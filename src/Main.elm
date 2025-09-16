@@ -1,7 +1,7 @@
 port module Main exposing (main)
 
 import Browser
-import Html exposing (Html, button, div, h1, h3, text)
+import Html exposing (Html, button, div, h1, h2, h3, text)
 import Html.Attributes exposing (class)
 import Html.Events exposing (onClick)
 
@@ -251,29 +251,39 @@ view model =
         , div [ class "text-center mb-4 text-sm text-gray-600" ]
             [ text ("Audio Time: " ++ String.fromFloat model.currentTime) ]
 
-        -- Control Buttons
-        , div [ class "text-center mb-6 space-x-4" ]
-            [ button
-                [ class "bg-indigo-600 hover:brightness-110 text-white font-bold py-3 px-8 rounded-lg shadow-md transition-all"
-                , onClick PlayMelodyClicked
-                ]
-                [ text "Play Melody" ]
-            , if model.isPlaying then
+        -- ========== SEQUENCER SECTION ==========
+        , div [ class "border-t-2 border-gray-300 pt-4 mt-4" ] []
+        , h2 [ class "text-xl font-bold text-center mb-4 text-gray-800" ] [ text "🎵 Beat Sequencer" ]
+        , div [ class "text-center mb-4" ]
+            [ if model.isPlaying then
                 button
                     [ class "bg-red-600 hover:brightness-110 text-white font-bold py-3 px-8 rounded-lg shadow-md transition-all"
                     , onClick StopSequence
                     ]
-                    [ text "Stop Sequence" ]
+                    [ text "⏹ Stop" ]
               else
                 button
                     [ class "bg-green-600 hover:brightness-110 text-white font-bold py-3 px-8 rounded-lg shadow-md transition-all"
                     , onClick StartSequence
                     ]
-                    [ text "Start Sequence" ]
+                    [ text "▶ Play" ]
+            ]
+        , sequencerGrid model
+
+        -- ========== DEMO MELODY SECTION ==========
+        , div [ class "border-t-2 border-gray-300 pt-4 mt-4" ] []
+        , h2 [ class "text-xl font-bold text-center mb-4 text-gray-800" ] [ text "🎼 Demo Song" ]
+        , div [ class "text-center mb-6 space-x-4" ]
+            [ button
+                [ class "bg-indigo-600 hover:brightness-110 text-white font-bold py-3 px-8 rounded-lg shadow-md transition-all"
+                , onClick PlayMelodyClicked
+                ]
+                [ text "🎵 Play Twinkle Twinkle Little Star" ]
             ]
 
-        -- Sequencer Grid
-        , sequencerGrid model
+        -- ========== PIANO KEYBOARD SECTION ==========
+        , div [ class "border-t-2 border-gray-300 pt-4 mt-4" ] []
+        , h2 [ class "text-xl font-bold text-center mb-4 text-gray-800" ] [ text "🎹 Piano Keyboard" ]
 
         -- Octave 3
         , octaveSection "Octave 3" 48 [ "bg-blue-500", "bg-green-500", "bg-yellow-500", "bg-orange-500", "bg-red-500", "bg-purple-500", "bg-pink-500" ]
