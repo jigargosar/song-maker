@@ -241,6 +241,30 @@ twinkleTwinkleMelody =
 -- VIEW
 
 
+formatTime : Float -> String
+formatTime seconds =
+    let
+        -- Round to 1 decimal place
+        roundedSeconds = toFloat (round (seconds * 10)) / 10
+        minutes = floor (roundedSeconds / 60)
+        remainingSecs = roundedSeconds - (toFloat minutes * 60)
+
+        -- Separate whole seconds and decimal part
+        wholeSeconds = floor remainingSecs
+        decimalPart = round ((remainingSecs - toFloat wholeSeconds) * 10)
+
+        -- Format with proper padding
+        secsStr =
+            if wholeSeconds < 10 then
+                "0" ++ String.fromInt wholeSeconds
+            else
+                String.fromInt wholeSeconds
+
+        formattedTime = String.fromInt minutes ++ ":" ++ secsStr ++ "." ++ String.fromInt decimalPart
+    in
+    formattedTime
+
+
 view : Model -> Html Msg
 view model =
     div [ class "p-6 bg-gray-50 min-h-screen" ]
@@ -249,7 +273,7 @@ view model =
 
         -- Debug: Show current time
         , div [ class "text-center mb-4 text-sm text-gray-600" ]
-            [ text ("Audio Time: " ++ String.fromFloat model.currentTime) ]
+            [ text ("Audio Time: " ++ formatTime model.currentTime) ]
 
         -- ========== SEQUENCER SECTION ==========
         , div [ class "border-t-2 border-gray-300 pt-4 mt-4" ] []

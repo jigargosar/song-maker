@@ -32,10 +32,10 @@
         // Use the captured constants
         player.loader.decodeAfterLoading(audioContext, piano);
 
-        // Start high-frequency time sync to Elm
+        // Start time sync to Elm for display (lower frequency for smoother display)
         setInterval(() => {
             app.ports.timeSync.send(audioContext.currentTime);
-        }, 10); // 100Hz updates
+        }, 100); // 10Hz updates for display
 
         // Listen to Elm port commands
         app.ports.playNote.subscribe((noteData) => {
