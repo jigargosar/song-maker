@@ -7,3 +7,4 @@ dist/
 
 # Node modules
 node_modules/
+/.parcel-cache/
