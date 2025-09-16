@@ -3,15 +3,25 @@
   "version": "1.0.0",
   "description": "A simple song maker app using Elm and Parcel",
   "scripts": {
-    "start": "parcel src/index.html",
+    "clean": "rm -rf .parcel-cache elm-stuff",
+    "start": "pnpm run clean && parcel src/index.html",
     "build": "parcel build src/index.html"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "packageManager": "pnpm@10.15.0",
+  "postcss": {
+    "plugins": {
+      "@tailwindcss/postcss": {}
+    }
+  },
   "devDependencies": {
+    "@parcel/transformer-elm": "2.15.4",
+    "@tailwindcss/postcss": "^4.1.13",
     "elm": "0.19.1-6",
-    "parcel": "^2.15.4"
+    "parcel": "^2.15.4",
+    "postcss": "^8.5.6",
+    "tailwindcss": "^4.1.13"
   }
 }
