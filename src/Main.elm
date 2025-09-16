@@ -119,10 +119,15 @@ beatDuration = 0.25  -- 250ms per beat (faster)
 
 togglePatternAt : Int -> List (Maybe Int) -> List (Maybe Int)
 togglePatternAt position pattern =
+    let
+        -- C major scale notes for each position
+        scaleNotes = [ 60, 62, 64, 65, 67, 69, 71, 72 ]  -- C D E F G A B C
+        noteForPosition = List.drop position scaleNotes |> List.head |> Maybe.withDefault 60
+    in
     List.indexedMap (\i note ->
         if i == position then
             case note of
-                Nothing -> Just 60  -- Default to middle C
+                Nothing -> Just noteForPosition
                 Just _ -> Nothing
         else
             note
