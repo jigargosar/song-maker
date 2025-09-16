@@ -109,6 +109,10 @@ defaultPattern : List (Maybe Int)
 defaultPattern = [ Just 60, Nothing, Just 64, Nothing, Just 67, Nothing, Just 72, Nothing ]  -- C-E-G-C with gaps
 
 
+emptyPattern : List (Maybe Int)
+emptyPattern = List.repeat 8 Nothing  -- Start with empty grid
+
+
 beatDuration : Float
 beatDuration = 0.25  -- 250ms per beat (faster)
 
