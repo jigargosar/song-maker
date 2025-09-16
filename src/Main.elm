@@ -6,10 +6,12 @@ import Html.Attributes exposing (class)
 import Html.Events exposing (onClick)
 
 
+
 -- PORTS
 
 
 port playNote : { note : Int, duration : Float, volume : Float } -> Cmd msg
+
 
 
 -- MODEL
@@ -17,6 +19,7 @@ port playNote : { note : Int, duration : Float, volume : Float } -> Cmd msg
 
 type alias Model =
     {}
+
 
 
 -- UPDATE
@@ -33,6 +36,7 @@ update msg model =
             ( model
             , playNote { note = midiNote, duration = 0.6, volume = 0.8 }
             )
+
 
 
 -- VIEW
@@ -58,9 +62,14 @@ view model =
 octaveSection : String -> Int -> List String -> Html Msg
 octaveSection title startNote colors =
     let
-        noteNames = [ "C", "D", "E", "F", "G", "A", "B" ]
-        noteOffsets = [ 0, 2, 4, 5, 7, 9, 11 ]
-        octaveNumber = String.fromInt ((startNote + 12) // 12)
+        noteNames =
+            [ "C", "D", "E", "F", "G", "A", "B" ]
+
+        noteOffsets =
+            [ 0, 2, 4, 5, 7, 9, 11 ]
+
+        octaveNumber =
+            String.fromInt ((startNote + 12) // 12)
     in
     div [ class "mb-6" ]
         [ h3 [ class "text-lg font-semibold mb-3 text-gray-700" ]
@@ -69,10 +78,21 @@ octaveSection title startNote colors =
             (List.map3
                 (\noteName offset color ->
                     let
-                        midiNote = startNote + offset
-                        noteLabel = noteName ++ octaveNumber
-                        buttonClass = color ++ " hover:" ++ String.replace "bg-" "bg-" (color ++ "0") ++ " text-white font-medium py-3 px-6 rounded-lg shadow-md transition-colors"
-                        specialClass = if midiNote == 60 then " border-2 border-blue-800" else ""
+                        midiNote =
+                            startNote + offset
+
+                        noteLabel =
+                            noteName ++ octaveNumber
+
+                        buttonClass =
+                            color ++ " hover:" ++ String.replace "bg-" "bg-" (color ++ "0") ++ " text-white font-medium py-3 px-6 rounded-lg shadow-md transition-colors"
+
+                        specialClass =
+                            if midiNote == 60 then
+                                " border-2 border-blue-800"
+
+                            else
+                                ""
                     in
                     button
                         [ class (buttonClass ++ specialClass)
@@ -85,6 +105,7 @@ octaveSection title startNote colors =
                 colors
             )
         ]
+
 
 
 -- MAIN
