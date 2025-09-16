@@ -19,6 +19,9 @@ port playSequence : List { note : Int, startTime : Float, duration : Float, volu
 port timeSync : (Float -> msg) -> Sub msg
 
 
+port scheduleNote : { note : Int, absoluteTime : Float, duration : Float, volume : Float } -> Cmd msg
+
+
 
 -- MODEL
 
@@ -27,6 +30,8 @@ type alias Model =
     { currentTime : Float
     , isPlaying : Bool
     , sequenceStartTime : Maybe Float
+    , nextNoteTime : Float
+    , currentNoteIndex : Int
     }
 
 
@@ -37,6 +42,8 @@ type alias Model =
 type Msg
     = PlayNoteClicked Int
     | PlayMelodyClicked
+    | StartSequence
+    | StopSequence
     | TimeSync Float
 
 
@@ -53,8 +60,69 @@ update msg model =
             , playSequence twinkleTwinkleMelody
             )
 
+        StartSequence ->
+            ( { model
+                | isPlaying = True
+                , sequenceStartTime = Just model.currentTime
+                , nextNoteTime = model.currentTime + 0.1  -- Start first note soon
+                , currentNoteIndex = 0
+              }
+            , scheduleNote { note = 60, absoluteTime = model.currentTime + 0.1, duration = 0.4, volume = 0.7 }  -- Wake audio context
+            )
+
+        StopSequence ->
+            ( { model | isPlaying = False, sequenceStartTime = Nothing }, Cmd.none )
+
         TimeSync currentTime ->
-            ( { model | currentTime = currentTime }, Cmd.none )
+            let
+                updatedModel = { model | currentTime = currentTime }
+            in
+            if model.isPlaying then
+                checkAndScheduleNote updatedModel
+            else
+                ( updatedModel, Cmd.none )
+
+
+-- SEQUENCER LOGIC
+
+
+pattern : List Int
+pattern = [ 60, 64, 67, 72 ]  -- C, E, G, C (octave up)
+
+
+beatDuration : Float
+beatDuration = 0.5  -- 500ms per beat
+
+
+checkAndScheduleNote : Model -> ( Model, Cmd Msg )
+checkAndScheduleNote model =
+    let
+        lookaheadTime = 0.050  -- 50ms lookahead
+    in
+    if model.currentTime + lookaheadTime >= model.nextNoteTime then
+        -- Time to schedule the next note
+        case List.drop model.currentNoteIndex pattern |> List.head of
+            Just noteValue ->
+                let
+                    nextIndex = modBy (List.length pattern) (model.currentNoteIndex + 1)
+                    nextNoteTime = model.nextNoteTime + beatDuration
+                in
+                ( { model
+                    | currentNoteIndex = nextIndex
+                    , nextNoteTime = nextNoteTime
+                  }
+                , scheduleNote
+                    { note = noteValue
+                    , absoluteTime = model.nextNoteTime
+                    , duration = 0.4
+                    , volume = 0.7
+                    }
+                )
+
+            Nothing ->
+                ( model, Cmd.none )
+    else
+        ( model, Cmd.none )
 
 
 twinkleTwinkleMelody : List { note : Int, startTime : Float, duration : Float, volume : Float }
@@ -129,13 +197,25 @@ view model =
         , div [ class "text-center mb-4 text-sm text-gray-600" ]
             [ text ("Audio Time: " ++ String.fromFloat model.currentTime) ]
 
-        -- Play Melody Button
-        , div [ class "text-center mb-6" ]
+        -- Control Buttons
+        , div [ class "text-center mb-6 space-x-4" ]
             [ button
                 [ class "bg-indigo-600 hover:brightness-110 text-white font-bold py-3 px-8 rounded-lg shadow-md transition-all"
                 , onClick PlayMelodyClicked
                 ]
                 [ text "Play Melody" ]
+            , if model.isPlaying then
+                button
+                    [ class "bg-red-600 hover:brightness-110 text-white font-bold py-3 px-8 rounded-lg shadow-md transition-all"
+                    , onClick StopSequence
+                    ]
+                    [ text "Stop Sequence" ]
+              else
+                button
+                    [ class "bg-green-600 hover:brightness-110 text-white font-bold py-3 px-8 rounded-lg shadow-md transition-all"
+                    , onClick StartSequence
+                    ]
+                    [ text "Start Sequence" ]
             ]
 
         -- Octave 3
@@ -204,7 +284,7 @@ octaveSection title startNote colors =
 main : Program () Model Msg
 main =
     Browser.element
-        { init = \_ -> ( { currentTime = 0.0, isPlaying = False, sequenceStartTime = Nothing }, Cmd.none )
+        { init = \_ -> ( { currentTime = 0.0, isPlaying = False, sequenceStartTime = Nothing, nextNoteTime = 0.0, currentNoteIndex = 0 }, Cmd.none )
         , update = update
         , subscriptions = \_ -> timeSync TimeSync
         , view = view

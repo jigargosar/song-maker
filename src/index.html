@@ -60,6 +60,13 @@
                     piano, scheduledTime, note, duration, volume);
             });
         });
+
+        // Listen to real-time note scheduling
+        app.ports.scheduleNote.subscribe((noteData) => {
+            const { note, absoluteTime, duration, volume } = noteData;
+            player.queueWaveTable(audioContext, audioContext.destination,
+                piano, absoluteTime, note, duration, volume);
+        });
     </script>
 </body>
 </html>
