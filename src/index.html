@@ -67,6 +67,13 @@
             player.queueWaveTable(audioContext, audioContext.destination,
                 piano, absoluteTime, note, duration, volume);
         });
+
+        // Wake audio context on user interaction
+        app.ports.wakeAudioContext.subscribe(() => {
+            if (audioContext.state === 'suspended') {
+                audioContext.resume();
+            }
+        });
     </script>
 </body>
 </html>

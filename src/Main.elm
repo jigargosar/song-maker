@@ -22,6 +22,9 @@ port timeSync : (Float -> msg) -> Sub msg
 port scheduleNote : { note : Int, absoluteTime : Float, duration : Float, volume : Float } -> Cmd msg
 
 
+port wakeAudioContext : () -> Cmd msg
+
+
 
 -- MODEL
 
@@ -32,6 +35,7 @@ type alias Model =
     , sequenceStartTime : Maybe Float
     , nextNoteTime : Float
     , currentNoteIndex : Int
+    , userPattern : List (Maybe Int)  -- User-defined pattern: Nothing = empty, Just note = selected
     }
 
 
@@ -45,6 +49,7 @@ type Msg
     | StartSequence
     | StopSequence
     | TimeSync Float
+    | ToggleGridNote Int  -- Toggle note at grid position
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -52,12 +57,18 @@ update msg model =
     case msg of
         PlayNoteClicked midiNote ->
             ( model
-            , playNote { note = midiNote, duration = 0.6, volume = 0.8 }
+            , Cmd.batch
+                [ playNote { note = midiNote, duration = 0.6, volume = 0.8 }
+                , wakeAudioContext ()
+                ]
             )
 
         PlayMelodyClicked ->
             ( model
-            , playSequence twinkleTwinkleMelody
+            , Cmd.batch
+                [ playSequence twinkleTwinkleMelody
+                , wakeAudioContext ()
+                ]
             )
 
         StartSequence ->
@@ -67,7 +78,7 @@ update msg model =
                 , nextNoteTime = model.currentTime + 0.1  -- Start first note soon
                 , currentNoteIndex = 0
               }
-            , scheduleNote { note = 60, absoluteTime = model.currentTime + 0.1, duration = 0.4, volume = 0.7 }  -- Wake audio context
+            , wakeAudioContext ()
             )
 
         StopSequence ->
@@ -82,31 +93,59 @@ update msg model =
             else
                 ( updatedModel, Cmd.none )
 
+        ToggleGridNote position ->
+            let
+                newPattern = togglePatternAt position model.userPattern
+            in
+            ( { model | userPattern = newPattern }
+            , wakeAudioContext ()
+            )
+
 
 -- SEQUENCER LOGIC
 
 
-pattern : List Int
-pattern = [ 60, 64, 67, 72 ]  -- C, E, G, C (octave up)
+defaultPattern : List (Maybe Int)
+defaultPattern = [ Just 60, Nothing, Just 64, Nothing, Just 67, Nothing, Just 72, Nothing ]  -- C-E-G-C with gaps
 
 
 beatDuration : Float
-beatDuration = 0.5  -- 500ms per beat
+beatDuration = 0.25  -- 250ms per beat (faster)
+
+
+togglePatternAt : Int -> List (Maybe Int) -> List (Maybe Int)
+togglePatternAt position pattern =
+    List.indexedMap (\i note ->
+        if i == position then
+            case note of
+                Nothing -> Just 60  -- Default to middle C
+                Just _ -> Nothing
+        else
+            note
+    ) pattern
+
+
+getActivePattern : Model -> List (Maybe Int)
+getActivePattern model =
+    model.userPattern
 
 
 checkAndScheduleNote : Model -> ( Model, Cmd Msg )
 checkAndScheduleNote model =
     let
         lookaheadTime = 0.050  -- 50ms lookahead
+        activePattern = getActivePattern model
     in
     if model.currentTime + lookaheadTime >= model.nextNoteTime then
         -- Time to schedule the next note
-        case List.drop model.currentNoteIndex pattern |> List.head of
+        let
+            nextIndex = modBy (List.length activePattern) (model.currentNoteIndex + 1)
+            nextNoteTime = model.nextNoteTime + beatDuration
+
+            currentNote = List.drop model.currentNoteIndex activePattern |> List.head |> Maybe.withDefault Nothing
+        in
+        case currentNote of
             Just noteValue ->
-                let
-                    nextIndex = modBy (List.length pattern) (model.currentNoteIndex + 1)
-                    nextNoteTime = model.nextNoteTime + beatDuration
-                in
                 ( { model
                     | currentNoteIndex = nextIndex
                     , nextNoteTime = nextNoteTime
@@ -114,13 +153,19 @@ checkAndScheduleNote model =
                 , scheduleNote
                     { note = noteValue
                     , absoluteTime = model.nextNoteTime
-                    , duration = 0.4
+                    , duration = 0.2
                     , volume = 0.7
                     }
                 )
 
             Nothing ->
-                ( model, Cmd.none )
+                -- Empty slot, just advance
+                ( { model
+                    | currentNoteIndex = nextIndex
+                    , nextNoteTime = nextNoteTime
+                  }
+                , Cmd.none
+                )
     else
         ( model, Cmd.none )
 
@@ -218,6 +263,9 @@ view model =
                     [ text "Start Sequence" ]
             ]
 
+        -- Sequencer Grid
+        , sequencerGrid model
+
         -- Octave 3
         , octaveSection "Octave 3" 48 [ "bg-blue-500", "bg-green-500", "bg-yellow-500", "bg-orange-500", "bg-red-500", "bg-purple-500", "bg-pink-500" ]
 
@@ -226,6 +274,39 @@ view model =
 
         -- Octave 5
         , octaveSection "Octave 5" 72 [ "bg-blue-400", "bg-green-400", "bg-yellow-400", "bg-orange-400", "bg-red-400", "bg-purple-400", "bg-pink-400" ]
+        ]
+
+
+sequencerGrid : Model -> Html Msg
+sequencerGrid model =
+    div [ class "mb-6" ]
+        [ h3 [ class "text-lg font-semibold mb-3 text-gray-700 text-center" ]
+            [ text "Sequencer Grid (Click to toggle notes)" ]
+        , div [ class "flex gap-2 justify-center" ]
+            (List.indexedMap
+                (\position maybeNote ->
+                    let
+                        isActive = maybeNote /= Nothing
+                        isCurrentBeat = model.isPlaying && (modBy 8 model.currentNoteIndex == position)
+
+                        buttonClass =
+                            if isCurrentBeat then
+                                "bg-yellow-400 border-2 border-yellow-600"  -- Currently playing beat
+                            else if isActive then
+                                "bg-blue-600 hover:bg-blue-700"  -- Active note
+                            else
+                                "bg-gray-300 hover:bg-gray-400"  -- Empty slot
+
+                        fullClass = buttonClass ++ " text-white font-medium py-4 px-4 rounded-lg shadow-md transition-all w-12 h-12 flex items-center justify-center"
+                    in
+                    button
+                        [ class fullClass
+                        , onClick (ToggleGridNote position)
+                        ]
+                        [ text (String.fromInt (position + 1)) ]
+                )
+                model.userPattern
+            )
         ]
 
 
@@ -284,7 +365,7 @@ octaveSection title startNote colors =
 main : Program () Model Msg
 main =
     Browser.element
-        { init = \_ -> ( { currentTime = 0.0, isPlaying = False, sequenceStartTime = Nothing, nextNoteTime = 0.0, currentNoteIndex = 0 }, Cmd.none )
+        { init = \_ -> ( { currentTime = 0.0, isPlaying = False, sequenceStartTime = Nothing, nextNoteTime = 0.0, currentNoteIndex = 0, userPattern = defaultPattern }, Cmd.none )
         , update = update
         , subscriptions = \_ -> timeSync TimeSync
         , view = view
