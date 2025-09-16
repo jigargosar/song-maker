@@ -16,12 +16,18 @@ port playNote : { note : Int, duration : Float, volume : Float } -> Cmd msg
 port playSequence : List { note : Int, startTime : Float, duration : Float, volume : Float } -> Cmd msg
 
 
+port timeSync : (Float -> msg) -> Sub msg
+
+
 
 -- MODEL
 
 
 type alias Model =
-    {}
+    { currentTime : Float
+    , isPlaying : Bool
+    , sequenceStartTime : Maybe Float
+    }
 
 
 
@@ -31,6 +37,7 @@ type alias Model =
 type Msg
     = PlayNoteClicked Int
     | PlayMelodyClicked
+    | TimeSync Float
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -45,6 +52,9 @@ update msg model =
             ( model
             , playSequence twinkleTwinkleMelody
             )
+
+        TimeSync currentTime ->
+            ( { model | currentTime = currentTime }, Cmd.none )
 
 
 twinkleTwinkleMelody : List { note : Int, startTime : Float, duration : Float, volume : Float }
@@ -114,6 +124,10 @@ view model =
     div [ class "p-6 bg-gray-50 min-h-screen" ]
         [ h1 [ class "text-3xl font-bold mb-6 text-gray-800 text-center" ]
             [ text "Song Maker Piano" ]
+
+        -- Debug: Show current time
+        , div [ class "text-center mb-4 text-sm text-gray-600" ]
+            [ text ("Audio Time: " ++ String.fromFloat model.currentTime) ]
 
         -- Play Melody Button
         , div [ class "text-center mb-6" ]
@@ -190,8 +204,8 @@ octaveSection title startNote colors =
 main : Program () Model Msg
 main =
     Browser.element
-        { init = \_ -> ( {}, Cmd.none )
+        { init = \_ -> ( { currentTime = 0.0, isPlaying = False, sequenceStartTime = Nothing }, Cmd.none )
         , update = update
-        , subscriptions = \_ -> Sub.none
+        , subscriptions = \_ -> timeSync TimeSync
         , view = view
         }
