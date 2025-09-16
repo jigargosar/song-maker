@@ -49,20 +49,59 @@ update msg model =
 
 twinkleTwinkleMelody : List { note : Int, startTime : Float, duration : Float, volume : Float }
 twinkleTwinkleMelody =
-    [ { note = 60, startTime = 0.0, duration = 0.5, volume = 0.8 }   -- C
-    , { note = 60, startTime = 0.5, duration = 0.5, volume = 0.8 }   -- C
-    , { note = 67, startTime = 1.0, duration = 0.5, volume = 0.8 }   -- G
-    , { note = 67, startTime = 1.5, duration = 0.5, volume = 0.8 }   -- G
-    , { note = 69, startTime = 2.0, duration = 0.5, volume = 0.8 }   -- A
-    , { note = 69, startTime = 2.5, duration = 0.5, volume = 0.8 }   -- A
-    , { note = 67, startTime = 3.0, duration = 1.0, volume = 0.8 }   -- G
-    , { note = 65, startTime = 4.0, duration = 0.5, volume = 0.8 }   -- F
-    , { note = 65, startTime = 4.5, duration = 0.5, volume = 0.8 }   -- F
-    , { note = 64, startTime = 5.0, duration = 0.5, volume = 0.8 }   -- E
-    , { note = 64, startTime = 5.5, duration = 0.5, volume = 0.8 }   -- E
-    , { note = 62, startTime = 6.0, duration = 0.5, volume = 0.8 }   -- D
-    , { note = 62, startTime = 6.5, duration = 0.5, volume = 0.8 }   -- D
-    , { note = 60, startTime = 7.0, duration = 1.0, volume = 0.8 }   -- C
+    [ -- Verse 1: "Twinkle twinkle little star"
+      { note = 60, startTime = 0.0, duration = 0.5, volume = 0.8 }   -- C: Twin-
+    , { note = 60, startTime = 0.5, duration = 0.5, volume = 0.8 }   -- C: -kle
+    , { note = 67, startTime = 1.0, duration = 0.5, volume = 0.8 }   -- G: twin-
+    , { note = 67, startTime = 1.5, duration = 0.5, volume = 0.8 }   -- G: -kle
+    , { note = 69, startTime = 2.0, duration = 0.5, volume = 0.8 }   -- A: lit-
+    , { note = 69, startTime = 2.5, duration = 0.5, volume = 0.8 }   -- A: -tle
+    , { note = 67, startTime = 3.0, duration = 1.0, volume = 0.8 }   -- G: star
+
+    -- Verse 2: "How I wonder what you are"
+    , { note = 65, startTime = 4.0, duration = 0.5, volume = 0.8 }   -- F: How
+    , { note = 65, startTime = 4.5, duration = 0.5, volume = 0.8 }   -- F: I
+    , { note = 64, startTime = 5.0, duration = 0.5, volume = 0.8 }   -- E: won-
+    , { note = 64, startTime = 5.5, duration = 0.5, volume = 0.8 }   -- E: -der
+    , { note = 62, startTime = 6.0, duration = 0.5, volume = 0.8 }   -- D: what
+    , { note = 62, startTime = 6.5, duration = 0.5, volume = 0.8 }   -- D: you
+    , { note = 60, startTime = 7.0, duration = 1.0, volume = 0.8 }   -- C: are
+
+    -- Verse 3: "Up above the world so high"
+    , { note = 67, startTime = 8.0, duration = 0.5, volume = 0.8 }   -- G: Up
+    , { note = 67, startTime = 8.5, duration = 0.5, volume = 0.8 }   -- G: a-
+    , { note = 65, startTime = 9.0, duration = 0.5, volume = 0.8 }   -- F: -bove
+    , { note = 65, startTime = 9.5, duration = 0.5, volume = 0.8 }   -- F: the
+    , { note = 64, startTime = 10.0, duration = 0.5, volume = 0.8 }  -- E: world
+    , { note = 64, startTime = 10.5, duration = 0.5, volume = 0.8 }  -- E: so
+    , { note = 62, startTime = 11.0, duration = 1.0, volume = 0.8 }  -- D: high
+
+    -- Verse 4: "Like a diamond in the sky"
+    , { note = 67, startTime = 12.0, duration = 0.5, volume = 0.8 }  -- G: Like
+    , { note = 67, startTime = 12.5, duration = 0.5, volume = 0.8 }  -- G: a
+    , { note = 65, startTime = 13.0, duration = 0.5, volume = 0.8 }  -- F: dia-
+    , { note = 65, startTime = 13.5, duration = 0.5, volume = 0.8 }  -- F: -mond
+    , { note = 64, startTime = 14.0, duration = 0.5, volume = 0.8 }  -- E: in
+    , { note = 64, startTime = 14.5, duration = 0.5, volume = 0.8 }  -- E: the
+    , { note = 62, startTime = 15.0, duration = 1.0, volume = 0.8 }  -- D: sky
+
+    -- Final verse: "Twinkle twinkle little star"
+    , { note = 60, startTime = 16.0, duration = 0.5, volume = 0.8 }  -- C: Twin-
+    , { note = 60, startTime = 16.5, duration = 0.5, volume = 0.8 }  -- C: -kle
+    , { note = 67, startTime = 17.0, duration = 0.5, volume = 0.8 }  -- G: twin-
+    , { note = 67, startTime = 17.5, duration = 0.5, volume = 0.8 }  -- G: -kle
+    , { note = 69, startTime = 18.0, duration = 0.5, volume = 0.8 }  -- A: lit-
+    , { note = 69, startTime = 18.5, duration = 0.5, volume = 0.8 }  -- A: -tle
+    , { note = 67, startTime = 19.0, duration = 1.0, volume = 0.8 }  -- G: star
+
+    -- Final line: "How I wonder what you are"
+    , { note = 65, startTime = 20.0, duration = 0.5, volume = 0.8 }  -- F: How
+    , { note = 65, startTime = 20.5, duration = 0.5, volume = 0.8 }  -- F: I
+    , { note = 64, startTime = 21.0, duration = 0.5, volume = 0.8 }  -- E: won-
+    , { note = 64, startTime = 21.5, duration = 0.5, volume = 0.8 }  -- E: -der
+    , { note = 62, startTime = 22.0, duration = 0.5, volume = 0.8 }  -- D: what
+    , { note = 62, startTime = 22.5, duration = 0.5, volume = 0.8 }  -- D: you
+    , { note = 60, startTime = 23.0, duration = 1.5, volume = 0.8 }  -- C: are (final hold)
     ]
 
 
