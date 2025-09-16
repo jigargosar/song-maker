@@ -13,6 +13,9 @@ import Html.Events exposing (onClick)
 port playNote : { note : Int, duration : Float, volume : Float } -> Cmd msg
 
 
+port playSequence : List { note : Int, startTime : Float, duration : Float, volume : Float } -> Cmd msg
+
+
 
 -- MODEL
 
@@ -27,6 +30,7 @@ type alias Model =
 
 type Msg
     = PlayNoteClicked Int
+    | PlayMelodyClicked
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -36,6 +40,30 @@ update msg model =
             ( model
             , playNote { note = midiNote, duration = 0.6, volume = 0.8 }
             )
+
+        PlayMelodyClicked ->
+            ( model
+            , playSequence twinkleTwinkleMelody
+            )
+
+
+twinkleTwinkleMelody : List { note : Int, startTime : Float, duration : Float, volume : Float }
+twinkleTwinkleMelody =
+    [ { note = 60, startTime = 0.0, duration = 0.5, volume = 0.8 }   -- C
+    , { note = 60, startTime = 0.5, duration = 0.5, volume = 0.8 }   -- C
+    , { note = 67, startTime = 1.0, duration = 0.5, volume = 0.8 }   -- G
+    , { note = 67, startTime = 1.5, duration = 0.5, volume = 0.8 }   -- G
+    , { note = 69, startTime = 2.0, duration = 0.5, volume = 0.8 }   -- A
+    , { note = 69, startTime = 2.5, duration = 0.5, volume = 0.8 }   -- A
+    , { note = 67, startTime = 3.0, duration = 1.0, volume = 0.8 }   -- G
+    , { note = 65, startTime = 4.0, duration = 0.5, volume = 0.8 }   -- F
+    , { note = 65, startTime = 4.5, duration = 0.5, volume = 0.8 }   -- F
+    , { note = 64, startTime = 5.0, duration = 0.5, volume = 0.8 }   -- E
+    , { note = 64, startTime = 5.5, duration = 0.5, volume = 0.8 }   -- E
+    , { note = 62, startTime = 6.0, duration = 0.5, volume = 0.8 }   -- D
+    , { note = 62, startTime = 6.5, duration = 0.5, volume = 0.8 }   -- D
+    , { note = 60, startTime = 7.0, duration = 1.0, volume = 0.8 }   -- C
+    ]
 
 
 
@@ -47,6 +75,15 @@ view model =
     div [ class "p-6 bg-gray-50 min-h-screen" ]
         [ h1 [ class "text-3xl font-bold mb-6 text-gray-800 text-center" ]
             [ text "Song Maker Piano" ]
+
+        -- Play Melody Button
+        , div [ class "text-center mb-6" ]
+            [ button
+                [ class "bg-indigo-600 hover:brightness-110 text-white font-bold py-3 px-8 rounded-lg shadow-md transition-all"
+                , onClick PlayMelodyClicked
+                ]
+                [ text "Play Melody" ]
+            ]
 
         -- Octave 3
         , octaveSection "Octave 3" 48 [ "bg-blue-500", "bg-green-500", "bg-yellow-500", "bg-orange-500", "bg-red-500", "bg-purple-500", "bg-pink-500" ]

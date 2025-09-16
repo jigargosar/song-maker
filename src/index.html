@@ -38,6 +38,23 @@
             player.queueWaveTable(audioContext, audioContext.destination,
                 piano, 0, note, duration, volume);
         });
+
+        // Listen to sequence playback commands
+        app.ports.playSequence.subscribe((sequence) => {
+            // Cancel any currently playing sequences
+            player.cancelQueue(audioContext);
+
+            const currentTime = audioContext.currentTime;
+
+            // Schedule each note in the sequence
+            sequence.forEach((noteData) => {
+                const { note, startTime, duration, volume } = noteData;
+                const scheduledTime = currentTime + startTime;
+
+                player.queueWaveTable(audioContext, audioContext.destination,
+                    piano, scheduledTime, note, duration, volume);
+            });
+        });
     </script>
 </body>
 </html>
