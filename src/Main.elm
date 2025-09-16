@@ -85,7 +85,7 @@ octaveSection title startNote colors =
                             noteName ++ octaveNumber
 
                         buttonClass =
-                            color ++ " text-white font-medium py-3 px-6 rounded-lg shadow-md transition-colors hover:opacity-80"
+                            color ++ " text-white font-medium py-3 px-6 rounded-lg shadow-md transition-all hover:brightness-110"
 
                         specialClass =
                             if midiNote == 60 then
