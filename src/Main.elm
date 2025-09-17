@@ -22,32 +22,41 @@ port timeSync : (Float -> msg) -> Sub msg
 
 -- CONSTANTS
 -- Grid dimensions
-
-
 -- MUSICAL CONFIGURATION
 -- All music-related constants in one place
-
 -- Grid octave configuration
+
+
 octaveCount : Int
 octaveCount =
-    1
+    3
 
 
 startingOctave : Int
 startingOctave =
-    4
+    3
+
 
 
 -- MIDI reference point (standard)
+
+
 midiC4 : Int
 midiC4 =
     60
 
 
+
 -- Major scale definition
+
+
 majorScalePattern : List Int
 majorScalePattern =
-    [ 0, 2, 4, 5, 7, 9, 11 ]  -- Semitones from root: C D E F G A B
+    [ 0, 2, 4, 5, 7, 9, 11 ]
+
+
+
+-- Semitones from root: C D E F G A B
 
 
 majorScaleNoteNames : List String
@@ -55,7 +64,10 @@ majorScaleNoteNames =
     [ "C", "D", "E", "F", "G", "A", "B" ]
 
 
+
 -- Derived values
+
+
 notesPerOctave : Int
 notesPerOctave =
     List.length majorScaleNoteNames
@@ -71,7 +83,10 @@ endingOctave =
     startingOctave - octaveCount + 1
 
 
+
 -- Musical structure (like Chrome Song Maker)
+
+
 barCount : Int
 barCount =
     4
@@ -87,7 +102,10 @@ splitBeats =
     2
 
 
+
 -- Derived values
+
+
 beatCount : Int
 beatCount =
     barCount * beatsPerBar * splitBeats
@@ -159,15 +177,14 @@ type alias Model =
 -- MIDI Note Mapping
 -- C4-centered system: C4 (MIDI 60) positioned at specific grid index
 -- All other notes calculated relative to C4's position
-
-
 -- SYSTEMATIC GRID-TO-MIDI CONVERSION
 -- Clean functions without magic numbers
-
 -- Convert grid index to musical position
+
+
 type alias MusicalPosition =
     { octave : Int
-    , noteIndex : Int  -- 0-6 for C-B
+    , noteIndex : Int -- 0-6 for C-B
     }
 
 
@@ -181,12 +198,15 @@ gridIndexToMusicalPosition gridIndex =
             modBy notesPerOctave gridIndex
 
         octave =
-            startingOctave - octaveOffset
+            startingOctave + octaveOffset
     in
     { octave = octave, noteIndex = noteIndex }
 
 
+
 -- Convert musical position to MIDI note
+
+
 musicalPositionToMidi : MusicalPosition -> Int
 musicalPositionToMidi position =
     let
@@ -205,7 +225,10 @@ musicalPositionToMidi position =
     baseMidiForC + semitoneOffset
 
 
+
 -- Convert musical position to note label
+
+
 musicalPositionToLabel : MusicalPosition -> String
 musicalPositionToLabel position =
     let
@@ -215,7 +238,10 @@ musicalPositionToLabel position =
     noteName ++ String.fromInt position.octave
 
 
+
 -- Main conversion functions (clean interface)
+
+
 getMidiNoteForIndex : Int -> Int
 getMidiNoteForIndex gridIndex =
     gridIndex
@@ -230,14 +256,20 @@ getNoteLabelForIndex gridIndex =
         |> musicalPositionToLabel
 
 
+
 -- Dynamic note list based on grid size and C4 position
+
+
 noteList : List Int
 noteList =
     List.range 0 (noteCount - 1)
         |> List.map getMidiNoteForIndex
 
 
+
 -- Dynamic note labels based on C major scale
+
+
 noteLabels : List String
 noteLabels =
     List.range 0 (noteCount - 1)
@@ -255,6 +287,8 @@ emptyGrid =
 
 
 -- Empty demo grid - no preset melody
+
+
 demoGrid : List (List Bool)
 demoGrid =
     emptyGrid
