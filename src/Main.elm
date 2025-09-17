@@ -366,15 +366,30 @@ update msg model =
             case model.playState of
                 Stopped ->
                     let
-                        activeNotes =
+                        -- Play beat 0 immediately
+                        activeNotesBeat0 =
                             getActiveNotesForBeat 0 model.grid
 
-                        chordCmd =
-                            if List.isEmpty activeNotes then
-                                Cmd.none
+                        -- Schedule beat 1 for proper timing
+                        activeNotesBeat1 =
+                            getActiveNotesForBeat 1 model.grid
 
-                            else
-                                playChord { notes = activeNotes, when = model.currentTime }
+                        beat1Time =
+                            model.currentTime + beatDurationSeconds
+
+                        chordCmd =
+                            Cmd.batch
+                                [ -- Play beat 0 now
+                                  if List.isEmpty activeNotesBeat0 then
+                                    Cmd.none
+                                  else
+                                    playChord { notes = activeNotesBeat0, when = model.currentTime }
+                                , -- Schedule beat 1 at the right time
+                                  if List.isEmpty activeNotesBeat1 then
+                                    Cmd.none
+                                  else
+                                    playChord { notes = activeNotesBeat1, when = beat1Time }
+                                ]
                     in
                     ( { model | playState = Playing { startTime = model.currentTime, currentBeat = 0 } }
                     , Cmd.batch [ wakeAudioContext (), chordCmd ]
