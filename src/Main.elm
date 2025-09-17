@@ -1,7 +1,7 @@
 port module Main exposing (main)
 
 import Browser
-import Html exposing (Html, button, div, h1, h2, text)
+import Html exposing (Html, button, div, footer, h1, h2, header, text)
 import Html.Attributes exposing (class)
 import Html.Events exposing (onClick)
 
@@ -243,9 +243,18 @@ formatTime seconds =
 
 view : Model -> Html Msg
 view model =
-    div [ class "p-6 bg-gray-50 min-h-screen" ]
-        [ -- Single line header with title, controls, and time
-          div [ class "flex items-center justify-between mb-6" ]
+    div [ class "h-screen bg-gray-50 flex flex-col" ]
+        [ headerView model
+        , div [ class "flex-1 overflow-hidden" ]
+            [ gridView model ]
+        , footerView model
+        ]
+
+
+headerView : Model -> Html Msg
+headerView model =
+    header [ class "bg-white shadow-sm border-b border-gray-200 px-6 py-4" ]
+        [ div [ class "flex items-center justify-between" ]
             [ h1 [ class "text-2xl font-bold text-gray-800" ]
                 [ text "Song Maker" ]
             , div [ class "flex items-center gap-3" ]
@@ -271,14 +280,26 @@ view model =
             , div [ class "text-sm text-gray-600" ]
                 [ text (formatTime model.currentTime) ]
             ]
+        ]
 
-        , gridView model
+
+footerView : Model -> Html Msg
+footerView model =
+    footer [ class "bg-white border-t border-gray-200 px-6 py-3" ]
+        [ div [ class "flex items-center justify-between text-sm text-gray-600" ]
+            [ div []
+                [ text ("BPM: " ++ String.fromInt defaultBpm) ]
+            , div []
+                [ text ("Notes: " ++ String.fromInt noteCount ++ " | Beats: " ++ String.fromInt beatCount) ]
+            , div []
+                [ text "Use mouse to toggle notes" ]
+            ]
         ]
 
 
 gridView : Model -> Html Msg
 gridView model =
-    div [ class "overflow-x-auto" ]
+    div [ class "h-full overflow-auto p-6" ]
         [ div [ class ("grid grid-cols-" ++ String.fromInt gridColumns ++ " gap-1 w-fit mx-auto") ]
             ([ div [ class "w-12 h-8" ] []  -- Empty corner cell
              ] ++
