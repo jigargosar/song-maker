@@ -431,26 +431,26 @@ update msg model =
                         activeNotes =
                             getActiveNotesForBeat expectedBeat model.grid
 
-                        -- Lookahead scheduling: schedule next beat when we're close to it
-                        timeUntilNextBeat =
-                            beatDurationSeconds - (elapsedTime - (toFloat expectedBeat * beatDurationSeconds))
-
-                        -- Schedule next beat when current beat changes
+                        -- Simple: schedule next beat when current beat changes
                         shouldSchedule =
                             expectedBeat /= currentBeat
 
                         nextBeat =
                             modBy beatCount (expectedBeat + 1)
 
-                        nextBeatTime =
-                            startTime + (toFloat (expectedBeat + 1) * beatDurationSeconds)
+                        -- Calculate absolute time for next beat
+                        loopNumber =
+                            floor (elapsedTime / (toFloat beatCount * beatDurationSeconds))
+
+                        nextBeatAbsoluteTime =
+                            startTime + (toFloat loopNumber * toFloat beatCount * beatDurationSeconds) + (toFloat nextBeat * beatDurationSeconds)
 
                         nextBeatNotes =
                             getActiveNotesForBeat nextBeat model.grid
 
                         chordCmd =
                             if shouldSchedule && not (List.isEmpty nextBeatNotes) then
-                                playChord { notes = nextBeatNotes, when = nextBeatTime }
+                                playChord { notes = nextBeatNotes, when = nextBeatAbsoluteTime }
 
                             else
                                 Cmd.none
