@@ -114,65 +114,66 @@ type alias Model =
 
 
 
--- Notes: 3 octaves from B5 to C3 (24 notes, high to low for display)
+-- MIDI Note Mapping
+-- C4-centered system: C4 (MIDI 60) positioned at specific grid index
+-- All other notes calculated relative to C4's position
 
 
+-- C4 reference
+c4MidiNote : Int
+c4MidiNote =
+    60
+
+
+-- Position C4 in the grid (0-indexed, counting from top)
+c4GridIndex : Int
+c4GridIndex =
+    noteCount // 2
+
+
+-- Generate MIDI note for given grid index
+getMidiNoteForIndex : Int -> Int
+getMidiNoteForIndex gridIndex =
+    -- C4 is at c4GridIndex, calculate offset and apply to C4 MIDI note
+    -- Grid goes from high to low (top to bottom), so subtract offset
+    let
+        offsetFromC4 =
+            c4GridIndex - gridIndex
+    in
+    c4MidiNote + offsetFromC4
+
+
+-- Generate note label for MIDI note
+getNoteLabelForMidi : Int -> String
+getNoteLabelForMidi midiNote =
+    let
+        noteNames =
+            [ "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B" ]
+
+        noteIndex =
+            modBy 12 midiNote
+
+        octave =
+            (midiNote // 12) - 1
+
+        noteName =
+            Maybe.withDefault "?" (List.drop noteIndex noteNames |> List.head)
+    in
+    noteName ++ String.fromInt octave
+
+
+-- Dynamic note list based on grid size and C4 position
 noteList : List Int
 noteList =
-    [ 83
-    , 81
-    , 79
-    , 77
-    , 76
-    , 74
-    , 72
-    , 71
-    , 69
-    , 67
-    , 65
-    , 64 -- B5 to C5
-    , 62
-    , 60
-    , 59
-    , 57
-    , 55
-    , 53
-    , 52
-    , 50
-    , 48
-    , 47
-    , 45
-    , 43 -- B4 to C4, B3 to C3
-    ]
+    List.range 0 (noteCount - 1)
+        |> List.map getMidiNoteForIndex
 
 
+-- Dynamic note labels based on MIDI notes
 noteLabels : List String
 noteLabels =
-    [ "B5"
-    , "A5"
-    , "G5"
-    , "F5"
-    , "E5"
-    , "D5"
-    , "C5"
-    , "B4"
-    , "A4"
-    , "G4"
-    , "F4"
-    , "E4"
-    , "D4"
-    , "C4"
-    , "B3"
-    , "A3"
-    , "G3"
-    , "F3"
-    , "E3"
-    , "D3"
-    , "C3"
-    , "B2"
-    , "A2"
-    , "G2"
-    ]
+    noteList
+        |> List.map getNoteLabelForMidi
 
 
 
@@ -198,16 +199,17 @@ demoGrid =
     , emptyRow
     , emptyRow
     , emptyRow
+    , [ False, False, False, False, True, True, False, False, False, False, False, False ] -- A4: index 3, beats 5,6 (A A)
+    , emptyRow
+    , [ False, False, True, True, False, False, True, False, False, False, False, False ] -- G4: index 5, beats 3,4,7 (G G G)
+    , emptyRow
+    , [ False, False, False, False, False, False, False, True, False, False, False, False ] -- F4: index 7, beat 8 (F)
     , emptyRow
     , emptyRow
     , emptyRow
     , emptyRow
-    , [ False, False, False, False, True, True, False, False, False, False, False, False ] -- A4: index 8, beats 5,6 (A A)
-    , [ False, False, True, True, False, False, True, False, False, False, False, False ] -- G4: index 9, beats 3,4,7 (G G G)
-    , [ False, False, False, False, False, False, False, True, False, False, False, False ] -- F4: index 10, beat 8 (F)
-    , [ False, False, False, False, False, False, False, False, False, False, False, False ] -- E4: index 11 (empty for now)
-    , [ False, False, False, False, False, False, False, False, False, False, False, False ] -- D4: index 12 (empty for now)
-    , [ True, True, False, False, False, False, False, False, False, False, False, False ] -- C4: index 13, beats 1,2 (C C)
+    , [ True, True, False, False, False, False, False, False, False, False, False, False ] -- C4: index 12, beats 1,2 (C C)
+    , emptyRow
     , emptyRow
     , emptyRow
     , emptyRow
