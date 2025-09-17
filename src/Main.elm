@@ -18,6 +18,34 @@ port wakeAudioContext : () -> Cmd msg
 port timeSync : (Float -> msg) -> Sub msg
 
 
+-- CONSTANTS
+
+
+-- Grid dimensions
+noteCount : Int
+noteCount = 24
+
+beatCount : Int
+beatCount = 8
+
+-- Audio settings
+defaultBpm : Int
+defaultBpm = 120
+
+defaultNoteDuration : Float
+defaultNoteDuration = 0.4
+
+defaultNoteVolume : Float
+defaultNoteVolume = 0.8
+
+-- Derived values
+beatDurationSeconds : Float
+beatDurationSeconds = 60.0 / toFloat defaultBpm / 2.0  -- 120 BPM = 0.5 seconds per beat
+
+gridColumns : Int
+gridColumns = beatCount + 1  -- beats + note label column
+
+
 -- MODEL
 
 
@@ -30,7 +58,7 @@ type PlayState
 
 
 type alias Model =
-    { grid : List (List Bool)  -- 24 notes × 8 beats, [note][beat]
+    { grid : List (List Bool)  -- noteCount × beatCount, [note][beat]
     , playState : PlayState
     , currentTime : Float
     }
@@ -51,16 +79,16 @@ noteLabels =
     ]
 
 
--- Initialize empty 24x8 grid
+-- Initialize empty grid
 emptyGrid : List (List Bool)
-emptyGrid = List.repeat 24 (List.repeat 8 False)
+emptyGrid = List.repeat noteCount (List.repeat beatCount False)
 
 
 -- Demo melody pattern - simple Twinkle Twinkle Little Star
 demoGrid : List (List Bool)
 demoGrid =
     let
-        emptyRow = [ False, False, False, False, False, False, False, False ]
+        emptyRow = List.repeat beatCount False
     in
     [ emptyRow, emptyRow, emptyRow, emptyRow, emptyRow, emptyRow, emptyRow, emptyRow, emptyRow  -- B5 to G4 (indices 0-8)
     , [ True, True, False, False, True, True, False, False ]  -- G4: index 9, beats 1,2,5,6 (Twinkle twinkle, little star)
@@ -132,9 +160,8 @@ update msg model =
 
                 Playing { startTime, currentBeat } ->
                     let
-                        beatDuration = 0.5  -- 120 BPM = 0.5 seconds per beat
                         elapsedTime = currentTime - startTime
-                        expectedBeat = modBy 8 (floor (elapsedTime / beatDuration))
+                        expectedBeat = modBy beatCount (floor (elapsedTime / beatDurationSeconds))
 
                         beatChanged = expectedBeat /= currentBeat
 
@@ -163,7 +190,7 @@ getActiveNotesForBeat beatIndex grid =
             Just True ->
                 case List.drop noteIndex noteList |> List.head of
                     Just midiNote ->
-                        Just { note = midiNote, duration = 0.4, volume = 0.8 }
+                        Just { note = midiNote, duration = defaultNoteDuration, volume = defaultNoteVolume }
                     Nothing ->
                         Nothing
             _ ->
@@ -252,14 +279,14 @@ view model =
 gridView : Model -> Html Msg
 gridView model =
     div [ class "overflow-x-auto" ]
-        [ div [ class "grid grid-cols-9 gap-1 w-fit mx-auto" ]
+        [ div [ class ("grid grid-cols-" ++ String.fromInt gridColumns ++ " gap-1 w-fit mx-auto") ]
             ([ div [ class "w-12 h-8" ] []  -- Empty corner cell
              ] ++
              -- Beat numbers header
              List.indexedMap (\beatIndex _ ->
                  div [ class "w-8 h-8 flex items-center justify-center text-xs font-bold text-gray-600" ]
                      [ text (String.fromInt (beatIndex + 1)) ]
-             ) (List.repeat 8 ()) ++
+             ) (List.repeat beatCount ()) ++
              -- Note rows
              (List.indexedMap (\noteIndex noteRow ->
                  [ -- Note label
