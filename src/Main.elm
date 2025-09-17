@@ -50,6 +50,28 @@ emptyGrid : List (List Bool)
 emptyGrid = List.repeat 8 (List.repeat 8 False)
 
 
+-- Demo melody pattern - simple Twinkle Twinkle Little Star
+demoGrid : List (List Bool)
+demoGrid =
+    [ -- G4: beats 1,2,5,6 (Twinkle twinkle, little star)
+      [ True, True, False, False, True, True, False, False ]
+    , -- F4: empty
+      [ False, False, False, False, False, False, False, False ]
+    , -- E4: empty
+      [ False, False, False, False, False, False, False, False ]
+    , -- D4: beats 3,4,7,8 (how I wonder what you are)
+      [ False, False, True, True, False, False, True, True ]
+    , -- C4: beat 8 (are)
+      [ False, False, False, False, False, False, False, True ]
+    , -- B3: empty
+      [ False, False, False, False, False, False, False, False ]
+    , -- A3: empty
+      [ False, False, False, False, False, False, False, False ]
+    , -- G3: empty
+      [ False, False, False, False, False, False, False, False ]
+    ]
+
+
 -- UPDATE
 
 
@@ -57,6 +79,7 @@ type Msg
     = ToggleCell Int Int  -- noteIndex, beatIndex
     | Play
     | Stop
+    | ClearGrid
     | TimeSync Float
 
 
@@ -97,6 +120,9 @@ update msg model =
                 Stopped ->
                     -- Already stopped, ignore duplicate Stop message
                     ( model, Cmd.none )
+
+        ClearGrid ->
+            ( { model | grid = emptyGrid }, Cmd.none )
 
         TimeSync currentTime ->
             -- TODO: Guard against time going backwards, NaN values, system clock adjustments
@@ -191,30 +217,32 @@ formatTime seconds =
 view : Model -> Html Msg
 view model =
     div [ class "p-6 bg-gray-50 min-h-screen" ]
-        [ h1 [ class "text-3xl font-bold mb-6 text-gray-800 text-center" ]
-            [ text "Song Maker" ]
-
-        , div [ class "text-center mb-4 text-sm text-gray-600" ]
-            [ text ("Audio Time: " ++ formatTime model.currentTime) ]
-
-        -- ========== 2D GRID SEQUENCER ==========
-        , div [ class "border-t-2 border-gray-300 pt-4 mt-4" ] []
-        , h2 [ class "text-xl font-bold text-center mb-4 text-gray-800" ] [ text "🎵 Grid Sequencer" ]
-
-        , div [ class "text-center mb-4" ]
-            [ case model.playState of
-                Playing _ ->
-                    button
-                        [ class "bg-red-600 hover:brightness-110 text-white font-bold py-3 px-8 rounded-lg shadow-md transition-all"
-                        , onClick Stop
-                        ]
-                        [ text "⏹ Stop" ]
-                Stopped ->
-                    button
-                        [ class "bg-green-600 hover:brightness-110 text-white font-bold py-3 px-8 rounded-lg shadow-md transition-all"
-                        , onClick Play
-                        ]
-                        [ text "▶ Play" ]
+        [ -- Single line header with title, controls, and time
+          div [ class "flex items-center justify-between mb-6" ]
+            [ h1 [ class "text-2xl font-bold text-gray-800" ]
+                [ text "Song Maker" ]
+            , div [ class "flex items-center gap-3" ]
+                [ case model.playState of
+                    Playing _ ->
+                        button
+                            [ class "bg-red-600 hover:brightness-110 text-white font-bold py-2 px-6 rounded-lg shadow-md transition-all"
+                            , onClick Stop
+                            ]
+                            [ text "Stop" ]
+                    Stopped ->
+                        button
+                            [ class "bg-green-600 hover:brightness-110 text-white font-bold py-2 px-6 rounded-lg shadow-md transition-all"
+                            , onClick Play
+                            ]
+                            [ text "Play" ]
+                , button
+                    [ class "bg-gray-600 hover:brightness-110 text-white font-bold py-2 px-4 rounded-lg shadow-md transition-all"
+                    , onClick ClearGrid
+                    ]
+                    [ text "Clear" ]
+                ]
+            , div [ class "text-sm text-gray-600" ]
+                [ text (formatTime model.currentTime) ]
             ]
 
         , gridView model
@@ -264,7 +292,7 @@ gridView model =
 main : Program () Model Msg
 main =
     Browser.element
-        { init = \_ -> ( { grid = emptyGrid, playState = Stopped, currentTime = 0.0 }, Cmd.none )
+        { init = \_ -> ( { grid = demoGrid, playState = Stopped, currentTime = 0.0 }, Cmd.none )
         , update = update
         , subscriptions = \_ -> timeSync TimeSync
         , view = view
