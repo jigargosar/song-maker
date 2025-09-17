@@ -30,45 +30,45 @@ type PlayState
 
 
 type alias Model =
-    { grid : List (List Bool)  -- 8 notes × 8 beats, [note][beat]
+    { grid : List (List Bool)  -- 24 notes × 8 beats, [note][beat]
     , playState : PlayState
     , currentTime : Float
     }
 
 
--- Notes: C4 to G4 (8 notes, high to low for display)
+-- Notes: 3 octaves from B5 to C3 (24 notes, high to low for display)
 noteList : List Int
-noteList = [ 67, 65, 64, 62, 60, 59, 57, 55 ]  -- G4, F4, E4, D4, C4, B3, A3, G3
+noteList =
+    [ 83, 81, 79, 78, 76, 74, 72, 71, 69, 67, 65, 64  -- B5 to C5
+    , 62, 60, 59, 57, 55, 53, 52, 50, 48, 47, 45, 43  -- B4 to C4, B3 to C3
+    ]
 
 
 noteLabels : List String
-noteLabels = [ "G4", "F4", "E4", "D4", "C4", "B3", "A3", "G3" ]
+noteLabels =
+    [ "B5", "A5", "G5", "F#5", "E5", "D5", "C5", "B4", "A4", "G4", "F4", "E4"
+    , "D4", "C4", "B3", "A3", "G3", "F3", "E3", "D3", "C#3", "C3", "B2", "A2"
+    ]
 
 
--- Initialize empty 8x8 grid
+-- Initialize empty 24x8 grid
 emptyGrid : List (List Bool)
-emptyGrid = List.repeat 8 (List.repeat 8 False)
+emptyGrid = List.repeat 24 (List.repeat 8 False)
 
 
 -- Demo melody pattern - simple Twinkle Twinkle Little Star
 demoGrid : List (List Bool)
 demoGrid =
-    [ -- G4: beats 1,2,5,6 (Twinkle twinkle, little star)
-      [ True, True, False, False, True, True, False, False ]
-    , -- F4: empty
-      [ False, False, False, False, False, False, False, False ]
-    , -- E4: empty
-      [ False, False, False, False, False, False, False, False ]
-    , -- D4: beats 3,4,7 (how I wonder what you)
-      [ False, False, True, True, False, False, True, False ]
-    , -- C4: beat 8 (are)
-      [ False, False, False, False, False, False, False, True ]
-    , -- B3: empty
-      [ False, False, False, False, False, False, False, False ]
-    , -- A3: empty
-      [ False, False, False, False, False, False, False, False ]
-    , -- G3: empty
-      [ False, False, False, False, False, False, False, False ]
+    let
+        emptyRow = [ False, False, False, False, False, False, False, False ]
+    in
+    [ emptyRow, emptyRow, emptyRow, emptyRow, emptyRow, emptyRow, emptyRow, emptyRow, emptyRow  -- B5 to G4 (indices 0-8)
+    , [ True, True, False, False, True, True, False, False ]  -- G4: index 9, beats 1,2,5,6 (Twinkle twinkle, little star)
+    , emptyRow  -- F4: index 10
+    , emptyRow  -- E4: index 11
+    , [ False, False, True, True, False, False, True, False ]  -- D4: index 12, beats 3,4,7 (how I wonder what you)
+    , [ False, False, False, False, False, False, False, True ]  -- C4: index 13, beat 8 (are)
+    , emptyRow, emptyRow, emptyRow, emptyRow, emptyRow, emptyRow, emptyRow, emptyRow, emptyRow, emptyRow  -- B3 to A2 (indices 14-23)
     ]
 
 
