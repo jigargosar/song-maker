@@ -2,7 +2,7 @@ port module Main exposing (main)
 
 import Browser
 import Html exposing (Html, button, div, footer, h1, h2, header, text)
-import Html.Attributes exposing (class)
+import Html.Attributes exposing (class, style)
 import Html.Events exposing (onClick)
 
 
@@ -434,7 +434,10 @@ footerView model =
 gridView : Model -> Html Msg
 gridView model =
     div [ class "h-full overflow-auto p-6" ]
-        [ div [ class ("grid grid-cols-" ++ String.fromInt gridColumns ++ " gap-1 w-fit mx-auto") ]
+        [ div
+            [ class "grid gap-1 w-fit mx-auto"
+            , style "grid-template-columns" ("repeat(" ++ String.fromInt gridColumns ++ ", minmax(0, 1fr))")
+            ]
             ([ div [ class "w-12 h-8" ] [] -- Empty corner cell
              ]
                 ++ -- Beat numbers header
