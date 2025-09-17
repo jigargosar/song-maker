@@ -24,9 +24,22 @@ port timeSync : (Float -> msg) -> Sub msg
 -- Grid dimensions
 
 
+-- Number of octaves to display
+octaveCount : Int
+octaveCount =
+    1
+
+
+-- C major scale notes per octave (7 notes)
+notesPerOctave : Int
+notesPerOctave =
+    7
+
+
+-- Total number of notes
 noteCount : Int
 noteCount =
-    24
+    octaveCount * notesPerOctave
 
 
 -- Musical structure (like Chrome Song Maker)
@@ -119,47 +132,67 @@ type alias Model =
 -- All other notes calculated relative to C4's position
 
 
--- C4 reference
-c4MidiNote : Int
-c4MidiNote =
-    60
+-- C major scale MIDI offsets from C (white keys only)
+cMajorScaleMidiOffsets : List Int
+cMajorScaleMidiOffsets =
+    [ 0, 2, 4, 5, 7, 9, 11 ] -- C D E F G A B
 
 
--- Position C4 in the grid (0-indexed, counting from top)
-c4GridIndex : Int
-c4GridIndex =
-    noteCount // 2
+-- C major scale note names
+cMajorScaleNames : List String
+cMajorScaleNames =
+    [ "C", "D", "E", "F", "G", "A", "B" ]
+
+
+-- Starting octave (top of grid)
+startingOctave : Int
+startingOctave =
+    4
 
 
 -- Generate MIDI note for given grid index
 getMidiNoteForIndex : Int -> Int
 getMidiNoteForIndex gridIndex =
-    -- C4 is at c4GridIndex, calculate offset and apply to C4 MIDI note
-    -- Grid goes from high to low (top to bottom), so subtract offset
     let
-        offsetFromC4 =
-            c4GridIndex - gridIndex
+        -- Calculate which octave and note within octave
+        octaveOffset =
+            gridIndex // notesPerOctave
+
+        noteInOctave =
+            modBy notesPerOctave gridIndex
+
+        -- Current octave (going down from starting octave)
+        currentOctave =
+            startingOctave - octaveOffset
+
+        -- Get MIDI offset for this note in C major scale
+        midiOffset =
+            Maybe.withDefault 0 (List.drop noteInOctave cMajorScaleMidiOffsets |> List.head)
+
+        -- Calculate base MIDI note for C in this octave
+        baseMidiForOctave =
+            (currentOctave + 1) * 12
     in
-    c4MidiNote + offsetFromC4
+    baseMidiForOctave + midiOffset
 
 
--- Generate note label for MIDI note
-getNoteLabelForMidi : Int -> String
-getNoteLabelForMidi midiNote =
+-- Generate note label for grid index
+getNoteLabelForIndex : Int -> String
+getNoteLabelForIndex gridIndex =
     let
-        noteNames =
-            [ "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B" ]
+        octaveOffset =
+            gridIndex // notesPerOctave
 
-        noteIndex =
-            modBy 12 midiNote
+        noteInOctave =
+            modBy notesPerOctave gridIndex
 
-        octave =
-            (midiNote // 12) - 1
+        currentOctave =
+            startingOctave - octaveOffset
 
         noteName =
-            Maybe.withDefault "?" (List.drop noteIndex noteNames |> List.head)
+            Maybe.withDefault "?" (List.drop noteInOctave cMajorScaleNames |> List.head)
     in
-    noteName ++ String.fromInt octave
+    noteName ++ String.fromInt currentOctave
 
 
 -- Dynamic note list based on grid size and C4 position
@@ -169,11 +202,11 @@ noteList =
         |> List.map getMidiNoteForIndex
 
 
--- Dynamic note labels based on MIDI notes
+-- Dynamic note labels based on C major scale
 noteLabels : List String
 noteLabels =
-    noteList
-        |> List.map getNoteLabelForMidi
+    List.range 0 (noteCount - 1)
+        |> List.map getNoteLabelForIndex
 
 
 
@@ -186,41 +219,10 @@ emptyGrid =
 
 
 
--- Demo melody pattern - simple Twinkle Twinkle Little Star
-
-
+-- Empty demo grid - no preset melody
 demoGrid : List (List Bool)
 demoGrid =
-    let
-        emptyRow =
-            List.repeat beatCount False
-    in
-    [ emptyRow
-    , emptyRow
-    , emptyRow
-    , emptyRow
-    , [ False, False, False, False, True, True, False, False, False, False, False, False, False, False, False, False ] -- A4: index 3, beats 5,6 (A A)
-    , emptyRow
-    , [ False, False, True, True, False, False, True, False, False, False, False, False, False, False, False, False ] -- G4: index 5, beats 3,4,7 (G G G)
-    , emptyRow
-    , [ False, False, False, False, False, False, False, True, False, False, False, False, False, False, False, False ] -- F4: index 7, beat 8 (F)
-    , emptyRow
-    , emptyRow
-    , emptyRow
-    , emptyRow
-    , [ True, True, False, False, False, False, False, False, False, False, False, False, False, False, False, False ] -- C4: index 12, beats 1,2 (C C)
-    , emptyRow
-    , emptyRow
-    , emptyRow
-    , emptyRow
-    , emptyRow
-    , emptyRow
-    , emptyRow
-    , emptyRow
-    , emptyRow
-    , emptyRow
-    , emptyRow -- B3 to A2 (indices 14-23)
-    ]
+    emptyGrid
 
 
 
@@ -512,7 +514,7 @@ gridView model =
 main : Program () Model Msg
 main =
     Browser.element
-        { init = \_ -> ( { grid = demoGrid, playState = Stopped, currentTime = 0.0 }, Cmd.none )
+        { init = \_ -> ( { grid = emptyGrid, playState = Stopped, currentTime = 0.0 }, Cmd.none )
         , update = update
         , subscriptions = \_ -> timeSync TimeSync
         , view = view
