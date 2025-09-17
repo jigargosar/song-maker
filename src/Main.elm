@@ -24,22 +24,51 @@ port timeSync : (Float -> msg) -> Sub msg
 -- Grid dimensions
 
 
--- Number of octaves to display
+-- MUSICAL CONFIGURATION
+-- All music-related constants in one place
+
+-- Grid octave configuration
 octaveCount : Int
 octaveCount =
     1
 
 
--- C major scale notes per octave (7 notes)
+startingOctave : Int
+startingOctave =
+    4
+
+
+-- MIDI reference point (standard)
+midiC4 : Int
+midiC4 =
+    60
+
+
+-- Major scale definition
+majorScalePattern : List Int
+majorScalePattern =
+    [ 0, 2, 4, 5, 7, 9, 11 ]  -- Semitones from root: C D E F G A B
+
+
+majorScaleNoteNames : List String
+majorScaleNoteNames =
+    [ "C", "D", "E", "F", "G", "A", "B" ]
+
+
+-- Derived values
 notesPerOctave : Int
 notesPerOctave =
-    7
+    List.length majorScaleNoteNames
 
 
--- Total number of notes
 noteCount : Int
 noteCount =
     octaveCount * notesPerOctave
+
+
+endingOctave : Int
+endingOctave =
+    startingOctave - octaveCount + 1
 
 
 -- Musical structure (like Chrome Song Maker)
@@ -132,67 +161,73 @@ type alias Model =
 -- All other notes calculated relative to C4's position
 
 
--- C major scale MIDI offsets from C (white keys only)
-cMajorScaleMidiOffsets : List Int
-cMajorScaleMidiOffsets =
-    [ 0, 2, 4, 5, 7, 9, 11 ] -- C D E F G A B
+-- SYSTEMATIC GRID-TO-MIDI CONVERSION
+-- Clean functions without magic numbers
+
+-- Convert grid index to musical position
+type alias MusicalPosition =
+    { octave : Int
+    , noteIndex : Int  -- 0-6 for C-B
+    }
 
 
--- C major scale note names
-cMajorScaleNames : List String
-cMajorScaleNames =
-    [ "C", "D", "E", "F", "G", "A", "B" ]
+gridIndexToMusicalPosition : Int -> MusicalPosition
+gridIndexToMusicalPosition gridIndex =
+    let
+        octaveOffset =
+            gridIndex // notesPerOctave
+
+        noteIndex =
+            modBy notesPerOctave gridIndex
+
+        octave =
+            startingOctave - octaveOffset
+    in
+    { octave = octave, noteIndex = noteIndex }
 
 
--- Starting octave (top of grid)
-startingOctave : Int
-startingOctave =
-    4
+-- Convert musical position to MIDI note
+musicalPositionToMidi : MusicalPosition -> Int
+musicalPositionToMidi position =
+    let
+        -- Octave offset from C4 reference point
+        octaveOffsetFromC4 =
+            position.octave - 4
+
+        -- Base MIDI for C in this octave
+        baseMidiForC =
+            midiC4 + (octaveOffsetFromC4 * 12)
+
+        -- Semitone offset for this note in major scale
+        semitoneOffset =
+            Maybe.withDefault 0 (List.drop position.noteIndex majorScalePattern |> List.head)
+    in
+    baseMidiForC + semitoneOffset
 
 
--- Generate MIDI note for given grid index
+-- Convert musical position to note label
+musicalPositionToLabel : MusicalPosition -> String
+musicalPositionToLabel position =
+    let
+        noteName =
+            Maybe.withDefault "?" (List.drop position.noteIndex majorScaleNoteNames |> List.head)
+    in
+    noteName ++ String.fromInt position.octave
+
+
+-- Main conversion functions (clean interface)
 getMidiNoteForIndex : Int -> Int
 getMidiNoteForIndex gridIndex =
-    let
-        -- Calculate which octave and note within octave
-        octaveOffset =
-            gridIndex // notesPerOctave
-
-        noteInOctave =
-            modBy notesPerOctave gridIndex
-
-        -- Current octave (going down from starting octave)
-        currentOctave =
-            startingOctave - octaveOffset
-
-        -- Get MIDI offset for this note in C major scale
-        midiOffset =
-            Maybe.withDefault 0 (List.drop noteInOctave cMajorScaleMidiOffsets |> List.head)
-
-        -- Calculate base MIDI note for C in this octave
-        baseMidiForOctave =
-            (currentOctave + 1) * 12
-    in
-    baseMidiForOctave + midiOffset
+    gridIndex
+        |> gridIndexToMusicalPosition
+        |> musicalPositionToMidi
 
 
--- Generate note label for grid index
 getNoteLabelForIndex : Int -> String
 getNoteLabelForIndex gridIndex =
-    let
-        octaveOffset =
-            gridIndex // notesPerOctave
-
-        noteInOctave =
-            modBy notesPerOctave gridIndex
-
-        currentOctave =
-            startingOctave - octaveOffset
-
-        noteName =
-            Maybe.withDefault "?" (List.drop noteInOctave cMajorScaleNames |> List.head)
-    in
-    noteName ++ String.fromInt currentOctave
+    gridIndex
+        |> gridIndexToMusicalPosition
+        |> musicalPositionToLabel
 
 
 -- Dynamic note list based on grid size and C4 position
