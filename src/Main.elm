@@ -59,8 +59,8 @@ demoGrid =
       [ False, False, False, False, False, False, False, False ]
     , -- E4: empty
       [ False, False, False, False, False, False, False, False ]
-    , -- D4: beats 3,4,7,8 (how I wonder what you are)
-      [ False, False, True, True, False, False, True, True ]
+    , -- D4: beats 3,4,7 (how I wonder what you)
+      [ False, False, True, True, False, False, True, False ]
     , -- C4: beat 8 (are)
       [ False, False, False, False, False, False, False, True ]
     , -- B3: empty
