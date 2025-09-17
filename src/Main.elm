@@ -435,8 +435,9 @@ update msg model =
                         timeUntilNextBeat =
                             beatDurationSeconds - (elapsedTime - (toFloat expectedBeat * beatDurationSeconds))
 
+                        -- Schedule next beat when current beat changes
                         shouldSchedule =
-                            timeUntilNextBeat <= beatDurationSeconds && expectedBeat /= currentBeat
+                            expectedBeat /= currentBeat
 
                         nextBeat =
                             modBy beatCount (expectedBeat + 1)
