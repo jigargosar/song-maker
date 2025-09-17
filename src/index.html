@@ -38,34 +38,14 @@
         }, 100); // 10Hz updates for display
 
         // Listen to Elm port commands
-        app.ports.playNote.subscribe((noteData) => {
-            const { note, duration, volume } = noteData;
-            player.queueWaveTable(audioContext, audioContext.destination,
-                piano, 0, note, duration, volume);
-        });
 
-        // Listen to sequence playback commands
-        app.ports.playSequence.subscribe((sequence) => {
-            // Cancel any currently playing sequences
-            player.cancelQueue(audioContext);
-
-            const currentTime = audioContext.currentTime;
-
-            // Schedule each note in the sequence
-            sequence.forEach((noteData) => {
-                const { note, startTime, duration, volume } = noteData;
-                const scheduledTime = currentTime + startTime;
-
+        // Listen to chord playback (multiple notes simultaneously)
+        app.ports.playChord.subscribe((notes) => {
+            notes.forEach(noteData => {
+                const { note, duration, volume } = noteData;
                 player.queueWaveTable(audioContext, audioContext.destination,
-                    piano, scheduledTime, note, duration, volume);
+                    piano, 0, note, duration, volume);
             });
-        });
-
-        // Listen to real-time note scheduling
-        app.ports.scheduleNote.subscribe((noteData) => {
-            const { note, absoluteTime, duration, volume } = noteData;
-            player.queueWaveTable(audioContext, audioContext.destination,
-                piano, absoluteTime, note, duration, volume);
         });
 
         // Wake audio context on user interaction
