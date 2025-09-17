@@ -312,10 +312,30 @@ update msg model =
         ToggleCell noteIndex beatIndex ->
             -- TODO: Guard against invalid indices (noteIndex/beatIndex out of bounds)
             let
+                wasActive =
+                    getCellState noteIndex beatIndex model.grid
+
                 newGrid =
                     toggleGridCell noteIndex beatIndex model.grid
+
+                nowActive =
+                    not wasActive
+
+                playNoteCmd =
+                    if nowActive then
+                        let
+                            midiNote =
+                                getMidiNoteForIndex noteIndex
+
+                            noteRecord =
+                                { note = midiNote, duration = defaultNoteDuration, volume = defaultNoteVolume }
+                        in
+                        Cmd.batch [ wakeAudioContext (), playChord [ noteRecord ] ]
+
+                    else
+                        Cmd.none
             in
-            ( { model | grid = newGrid }, Cmd.none )
+            ( { model | grid = newGrid }, playNoteCmd )
 
         Play ->
             case model.playState of
@@ -408,6 +428,22 @@ getActiveNotesForBeat beatIndex grid =
         )
         grid
         |> List.filterMap identity
+
+
+-- Get current cell state
+getCellState : Int -> Int -> List (List Bool) -> Bool
+getCellState noteIndex beatIndex grid =
+    case List.drop noteIndex grid |> List.head of
+        Just noteRow ->
+            case List.drop beatIndex noteRow |> List.head of
+                Just isActive ->
+                    isActive
+
+                Nothing ->
+                    False
+
+        Nothing ->
+            False
 
 
 toggleGridCell : Int -> Int -> List (List Bool) -> List (List Bool)
