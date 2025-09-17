@@ -21,10 +21,17 @@ port timeSync : (Float -> msg) -> Sub msg
 -- MODEL
 
 
+type PlayState
+    = Stopped
+    | Playing
+        { startTime : Float
+        , currentBeat : Int
+        }
+
+
 type alias Model =
     { grid : List (List Bool)  -- 8 notes × 8 beats, [note][beat]
-    , isPlaying : Bool
-    , currentBeat : Int
+    , playState : PlayState
     , currentTime : Float
     }
 
@@ -57,44 +64,67 @@ update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
         ToggleCell noteIndex beatIndex ->
+            -- TODO: Guard against invalid indices (noteIndex/beatIndex out of bounds)
             let
                 newGrid = toggleGridCell noteIndex beatIndex model.grid
             in
             ( { model | grid = newGrid }, Cmd.none )
 
         Play ->
-            let
-                activeNotes = getActiveNotesForBeat 0 model.grid
-                chordCmd =
-                    if List.isEmpty activeNotes then
-                        Cmd.none
-                    else
-                        playChord activeNotes
-            in
-            ( { model | isPlaying = True, currentBeat = 0 }, Cmd.batch [ wakeAudioContext (), chordCmd ] )
+            case model.playState of
+                Stopped ->
+                    let
+                        activeNotes = getActiveNotesForBeat 0 model.grid
+                        chordCmd =
+                            if List.isEmpty activeNotes then
+                                Cmd.none
+                            else
+                                playChord activeNotes
+                    in
+                    ( { model | playState = Playing { startTime = model.currentTime, currentBeat = 0 } }
+                    , Cmd.batch [ wakeAudioContext (), chordCmd ]
+                    )
+
+                Playing _ ->
+                    -- Already playing, ignore duplicate Play message
+                    ( model, Cmd.none )
 
         Stop ->
-            ( { model | isPlaying = False }, Cmd.none )
+            case model.playState of
+                Playing _ ->
+                    ( { model | playState = Stopped }, Cmd.none )
+
+                Stopped ->
+                    -- Already stopped, ignore duplicate Stop message
+                    ( model, Cmd.none )
 
         TimeSync currentTime ->
-            if model.isPlaying then
-                let
-                    -- Calculate beat based on time (120 BPM = 0.5 seconds per beat)
-                    beatDuration = 0.5
-                    newBeat = modBy 8 (floor (currentTime / beatDuration))
+            -- TODO: Guard against time going backwards, NaN values, system clock adjustments
+            case model.playState of
+                Stopped ->
+                    ( { model | currentTime = currentTime }, Cmd.none )
 
-                    beatChanged = newBeat /= model.currentBeat
+                Playing { startTime, currentBeat } ->
+                    let
+                        beatDuration = 0.5  -- 120 BPM = 0.5 seconds per beat
+                        elapsedTime = currentTime - startTime
+                        expectedBeat = modBy 8 (floor (elapsedTime / beatDuration))
 
-                    activeNotes = getActiveNotesForBeat newBeat model.grid
-                    chordCmd =
-                        if beatChanged && not (List.isEmpty activeNotes) then
-                            playChord activeNotes
-                        else
-                            Cmd.none
-                in
-                ( { model | currentTime = currentTime, currentBeat = newBeat }, chordCmd )
-            else
-                ( { model | currentTime = currentTime }, Cmd.none )
+                        beatChanged = expectedBeat /= currentBeat
+
+                        activeNotes = getActiveNotesForBeat expectedBeat model.grid
+                        chordCmd =
+                            if beatChanged && not (List.isEmpty activeNotes) then
+                                playChord activeNotes
+                            else
+                                Cmd.none
+                    in
+                    ( { model
+                        | currentTime = currentTime
+                        , playState = Playing { startTime = startTime, currentBeat = expectedBeat }
+                      }
+                    , chordCmd
+                    )
 
 
 -- GRID LOGIC
@@ -172,18 +202,19 @@ view model =
         , h2 [ class "text-xl font-bold text-center mb-4 text-gray-800" ] [ text "🎵 Grid Sequencer" ]
 
         , div [ class "text-center mb-4" ]
-            [ if model.isPlaying then
-                button
-                    [ class "bg-red-600 hover:brightness-110 text-white font-bold py-3 px-8 rounded-lg shadow-md transition-all"
-                    , onClick Stop
-                    ]
-                    [ text "⏹ Stop" ]
-              else
-                button
-                    [ class "bg-green-600 hover:brightness-110 text-white font-bold py-3 px-8 rounded-lg shadow-md transition-all"
-                    , onClick Play
-                    ]
-                    [ text "▶ Play" ]
+            [ case model.playState of
+                Playing _ ->
+                    button
+                        [ class "bg-red-600 hover:brightness-110 text-white font-bold py-3 px-8 rounded-lg shadow-md transition-all"
+                        , onClick Stop
+                        ]
+                        [ text "⏹ Stop" ]
+                Stopped ->
+                    button
+                        [ class "bg-green-600 hover:brightness-110 text-white font-bold py-3 px-8 rounded-lg shadow-md transition-all"
+                        , onClick Play
+                        ]
+                        [ text "▶ Play" ]
             ]
 
         , gridView model
@@ -233,7 +264,7 @@ gridView model =
 main : Program () Model Msg
 main =
     Browser.element
-        { init = \_ -> ( { grid = emptyGrid, isPlaying = False, currentBeat = 0, currentTime = 0.0 }, Cmd.none )
+        { init = \_ -> ( { grid = emptyGrid, playState = Stopped, currentTime = 0.0 }, Cmd.none )
         , update = update
         , subscriptions = \_ -> timeSync TimeSync
         , view = view
