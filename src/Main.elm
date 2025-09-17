@@ -32,7 +32,7 @@ noteCount =
 -- Musical structure (like Chrome Song Maker)
 barCount : Int
 barCount =
-    3
+    4
 
 
 beatsPerBar : Int
@@ -199,16 +199,16 @@ demoGrid =
     , emptyRow
     , emptyRow
     , emptyRow
-    , [ False, False, False, False, True, True, False, False, False, False, False, False ] -- A4: index 3, beats 5,6 (A A)
+    , [ False, False, False, False, True, True, False, False, False, False, False, False, False, False, False, False ] -- A4: index 3, beats 5,6 (A A)
     , emptyRow
-    , [ False, False, True, True, False, False, True, False, False, False, False, False ] -- G4: index 5, beats 3,4,7 (G G G)
+    , [ False, False, True, True, False, False, True, False, False, False, False, False, False, False, False, False ] -- G4: index 5, beats 3,4,7 (G G G)
     , emptyRow
-    , [ False, False, False, False, False, False, False, True, False, False, False, False ] -- F4: index 7, beat 8 (F)
-    , emptyRow
-    , emptyRow
+    , [ False, False, False, False, False, False, False, True, False, False, False, False, False, False, False, False ] -- F4: index 7, beat 8 (F)
     , emptyRow
     , emptyRow
-    , [ True, True, False, False, False, False, False, False, False, False, False, False ] -- C4: index 12, beats 1,2 (C C)
+    , emptyRow
+    , emptyRow
+    , [ True, True, False, False, False, False, False, False, False, False, False, False, False, False, False, False ] -- C4: index 12, beats 1,2 (C C)
     , emptyRow
     , emptyRow
     , emptyRow
@@ -448,7 +448,7 @@ footerView model =
             [ div []
                 [ text ("BPM: " ++ String.fromInt defaultBpm) ]
             , div []
-                [ text ("Notes: " ++ String.fromInt noteCount ++ " | Beats: " ++ String.fromInt beatCount) ]
+                [ text ("Grid: " ++ String.fromInt noteCount ++ " notes × " ++ String.fromInt beatCount ++ " beats | Bars: " ++ String.fromInt barCount ++ " | Beats/Bar: " ++ String.fromInt beatsPerBar ++ " | Splits: " ++ String.fromInt splitBeats) ]
             , div []
                 [ text "Use mouse to toggle notes" ]
             ]
