@@ -4,7 +4,7 @@
   "description": "A simple song maker app using Elm and Parcel",
   "scripts": {
     "clean": "rm -rf .parcel-cache dist elm-stuff",
-    "start": "pnpm run clean && parcel --no-cache --no-hmr src/index.html",
+    "start": "pnpm run clean && parcel --no-cache src/index.html",
     "build": "parcel build src/index.html"
   },
   "keywords": [],
