@@ -10,7 +10,7 @@ import Html.Events exposing (onClick)
 -- PORTS
 
 
-port playChord : List { note : Int, duration : Float, volume : Float } -> Cmd msg
+port playChord : { notes : List { note : Int, duration : Float, volume : Float }, when : Float } -> Cmd msg
 
 
 port wakeAudioContext : () -> Cmd msg
@@ -286,6 +286,31 @@ emptyGrid =
 
 
 
+-- V-shaped melody demo: smooth stepwise progression C3 -> C4 -> C3
+vShapeGrid : List (List Bool)
+vShapeGrid =
+    emptyGrid
+        -- Ascending: C3 to C4 (beats 1-8)
+        |> toggleGridCell 0 0   -- C3 at beat 1
+        |> toggleGridCell 1 1   -- D3 at beat 2
+        |> toggleGridCell 2 2   -- E3 at beat 3
+        |> toggleGridCell 3 3   -- F3 at beat 4
+        |> toggleGridCell 4 4   -- G3 at beat 5
+        |> toggleGridCell 5 5   -- A3 at beat 6
+        |> toggleGridCell 6 6   -- B3 at beat 7
+        |> toggleGridCell 7 7   -- C4 at beat 8
+        -- Peak: hold C4 for 2 beats (beats 8-9)
+        |> toggleGridCell 7 8   -- C4 at beat 9 (held)
+        -- Descending: C4 back to C3 (beats 10-16)
+        |> toggleGridCell 6 9   -- B3 at beat 10
+        |> toggleGridCell 5 10  -- A3 at beat 11
+        |> toggleGridCell 4 11  -- G3 at beat 12
+        |> toggleGridCell 3 12  -- F3 at beat 13
+        |> toggleGridCell 2 13  -- E3 at beat 14
+        |> toggleGridCell 1 14  -- D3 at beat 15
+        |> toggleGridCell 0 15  -- C3 at beat 16
+
+
 -- Empty demo grid - no preset melody
 
 
@@ -330,7 +355,7 @@ update msg model =
                             noteRecord =
                                 { note = midiNote, duration = defaultNoteDuration, volume = defaultNoteVolume }
                         in
-                        Cmd.batch [ wakeAudioContext (), playChord [ noteRecord ] ]
+                        Cmd.batch [ wakeAudioContext (), playChord { notes = [ noteRecord ], when = model.currentTime } ]
 
                     else
                         Cmd.none
@@ -349,7 +374,7 @@ update msg model =
                                 Cmd.none
 
                             else
-                                playChord activeNotes
+                                playChord { notes = activeNotes, when = model.currentTime }
                     in
                     ( { model | playState = Playing { startTime = model.currentTime, currentBeat = 0 } }
                     , Cmd.batch [ wakeAudioContext (), chordCmd ]
@@ -391,9 +416,25 @@ update msg model =
                         activeNotes =
                             getActiveNotesForBeat expectedBeat model.grid
 
+                        -- Lookahead scheduling: schedule next beat when we're close to it
+                        timeUntilNextBeat =
+                            beatDurationSeconds - (elapsedTime - (toFloat expectedBeat * beatDurationSeconds))
+
+                        shouldSchedule =
+                            timeUntilNextBeat <= beatDurationSeconds && expectedBeat /= currentBeat
+
+                        nextBeat =
+                            modBy beatCount (expectedBeat + 1)
+
+                        nextBeatTime =
+                            startTime + (toFloat (expectedBeat + 1) * beatDurationSeconds)
+
+                        nextBeatNotes =
+                            getActiveNotesForBeat nextBeat model.grid
+
                         chordCmd =
-                            if beatChanged && not (List.isEmpty activeNotes) then
-                                playChord activeNotes
+                            if shouldSchedule && not (List.isEmpty nextBeatNotes) then
+                                playChord { notes = nextBeatNotes, when = nextBeatTime }
 
                             else
                                 Cmd.none
@@ -619,7 +660,7 @@ gridView model =
 main : Program () Model Msg
 main =
     Browser.element
-        { init = \_ -> ( { grid = emptyGrid, playState = Stopped, currentTime = 0.0 }, Cmd.none )
+        { init = \_ -> ( { grid = vShapeGrid, playState = Stopped, currentTime = 0.0 }, Cmd.none )
         , update = update
         , subscriptions = \_ -> timeSync TimeSync
         , view = view
