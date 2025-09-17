@@ -436,14 +436,15 @@ gridView model =
     div [ class "h-full overflow-auto p-6" ]
         [ div
             [ class "grid gap-1 w-fit mx-auto"
-            , style "grid-template-columns" ("repeat(" ++ String.fromInt gridColumns ++ ", minmax(0, 1fr))")
+            , style "grid-template-columns" "48px repeat(8, 32px)"
+            , style "grid-template-rows" ("repeat(" ++ String.fromInt (noteCount + 1) ++ ", 32px)")
             ]
-            ([ div [ class "w-12 h-8" ] [] -- Empty corner cell
+            ([ div [ class "" ] [] -- Empty corner cell
              ]
                 ++ -- Beat numbers header
                    List.indexedMap
                     (\beatIndex _ ->
-                        div [ class "w-8 h-8 flex items-center justify-center text-xs font-bold text-gray-600" ]
+                        div [ class "flex items-center justify-center text-xs font-bold text-gray-600" ]
                             [ text (String.fromInt (beatIndex + 1)) ]
                     )
                     (List.repeat beatCount ())
@@ -451,7 +452,7 @@ gridView model =
                    (List.indexedMap
                         (\noteIndex noteRow ->
                             [ -- Note label
-                              div [ class "w-12 h-8 flex items-center justify-center text-xs font-bold text-gray-700 bg-gray-200 rounded" ]
+                              div [ class "flex items-center justify-center text-xs font-bold text-gray-700 bg-gray-200 rounded" ]
                                 [ text (Maybe.withDefault "?" (List.drop noteIndex noteLabels |> List.head)) ]
                             ]
                                 ++ -- Beat cells for this note
@@ -460,10 +461,10 @@ gridView model =
                                         let
                                             cellClass =
                                                 if isActive then
-                                                    "w-8 h-8 bg-blue-600 hover:bg-blue-700 rounded cursor-pointer"
+                                                    "bg-blue-600 hover:bg-blue-700 rounded cursor-pointer"
 
                                                 else
-                                                    "w-8 h-8 bg-gray-300 hover:bg-gray-400 rounded cursor-pointer"
+                                                    "bg-gray-300 hover:bg-gray-400 rounded cursor-pointer"
                                         in
                                         div
                                             [ class cellClass
