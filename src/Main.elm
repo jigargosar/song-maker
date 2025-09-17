@@ -29,9 +29,26 @@ noteCount =
     24
 
 
+-- Musical structure (like Chrome Song Maker)
+barCount : Int
+barCount =
+    3
+
+
+beatsPerBar : Int
+beatsPerBar =
+    2
+
+
+splitBeats : Int
+splitBeats =
+    2
+
+
+-- Derived values
 beatCount : Int
 beatCount =
-    8
+    barCount * beatsPerBar * splitBeats
 
 
 
@@ -59,7 +76,12 @@ defaultNoteVolume =
 
 beatDurationSeconds : Float
 beatDurationSeconds =
-    60.0 / toFloat defaultBpm / 2.0
+    60.0 / toFloat defaultBpm
+
+
+subdivisionDurationSeconds : Float
+subdivisionDurationSeconds =
+    beatDurationSeconds / toFloat splitBeats
 
 
 
@@ -180,12 +202,12 @@ demoGrid =
     , emptyRow
     , emptyRow
     , emptyRow
-    , emptyRow -- B5 to G4 (indices 0-8)
-    , [ True, True, False, False, True, True, False, False ] -- G4: index 9, beats 1,2,5,6 (Twinkle twinkle, little star)
-    , emptyRow -- F4: index 10
-    , emptyRow -- E4: index 11
-    , [ False, False, True, True, False, False, True, False ] -- D4: index 12, beats 3,4,7 (how I wonder what you)
-    , [ False, False, False, False, False, False, False, True ] -- C4: index 13, beat 8 (are)
+    , [ False, False, False, False, True, True, False, False, False, False, False, False ] -- A4: index 8, beats 5,6 (A A)
+    , [ False, False, True, True, False, False, True, False, False, False, False, False ] -- G4: index 9, beats 3,4,7 (G G G)
+    , [ False, False, False, False, False, False, False, True, False, False, False, False ] -- F4: index 10, beat 8 (F)
+    , [ False, False, False, False, False, False, False, False, False, False, False, False ] -- E4: index 11 (empty for now)
+    , [ False, False, False, False, False, False, False, False, False, False, False, False ] -- D4: index 12 (empty for now)
+    , [ True, True, False, False, False, False, False, False, False, False, False, False ] -- C4: index 13, beats 1,2 (C C)
     , emptyRow
     , emptyRow
     , emptyRow
@@ -436,7 +458,7 @@ gridView model =
     div [ class "h-full overflow-auto p-6" ]
         [ div
             [ class "grid gap-1 w-fit mx-auto"
-            , style "grid-template-columns" "48px repeat(8, 32px)"
+            , style "grid-template-columns" ("48px repeat(" ++ String.fromInt beatCount ++ ", 32px)")
             , style "grid-template-rows" ("repeat(" ++ String.fromInt (noteCount + 1) ++ ", 32px)")
             ]
             ([ div [ class "" ] [] -- Empty corner cell
