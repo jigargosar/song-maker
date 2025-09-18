@@ -591,7 +591,7 @@ init : () -> ( Model, Cmd Msg )
 init _ =
     let
         selectedPattern =
-            Patterns.twinkleTwinkleChordsV2Config
+            Patterns.twinkleTwinkleChordsV3Config
     in
     ( { grid = selectedPattern.grid
       , playState = Stopped

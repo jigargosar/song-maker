@@ -1,8 +1,9 @@
 module Patterns exposing
     ( PatternConfig
     , twinkleTwinkleChordsConfig
-    , twinkleTwinkleConfig
     , twinkleTwinkleChordsV2Config
+    , twinkleTwinkleChordsV3Config
+    , twinkleTwinkleConfig
     , vShapeConfig
     )
 
@@ -124,21 +125,41 @@ notesToGrid o =
                 Nothing ->
                     Nothing
 
-        setNoteAtStep : String -> Int -> List (List Bool) -> List (List Bool)
-        setNoteAtStep noteName stepIndex grid =
-            case noteToGridIndex noteName of
-                Just noteIndex ->
-                    toggleGridCell noteIndex stepIndex grid
+        setNoteAtStep : Int -> Int -> List (List Bool) -> List (List Bool)
+        setNoteAtStep noteIndex stepIndex grid =
+            List.indexedMap
+                (\nIdx noteRow ->
+                    if nIdx == noteIndex then
+                        List.indexedMap
+                            (\sIdx isActive ->
+                                if sIdx == stepIndex then
+                                    True
 
-                Nothing ->
-                    grid
+                                else
+                                    isActive
+                            )
+                            noteRow
 
-        processStep : Int -> List String -> List (List Bool) -> List (List Bool)
-        processStep stepIndex noteNames grid =
-            List.foldl (\noteName currentGrid -> setNoteAtStep noteName stepIndex currentGrid) grid noteNames
+                    else
+                        noteRow
+                )
+                grid
+
+        processStep : ( Int, List String ) -> List (List Bool) -> List (List Bool)
+        processStep ( stepIndex, noteNames ) grid =
+            List.foldl
+                (\noteName currentGrid ->
+                    case noteToGridIndex noteName of
+                        Just noteIndex ->
+                            setNoteAtStep noteIndex stepIndex currentGrid
+
+                        Nothing ->
+                            currentGrid
+                )
+                grid
+                noteNames
     in
-    List.indexedMap processStep o.stepsWithNotes
-        |> List.foldl (\stepProcessor currentGrid -> stepProcessor currentGrid) emptyGridLocal
+    List.foldl processStep emptyGridLocal (List.indexedMap Tuple.pair o.stepsWithNotes)
 
 
 
@@ -242,8 +263,61 @@ twinkleTwinklePattern =
 
 
 -- Twinkle Twinkle Little Star with chords (chords only on key steps, 64 steps)
-
 -- Twinkle Twinkle V2: cleaner chord arrangement with brighter harmony
+-- Twinkle Twinkle V3: chords always above C4, no low-pitch chords
+
+
+twinkleTwinkleV3Pattern : List (List String)
+twinkleTwinkleV3Pattern =
+    [ [ "C4", "E4", "G4", "C5" ] -- Twin-kle
+    , [ "C4" ] -- twin-kle
+    , [ "G4", "B4", "D5", "G5" ] -- lit-tle
+    , [ "G4" ] -- star
+    , [ "A4", "C5", "E5", "A5" ] -- How
+    , [ "A4" ] -- I
+    , [ "G4", "B4", "D5", "G5" ] -- won-der
+    , [] -- what
+    , [ "F4", "A4", "C5", "F5" ] -- you
+    , [ "F4" ] -- are
+    , [ "E4", "G4", "C5", "E5" ] --
+    , [ "E4" ] --
+    , [ "D4", "G4", "B4", "D5" ] --
+    , [ "D4" ] --
+    , [ "C4", "E4", "G4", "C5" ] --
+    , [] --
+    , [ "G4", "B4", "D5", "G5" ] -- Up
+    , [ "G4" ] -- a-
+    , [ "F4", "A4", "C5", "F5" ] -- bove
+    , [ "F4" ] -- the
+    , [ "E4", "G4", "C5", "E5" ] -- world
+    , [ "E4" ] -- so
+    , [ "D4", "G4", "B4", "D5" ] -- high
+    , [] --
+    , [ "G4", "B4", "D5", "G5" ] -- Like
+    , [ "G4" ] -- a
+    , [ "F4", "A4", "C5", "F5" ] -- dia-
+    , [ "F4" ] -- mond
+    , [ "E4", "G4", "C5", "E5" ] -- in
+    , [ "E4" ] -- the
+    , [ "D4", "G4", "B4", "D5" ] -- sky
+    , [] --
+    , [ "C4", "E4", "G4", "C5" ] -- Twin-kle
+    , [ "C4" ] -- twin-kle
+    , [ "G4", "B4", "D5", "G5" ] -- lit-tle
+    , [ "G4" ] -- star
+    , [ "A4", "C5", "E5", "A5" ] -- How
+    , [ "A4" ] -- I
+    , [ "G4", "B4", "D5", "G5" ] -- won-der
+    , [] -- what
+    , [ "F4", "A4", "C5", "F5" ] -- you
+    , [ "F4" ] -- are
+    , [ "E4", "G4", "C5", "E5" ] --
+    , [ "E4" ] --
+    , [ "D4", "G4", "B4", "D5" ] --
+    , [ "D4" ] --
+    , [ "C4", "E4", "G4", "C5" ] --
+    , [] --
+    ]
 
 
 twinkleTwinkleV2Pattern : List (List String)
@@ -402,6 +476,35 @@ twinkleTwinkleChordsPattern =
 
 
 -- PATTERN CONFIGURATIONS
+
+
+twinkleTwinkleChordsV3Config : PatternConfig
+twinkleTwinkleChordsV3Config =
+    let
+        octaveStart =
+            3
+
+        octaveCount =
+            4
+
+        stepCount =
+            List.length twinkleTwinkleV3Pattern
+    in
+    { grid =
+        notesToGrid
+            { stepsWithNotes = twinkleTwinkleV3Pattern
+            , octaveStart = octaveStart
+            , octaveCount = octaveCount
+            , stepCount = stepCount
+            }
+    , bpm = 120
+    , barCount = 20
+    , beatsPerBar = 2
+    , splitBeats = 2
+    , name = "Twinkle V3 (No Low Chords)"
+    , octaveStart = octaveStart
+    , octaveCount = octaveCount
+    }
 
 
 vShapeConfig : PatternConfig
