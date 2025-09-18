@@ -26,19 +26,6 @@ port timeSync : (Float -> msg) -> Sub msg
 -- MUSICAL CONFIGURATION
 -- All music-related constants in one place
 -- Grid octave configuration
-
-
-octaveCount : Int
-octaveCount =
-    3
-
-
-startingOctave : Int
-startingOctave =
-    3
-
-
-
 -- MIDI reference point (standard)
 
 
@@ -72,31 +59,6 @@ majorScaleNoteNames =
 notesPerOctave : Int
 notesPerOctave =
     List.length majorScaleNoteNames
-
-
-noteCount : Int
-noteCount =
-    octaveCount * notesPerOctave
-
-
-splitBeats : Int
-splitBeats =
-    2
-
-
-bpm : Int
-bpm =
-    120
-
-
-noteDuration : Float
-noteDuration =
-    (60.0 / toFloat bpm) / toFloat splitBeats
-
-
-noteVolume : Float
-noteVolume =
-    0.8
 
 
 
