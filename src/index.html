@@ -35,7 +35,7 @@
         // Start time sync to Elm for display (lower frequency for smoother display)
         setInterval(() => {
             app.ports.timeSync.send(audioContext.currentTime);
-        }, 100); // 10Hz updates for display
+        }, 10); // 10Hz updates for display
 
         // Listen to Elm port commands
 

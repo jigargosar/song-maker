@@ -117,7 +117,7 @@ beatCount =
 
 defaultBpm : Int
 defaultBpm =
-    120
+    240
 
 
 defaultNoteDuration : Float
@@ -576,7 +576,7 @@ headerView model =
     header [ class "bg-white shadow-sm border-b border-gray-200 px-6 py-4" ]
         [ div [ class "flex items-center justify-between" ]
             [ h1 [ class "text-2xl font-bold text-gray-800" ]
-                [ text "Song Maker - Build 4" ]
+                [ text "Song Maker - Build 5" ]
             , div [ class "flex items-center gap-3" ]
                 [ case model.playState of
                     Playing _ ->
