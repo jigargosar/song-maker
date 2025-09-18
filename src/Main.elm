@@ -438,12 +438,18 @@ update msg model =
                         nextBeat =
                             modBy beatCount (expectedBeat + 1)
 
-                        -- Calculate absolute time for next beat
-                        loopNumber =
+                        -- Calculate which loop the next beat will be in
+                        currentLoopNumber =
                             floor (elapsedTime / (toFloat beatCount * beatDurationSeconds))
 
+                        nextBeatLoopNumber =
+                            if nextBeat == 0 then
+                                currentLoopNumber + 1  -- Next beat wraps to new loop
+                            else
+                                currentLoopNumber       -- Next beat is in same loop
+
                         nextBeatAbsoluteTime =
-                            startTime + (toFloat loopNumber * toFloat beatCount * beatDurationSeconds) + (toFloat nextBeat * beatDurationSeconds)
+                            startTime + (toFloat nextBeatLoopNumber * toFloat beatCount * beatDurationSeconds) + (toFloat nextBeat * beatDurationSeconds)
 
                         nextBeatNotes =
                             getActiveNotesForBeat nextBeat model.grid
