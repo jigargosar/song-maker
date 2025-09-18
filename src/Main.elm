@@ -272,29 +272,46 @@ emptyGrid =
     List.repeat noteCount (List.repeat stepCount False)
 
 
+notesToGrid : List (List String) -> List (List Bool)
+notesToGrid stepsWithNotes =
+    let
+        setNoteAtStep : String -> Int -> List (List Bool) -> List (List Bool)
+        setNoteAtStep noteName stepIndex grid =
+            case findNoteIndex noteName of
+                Just noteIndex ->
+                    toggleGridCell noteIndex stepIndex grid
+                Nothing ->
+                    grid
+
+        findNoteIndex : String -> Maybe Int
+        findNoteIndex noteName =
+            List.indexedMap (\index label -> (index, label)) noteLabels
+                |> List.filter (\(_, label) -> label == noteName)
+                |> List.head
+                |> Maybe.map Tuple.first
+
+        processStep : Int -> List String -> List (List Bool) -> List (List Bool)
+        processStep stepIndex noteNames grid =
+            List.foldl (\noteName currentGrid -> setNoteAtStep noteName stepIndex currentGrid) grid noteNames
+    in
+    List.indexedMap processStep stepsWithNotes
+        |> List.foldl (\stepProcessor currentGrid -> stepProcessor currentGrid) emptyGrid
+
+
 
 -- V-shaped melody demo: smooth stepwise progression C3 -> C4 -> C3
 
 
+vShapePattern : List (List String)
+vShapePattern =
+    [ ["C3"], ["D3"], ["E3"], ["F3"], ["G3"], ["A3"], ["B3"], ["C4"]  -- Ascending
+    , ["C4"], ["B3"], ["A3"], ["G3"], ["F3"], ["E3"], ["D3"], ["C3"]  -- Descending
+    ]
+
+
 vShapeGrid : List (List Bool)
 vShapeGrid =
-    emptyGrid
-        |> toggleGridCell 0 0
-        |> toggleGridCell 1 1
-        |> toggleGridCell 2 2
-        |> toggleGridCell 3 3
-        |> toggleGridCell 4 4
-        |> toggleGridCell 5 5
-        |> toggleGridCell 6 6
-        |> toggleGridCell 7 7
-        |> toggleGridCell 7 8
-        |> toggleGridCell 6 9
-        |> toggleGridCell 5 10
-        |> toggleGridCell 4 11
-        |> toggleGridCell 3 12
-        |> toggleGridCell 2 13
-        |> toggleGridCell 1 14
-        |> toggleGridCell 0 15
+    notesToGrid vShapePattern
 -- Empty demo grid - no preset melody
 
 
