@@ -266,8 +266,14 @@ emptyGrid =
     List.repeat noteCount (List.repeat stepCount False)
 
 
-notesToGridIndependent : { stepsWithNotes : List (List String), octaveStart : Int, octaveCount : Int, stepCount : Int } -> List (List Bool)
-notesToGridIndependent o =
+notesToGridV2 :
+    { stepsWithNotes : List (List String)
+    , octaveStart : Int
+    , octaveCount : Int
+    , stepCount : Int
+    }
+    -> List (List Bool)
+notesToGridV2 o =
     let
         noteCount_ =
             o.octaveCount * 7
@@ -355,8 +361,8 @@ notesToGridIndependent o =
         |> List.foldl (\stepProcessor currentGrid -> stepProcessor currentGrid) emptyGridLocal
 
 
-notesToGrid : List (List String) -> List (List Bool)
-notesToGrid stepsWithNotes =
+notesToGridV1 : List (List String) -> List (List Bool)
+notesToGridV1 stepsWithNotes =
     let
         setNoteAtStep : String -> Int -> List (List Bool) -> List (List Bool)
         setNoteAtStep noteName stepIndex grid =
@@ -409,7 +415,12 @@ vShapePattern =
 
 vShapeGrid : List (List Bool)
 vShapeGrid =
-    notesToGrid vShapePattern
+    notesToGridV2
+        { stepsWithNotes = vShapePattern
+        , octaveStart = startingOctave
+        , octaveCount = octaveCount
+        , stepCount = stepCount
+        }
 
 
 
