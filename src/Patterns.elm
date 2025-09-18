@@ -2,6 +2,7 @@ module Patterns exposing
     ( PatternConfig
     , twinkleTwinkleChordsConfig
     , twinkleTwinkleConfig
+    , twinkleTwinkleChordsV2Config
     , vShapeConfig
     )
 
@@ -242,6 +243,93 @@ twinkleTwinklePattern =
 
 -- Twinkle Twinkle Little Star with chords (chords only on key steps, 64 steps)
 
+-- Twinkle Twinkle V2: cleaner chord arrangement with brighter harmony
+
+
+twinkleTwinkleV2Pattern : List (List String)
+twinkleTwinkleV2Pattern =
+    [ [ "C4", "C5", "E5", "G5" ] -- Twin-kle
+    , [ "C4" ] -- twin-kle
+    , [ "G4", "G5", "B5", "D6" ] -- lit-tle
+    , [ "G4" ] -- star
+    , [ "A4", "A5", "C6", "E6" ] -- How
+    , [ "A4" ] -- I
+    , [ "G4", "G5", "B5", "D6" ] -- won-der
+    , [] -- what
+    , [ "F4", "F5", "A5", "C6" ] -- you
+    , [ "F4" ] -- are
+    , [ "E4", "C5", "E5", "G5" ] --
+    , [ "E4" ] --
+    , [ "D4", "G5", "B5", "D6" ] --
+    , [ "D4" ] --
+    , [ "C4", "C5", "E5", "G5" ] --
+    , [] --
+    , [ "G4", "G5", "B5", "D6" ] -- Up
+    , [ "G4" ] -- a-
+    , [ "F4", "F5", "A5", "C6" ] -- bove
+    , [ "F4" ] -- the
+    , [ "E4", "C5", "E5", "G5" ] -- world
+    , [ "E4" ] -- so
+    , [ "D4", "G5", "B5", "D6" ] -- high
+    , [] --
+    , [ "G4", "G5", "B5", "D6" ] -- Like
+    , [ "G4" ] -- a
+    , [ "F4", "F5", "A5", "C6" ] -- dia-
+    , [ "F4" ] -- mond
+    , [ "E4", "C5", "E5", "G5" ] -- in
+    , [ "E4" ] -- the
+    , [ "D4", "G5", "B5", "D6" ] -- sky
+    , [] --
+    , [ "C4", "C5", "E5", "G5" ] -- Twin-kle
+    , [ "C4" ] -- twin-kle
+    , [ "G4", "G5", "B5", "D6" ] -- lit-tle
+    , [ "G4" ] -- star
+    , [ "A4", "A5", "C6", "E6" ] -- How
+    , [ "A4" ] -- I
+    , [ "G4", "G5", "B5", "D6" ] -- won-der
+    , [] -- what
+    , [ "F4", "F5", "A5", "C6" ] -- you
+    , [ "F4" ] -- are
+    , [ "E4", "C5", "E5", "G5" ] --
+    , [ "E4" ] --
+    , [ "D4", "G5", "B5", "D6" ] --
+    , [ "D4" ] --
+    , [ "C4", "C5", "E5", "G5" ] --
+    , [] --
+    , [ "G4", "G5", "B5", "D6" ] -- When
+    , [ "G4" ] -- the
+    , [ "F4", "F5", "A5", "C6" ] -- bla-
+    , [ "F4" ] -- zing
+    , [ "E4", "C5", "E5", "G5" ] -- sun
+    , [ "E4" ] -- is
+    , [ "D4", "G5", "B5", "D6" ] -- gone
+    , [] --
+    , [ "G4", "G5", "B5", "D6" ] -- When
+    , [ "G4" ] -- he
+    , [ "F4", "F5", "A5", "C6" ] -- no-
+    , [ "F4" ] -- thing
+    , [ "E4", "C5", "E5", "G5" ] -- shines
+    , [ "E4" ] -- up-
+    , [ "D4", "G5", "B5", "D6" ] -- on
+    , [] --
+    , [ "C4", "C5", "E5", "G5" ] -- Then
+    , [ "C4" ] -- you
+    , [ "G4", "G5", "B5", "D6" ] -- show
+    , [ "G4" ] -- your
+    , [ "A4", "A5", "C6", "E6" ] -- lit-
+    , [ "A4" ] -- tle
+    , [ "G4", "G5", "B5", "D6" ] -- light
+    , [] --
+    , [ "F4", "F5", "A5", "C6" ] -- Twin-
+    , [ "F4" ] -- kle
+    , [ "E4", "C5", "E5", "G5" ] -- twin-
+    , [ "E4" ] -- kle
+    , [ "D4", "G5", "B5", "D6" ] -- all
+    , [ "D4" ] -- the
+    , [ "C4", "C5", "E5", "G5" ] -- night
+    , [] --
+    ]
+
 
 twinkleTwinkleChordsPattern : List (List String)
 twinkleTwinkleChordsPattern =
@@ -398,6 +486,35 @@ twinkleTwinkleChordsConfig =
     , beatsPerBar = 2
     , splitBeats = 2
     , name = "Twinkle Twinkle Chords"
+    , octaveStart = octaveStart
+    , octaveCount = octaveCount
+    }
+
+
+twinkleTwinkleChordsV2Config : PatternConfig
+twinkleTwinkleChordsV2Config =
+    let
+        octaveStart =
+            3
+
+        octaveCount =
+            4
+
+        stepCount =
+            List.length twinkleTwinkleV2Pattern
+    in
+    { grid =
+        notesToGrid
+            { stepsWithNotes = twinkleTwinkleV2Pattern
+            , octaveStart = octaveStart
+            , octaveCount = octaveCount
+            , stepCount = stepCount
+            }
+    , bpm = 120
+    , barCount = 20
+    , beatsPerBar = 2
+    , splitBeats = 2
+    , name = "Twinkle V2 (Bright Chords)"
     , octaveStart = octaveStart
     , octaveCount = octaveCount
     }
