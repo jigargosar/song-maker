@@ -1,7 +1,7 @@
 port module Main exposing (main)
 
 import Browser
-import Html exposing (Html, button, div, footer, h1, h2, header, text)
+import Html exposing (Html, button, div, footer, h1, header, text)
 import Html.Attributes exposing (class, style)
 import Html.Events exposing (onClick)
 
@@ -78,15 +78,6 @@ noteCount =
     octaveCount * notesPerOctave
 
 
-endingOctave : Int
-endingOctave =
-    startingOctave - octaveCount + 1
-
-
-
--- Musical structure (like Chrome Song Maker)
-
-
 barCount : Int
 barCount =
     16
@@ -128,11 +119,6 @@ noteDuration =
 noteVolume : Float
 noteVolume =
     0.8
-
-
-gridColumns : Int
-gridColumns =
-    stepCount + 1
 
 
 
@@ -291,7 +277,7 @@ notesToGridV2 o =
                 [] ->
                     Nothing
 
-                [ noteLetter ] ->
+                [ _ ] ->
                     Nothing
 
                 noteLetter :: octaveChars ->
@@ -598,15 +584,6 @@ twinkleTwinkleChordsGrid =
 
 
 
--- Empty demo grid - no preset melody
-
-
-demoGrid : List (List Bool)
-demoGrid =
-    emptyGrid
-
-
-
 -- UPDATE
 
 
@@ -844,7 +821,7 @@ headerView model =
     header [ class "bg-white shadow-sm border-b border-gray-200 px-6 py-4" ]
         [ div [ class "flex items-center justify-between" ]
             [ h1 [ class "text-2xl font-bold text-gray-800" ]
-                [ text "Song Maker - Build 5" ]
+                [ text "Song Maker - Build 6" ]
             , div [ class "flex items-center gap-3" ]
                 [ case model.playState of
                     Playing _ ->
@@ -873,7 +850,7 @@ headerView model =
 
 
 footerView : Model -> Html Msg
-footerView model =
+footerView _ =
     footer [ class "bg-white border-t border-gray-200 px-6 py-3" ]
         [ div [ class "flex items-center justify-between text-sm text-gray-600" ]
             [ div []
@@ -940,7 +917,11 @@ gridView model =
 
 init : () -> ( Model, Cmd Msg )
 init _ =
-    ( { grid = twinkleTwinkleChordsGrid
+    ( { grid =
+            notesToGridV1
+                |> always vShapeGrid
+                |> always twinkleTwinkleGrid
+                |> always twinkleTwinkleChordsGrid
       , playState = Stopped
       , currentTime = 0.0
       , bpm = 120
