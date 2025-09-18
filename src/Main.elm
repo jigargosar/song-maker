@@ -486,6 +486,79 @@ twinkleTwinklePattern =
     ]
 
 
+
+-- Twinkle Twinkle Little Star with chords (chords only on key steps, 64 steps)
+
+
+twinkleTwinkleChordsPattern : List (List String)
+twinkleTwinkleChordsPattern =
+    [ [ "C4", "E4", "G4" ] -- chord
+    , [ "C4" ]
+    , [ "G4", "B4", "D5" ] -- chord
+    , [ "G4" ]
+    , [ "A4", "C5", "E5" ] -- chord
+    , [ "A4" ]
+    , [ "G4" ]
+    , []
+    , [ "F4", "A4", "C5" ] -- chord
+    , [ "F4" ]
+    , [ "E4", "G4", "C5" ] -- chord
+    , [ "E4" ]
+    , [ "D4", "F4", "A4" ] -- chord
+    , [ "D4" ]
+    , [ "C4" ]
+    , []
+    , [ "G4", "B4", "D5" ] -- chord
+    , [ "G4" ]
+    , [ "F4", "A4", "C5" ] -- chord
+    , [ "F4" ]
+    , [ "E4", "G4", "C5" ] -- chord
+    , [ "E4" ]
+    , [ "D4" ]
+    , []
+    , [ "G4", "B4", "D5" ] -- chord
+    , [ "G4" ]
+    , [ "F4", "A4", "C5" ] -- chord
+    , [ "F4" ]
+    , [ "E4", "G4", "C5" ] -- chord
+    , [ "E4" ]
+    , [ "D4" ]
+    , []
+    , [ "C4", "E4", "G4" ] -- chord
+    , [ "C4" ]
+    , [ "G4", "B4", "D5" ] -- chord
+    , [ "G4" ]
+    , [ "A4", "C5", "E5" ] -- chord
+    , [ "A4" ]
+    , [ "G4" ]
+    , []
+    , [ "F4", "A4", "C5" ] -- chord
+    , [ "F4" ]
+    , [ "E4", "G4", "C5" ] -- chord
+    , [ "E4" ]
+    , [ "D4", "F4", "A4" ] -- chord
+    , [ "D4" ]
+    , [ "C4" ]
+    , []
+    , [ "G4", "B4", "D5" ] -- chord
+    , [ "G4" ]
+    , [ "F4", "A4", "C5" ] -- chord
+    , [ "F4" ]
+    , [ "E4", "G4", "C5" ] -- chord
+    , [ "E4" ]
+    , [ "D4" ]
+    , []
+    , [ "G4", "B4", "D5" ] -- chord
+    , [ "G4" ]
+    , [ "F4", "A4", "C5" ] -- chord
+    , [ "F4" ]
+    , [ "E4", "G4", "C5" ] -- chord
+    , [ "E4" ]
+    , [ "D4" ]
+    , []
+    ]
+
+
 vShapeGrid : List (List Bool)
 vShapeGrid =
     notesToGridV2
@@ -500,6 +573,20 @@ twinkleTwinkleGrid : List (List Bool)
 twinkleTwinkleGrid =
     notesToGridV2
         { stepsWithNotes = twinkleTwinklePattern
+        , octaveStart = startingOctave
+        , octaveCount = octaveCount
+        , stepCount = stepCount
+        }
+
+
+
+-- Twinkle Twinkle with chords grid
+
+
+twinkleTwinkleChordsGrid : List (List Bool)
+twinkleTwinkleChordsGrid =
+    notesToGridV2
+        { stepsWithNotes = twinkleTwinkleChordsPattern
         , octaveStart = startingOctave
         , octaveCount = octaveCount
         , stepCount = stepCount
@@ -850,7 +937,7 @@ gridView model =
 main : Program () Model Msg
 main =
     Browser.element
-        { init = \_ -> ( { grid = twinkleTwinkleGrid, playState = Stopped, currentTime = 0.0 }, Cmd.none )
+        { init = \_ -> ( { grid = twinkleTwinkleChordsGrid, playState = Stopped, currentTime = 0.0 }, Cmd.none )
         , update = update
         , subscriptions = \_ -> timeSync TimeSync
         , view = view
