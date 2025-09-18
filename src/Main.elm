@@ -106,8 +106,8 @@ splitBeats =
 -- Derived values
 
 
-beatCount : Int
-beatCount =
+stepCount : Int
+stepCount =
     barCount * beatsPerBar * splitBeats
 
 
@@ -141,7 +141,7 @@ noteVolume =
 
 gridColumns : Int
 gridColumns =
-    beatCount + 1
+    stepCount + 1
 
 
 
@@ -153,12 +153,12 @@ type PlayState
     = Stopped
     | Playing
         { startTime : Float
-        , nextBeatToSchedule : Int
+        , nextStepToSchedule : Int
         }
 
 
 type alias Model =
-    { grid : List (List Bool) -- noteCount × beatCount, [note][beat]
+    { grid : List (List Bool) -- noteCount × stepCount, [note][beat]
     , playState : PlayState
     , currentTime : Float
     }
@@ -273,7 +273,7 @@ noteLabels =
 
 emptyGrid : List (List Bool)
 emptyGrid =
-    List.repeat noteCount (List.repeat beatCount False)
+    List.repeat noteCount (List.repeat stepCount False)
 
 
 
@@ -334,7 +334,7 @@ demoGrid =
 
 
 type Msg
-    = ToggleCell Int Int -- noteIndex, beatIndex
+    = ToggleCell Int Int -- noteIndex, stepIndex
     | Play
     | Stop
     | ClearGrid
@@ -344,14 +344,14 @@ type Msg
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
-        ToggleCell noteIndex beatIndex ->
-            -- TODO: Guard against invalid indices (noteIndex/beatIndex out of bounds)
+        ToggleCell noteIndex stepIndex ->
+            -- TODO: Guard against invalid indices (noteIndex/stepIndex out of bounds)
             let
                 wasActive =
-                    getCellState noteIndex beatIndex model.grid
+                    getCellState noteIndex stepIndex model.grid
 
                 newGrid =
-                    toggleGridCell noteIndex beatIndex model.grid
+                    toggleGridCell noteIndex stepIndex model.grid
 
                 nowActive =
                     not wasActive
@@ -375,7 +375,7 @@ update msg model =
         Play ->
             case model.playState of
                 Stopped ->
-                    ( { model | playState = Playing { startTime = model.currentTime, nextBeatToSchedule = 0 } }
+                    ( { model | playState = Playing { startTime = model.currentTime, nextStepToSchedule = 0 } }
                     , wakeAudioContext ()
                     )
 
@@ -401,31 +401,31 @@ update msg model =
                 Stopped ->
                     ( { model | currentTime = currentTime }, Cmd.none )
 
-                Playing { startTime, nextBeatToSchedule } ->
+                Playing { startTime, nextStepToSchedule } ->
                     let
                         elapsedTime =
                             currentTime - startTime
 
-                        absoluteBeat =
+                        absoluteStep =
                             floor (elapsedTime / noteDuration)
 
                         shouldSchedule =
-                            absoluteBeat >= nextBeatToSchedule
+                            absoluteStep >= nextStepToSchedule
 
-                        beatTime =
-                            startTime + toFloat nextBeatToSchedule * noteDuration
+                        stepTime =
+                            startTime + toFloat nextStepToSchedule * noteDuration
 
-                        gridBeat =
-                            modBy beatCount nextBeatToSchedule
+                        gridStep =
+                            modBy stepCount nextStepToSchedule
 
                         chordCmd =
                             if shouldSchedule then
                                 let
-                                    beatNotes =
-                                        getActiveNotesForBeat gridBeat model.grid
+                                    stepNotes =
+                                        getActiveNotesForStep gridStep model.grid
                                 in
-                                if not (List.isEmpty beatNotes) then
-                                    playChord { notes = beatNotes, when = beatTime }
+                                if not (List.isEmpty stepNotes) then
+                                    playChord { notes = stepNotes, when = stepTime }
 
                                 else
                                     Cmd.none
@@ -438,12 +438,12 @@ update msg model =
                         , playState =
                             Playing
                                 { startTime = startTime
-                                , nextBeatToSchedule =
+                                , nextStepToSchedule =
                                     if shouldSchedule then
-                                        nextBeatToSchedule + 1
+                                        nextStepToSchedule + 1
 
                                     else
-                                        nextBeatToSchedule
+                                        nextStepToSchedule
                                 }
                       }
                     , chordCmd
@@ -454,11 +454,11 @@ update msg model =
 -- GRID LOGIC
 
 
-getActiveNotesForBeat : Int -> List (List Bool) -> List { note : Int, duration : Float, volume : Float }
-getActiveNotesForBeat beatIndex grid =
+getActiveNotesForStep : Int -> List (List Bool) -> List { note : Int, duration : Float, volume : Float }
+getActiveNotesForStep stepIndex grid =
     List.indexedMap
         (\noteIndex noteRow ->
-            case List.drop beatIndex noteRow |> List.head of
+            case List.drop stepIndex noteRow |> List.head of
                 Just True ->
                     case List.drop noteIndex noteList |> List.head of
                         Just midiNote ->
@@ -479,10 +479,10 @@ getActiveNotesForBeat beatIndex grid =
 
 
 getCellState : Int -> Int -> List (List Bool) -> Bool
-getCellState noteIndex beatIndex grid =
+getCellState noteIndex stepIndex grid =
     case List.drop noteIndex grid |> List.head of
         Just noteRow ->
-            case List.drop beatIndex noteRow |> List.head of
+            case List.drop stepIndex noteRow |> List.head of
                 Just isActive ->
                     isActive
 
@@ -494,13 +494,13 @@ getCellState noteIndex beatIndex grid =
 
 
 toggleGridCell : Int -> Int -> List (List Bool) -> List (List Bool)
-toggleGridCell noteIndex beatIndex grid =
+toggleGridCell noteIndex stepIndex grid =
     List.indexedMap
         (\nIdx noteRow ->
             if nIdx == noteIndex then
                 List.indexedMap
                     (\bIdx isActive ->
-                        if bIdx == beatIndex then
+                        if bIdx == stepIndex then
                             not isActive
 
                         else
@@ -602,7 +602,7 @@ footerView model =
             [ div []
                 [ text ("BPM: " ++ String.fromInt bpm) ]
             , div []
-                [ text ("Grid: " ++ String.fromInt noteCount ++ " notes × " ++ String.fromInt beatCount ++ " beats | Bars: " ++ String.fromInt barCount ++ " | Beats/Bar: " ++ String.fromInt beatsPerBar ++ " | Splits: " ++ String.fromInt splitBeats) ]
+                [ text ("Grid: " ++ String.fromInt noteCount ++ " notes × " ++ String.fromInt stepCount ++ " beats | Bars: " ++ String.fromInt barCount ++ " | Beats/Bar: " ++ String.fromInt beatsPerBar ++ " | Splits: " ++ String.fromInt splitBeats) ]
             , div []
                 [ text "Use mouse to toggle notes" ]
             ]
@@ -614,18 +614,18 @@ gridView model =
     div [ class "h-full overflow-auto p-6" ]
         [ div
             [ class "grid gap-1 w-fit mx-auto"
-            , style "grid-template-columns" ("48px repeat(" ++ String.fromInt beatCount ++ ", 32px)")
+            , style "grid-template-columns" ("48px repeat(" ++ String.fromInt stepCount ++ ", 32px)")
             , style "grid-template-rows" ("repeat(" ++ String.fromInt (noteCount + 1) ++ ", 32px)")
             ]
             ([ div [ class "" ] [] -- Empty corner cell
              ]
                 ++ -- Beat numbers header
                    List.indexedMap
-                    (\beatIndex _ ->
+                    (\stepIndex _ ->
                         div [ class "flex items-center justify-center text-xs font-bold text-gray-600" ]
-                            [ text (String.fromInt (beatIndex + 1)) ]
+                            [ text (String.fromInt (stepIndex + 1)) ]
                     )
-                    (List.repeat beatCount ())
+                    (List.repeat stepCount ())
                 ++ -- Note rows
                    (List.indexedMap
                         (\noteIndex noteRow ->
@@ -635,7 +635,7 @@ gridView model =
                             ]
                                 ++ -- Beat cells for this note
                                    List.indexedMap
-                                    (\beatIndex isActive ->
+                                    (\stepIndex isActive ->
                                         let
                                             cellClass =
                                                 if isActive then
@@ -646,7 +646,7 @@ gridView model =
                                         in
                                         div
                                             [ class cellClass
-                                            , onClick (ToggleCell noteIndex beatIndex)
+                                            , onClick (ToggleCell noteIndex stepIndex)
                                             ]
                                             []
                                     )
