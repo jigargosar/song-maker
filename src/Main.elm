@@ -106,9 +106,9 @@ splitBeats =
 -- Derived values
 
 
-stepCount : { a | barCount : Int, beatsPerBar : Int, splitBeats : Int } -> Int
-stepCount config =
-    config.barCount * config.beatsPerBar * config.splitBeats
+stepCount : Int
+stepCount =
+    barCount * beatsPerBar * splitBeats
 
 
 
@@ -132,7 +132,7 @@ noteVolume =
 
 gridColumns : Int
 gridColumns =
-    stepCount { barCount = barCount, beatsPerBar = beatsPerBar, splitBeats = splitBeats } + 1
+    stepCount + 1
 
 
 
@@ -267,7 +267,7 @@ noteLabels =
 
 emptyGrid : List (List Bool)
 emptyGrid =
-    List.repeat noteCount (List.repeat (stepCount { barCount = barCount, beatsPerBar = beatsPerBar, splitBeats = splitBeats }) False)
+    List.repeat noteCount (List.repeat stepCount False)
 
 
 notesToGridV2 :
@@ -569,7 +569,7 @@ vShapeGrid =
         { stepsWithNotes = vShapePattern
         , octaveStart = startingOctave
         , octaveCount = octaveCount
-        , stepCount = stepCount { barCount = barCount, beatsPerBar = beatsPerBar, splitBeats = splitBeats }
+        , stepCount = stepCount
         }
 
 
@@ -579,7 +579,7 @@ twinkleTwinkleGrid =
         { stepsWithNotes = twinkleTwinklePattern
         , octaveStart = startingOctave
         , octaveCount = octaveCount
-        , stepCount = stepCount { barCount = barCount, beatsPerBar = beatsPerBar, splitBeats = splitBeats }
+        , stepCount = stepCount
         }
 
 
@@ -593,7 +593,7 @@ twinkleTwinkleChordsGrid =
         { stepsWithNotes = twinkleTwinkleChordsPattern
         , octaveStart = startingOctave
         , octaveCount = octaveCount
-        , stepCount = stepCount { barCount = barCount, beatsPerBar = beatsPerBar, splitBeats = splitBeats }
+        , stepCount = stepCount
         }
 
 
@@ -693,7 +693,7 @@ update msg model =
                             startTime + toFloat nextStepToSchedule * noteDuration
 
                         gridStep =
-                            modBy (stepCount { barCount = barCount, beatsPerBar = beatsPerBar, splitBeats = splitBeats }) nextStepToSchedule
+                            modBy stepCount nextStepToSchedule
 
                         chordCmd =
                             if shouldSchedule then
@@ -844,7 +844,7 @@ headerView model =
     header [ class "bg-white shadow-sm border-b border-gray-200 px-6 py-4" ]
         [ div [ class "flex items-center justify-between" ]
             [ h1 [ class "text-2xl font-bold text-gray-800" ]
-                [ text "Song Maker - Build 6" ]
+                [ text "Song Maker - Build 5" ]
             , div [ class "flex items-center gap-3" ]
                 [ case model.playState of
                     Playing _ ->
@@ -879,7 +879,7 @@ footerView model =
             [ div []
                 [ text ("BPM: " ++ String.fromInt bpm) ]
             , div []
-                [ text ("Grid: " ++ String.fromInt noteCount ++ " notes × " ++ String.fromInt (stepCount { barCount = barCount, beatsPerBar = beatsPerBar, splitBeats = splitBeats }) ++ " steps | Bars: " ++ String.fromInt barCount ++ " | Beats/Bar: " ++ String.fromInt beatsPerBar ++ " | Splits: " ++ String.fromInt splitBeats) ]
+                [ text ("Grid: " ++ String.fromInt noteCount ++ " notes × " ++ String.fromInt stepCount ++ " steps | Bars: " ++ String.fromInt barCount ++ " | Beats/Bar: " ++ String.fromInt beatsPerBar ++ " | Splits: " ++ String.fromInt splitBeats) ]
             , div []
                 [ text "Use mouse to toggle notes" ]
             ]
@@ -891,7 +891,7 @@ gridView model =
     div [ class "h-full overflow-auto p-6" ]
         [ div
             [ class "grid gap-1 w-fit mx-auto"
-            , style "grid-template-columns" ("48px repeat(" ++ String.fromInt (stepCount { barCount = barCount, beatsPerBar = beatsPerBar, splitBeats = splitBeats }) ++ ", 32px)")
+            , style "grid-template-columns" ("48px repeat(" ++ String.fromInt stepCount ++ ", 32px)")
             , style "grid-template-rows" ("repeat(" ++ String.fromInt (noteCount + 1) ++ ", 32px)")
             ]
             ([ div [ class "" ] [] -- Empty corner cell
@@ -901,7 +901,7 @@ gridView model =
                         div [ class "flex items-center justify-center text-xs font-bold text-gray-600" ]
                             [ text (String.fromInt (stepIndex + 1)) ]
                     )
-                    (List.repeat (stepCount { barCount = barCount, beatsPerBar = beatsPerBar, splitBeats = splitBeats }) ())
+                    (List.repeat stepCount ())
                 ++ -- Note rows
                    (List.indexedMap
                         (\noteIndex noteRow ->
@@ -941,18 +941,16 @@ gridView model =
 main : Program () Model Msg
 main =
     Browser.element
-        { init =
-            \_ ->
-                ( { grid = twinkleTwinkleChordsGrid
-                  , playState = Stopped
-                  , currentTime = 0.0
-                  , bpm = 120
-                  , barCount = 4
-                  , beatsPerBar = 2
-                  , splitBeats = 2
-                  }
-                , Cmd.none
-                )
+                { init = \_ ->
+                        ( { grid = twinkleTwinkleChordsGrid
+                            , playState = Stopped
+                            , currentTime = 0.0
+                            , bpm = 120
+                            , barCount = 4
+                            , beatsPerBar = 2
+                            , splitBeats = 2
+                            }
+                        , Cmd.none )
         , update = update
         , subscriptions = \_ -> timeSync TimeSync
         , view = view
