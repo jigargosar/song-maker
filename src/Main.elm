@@ -444,7 +444,16 @@ update msg model =
                     in
                     ( { model
                         | currentTime = currentTime
-                        , playState = Playing { startTime = startTime, nextBeatToSchedule = if shouldSchedule then nextBeatToSchedule + 1 else nextBeatToSchedule }
+                        , playState =
+                            Playing
+                                { startTime = startTime
+                                , nextBeatToSchedule =
+                                    if shouldSchedule then
+                                        nextBeatToSchedule + 1
+
+                                    else
+                                        nextBeatToSchedule
+                                }
                       }
                     , chordCmd
                     )
