@@ -110,7 +110,7 @@ stepCountFromModel record =
 
 noteCountFromModel : { a | octaveCount : Int } -> Int
 noteCountFromModel record =
-    record.octaveCount * 7
+    record.octaveCount * notesPerOctave
 
 
 noteDurationFromModel : { a | bpm : Int, splitBeats : Int } -> Float
@@ -132,10 +132,10 @@ noteLabelsFromModel record =
             (\gridIndex ->
                 let
                     octaveOffset =
-                        gridIndex // 7
+                        gridIndex // notesPerOctave
 
                     noteIndex =
-                        modBy 7 gridIndex
+                        modBy notesPerOctave gridIndex
 
                     octave =
                         startingOctave_ + octaveOffset
@@ -169,6 +169,7 @@ type alias Model =
     , splitBeats : Int
     , startingOctave : Int
     , octaveCount : Int
+    , noteVolume : Float
     }
 
 
@@ -187,8 +188,8 @@ type alias MusicalPosition =
     }
 
 
-gridIndexToMusicalPosition : Int -> MusicalPosition
-gridIndexToMusicalPosition gridIndex =
+gridIndexToMusicalPosition : Int -> { a | startingOctave : Int } -> MusicalPosition
+gridIndexToMusicalPosition gridIndex record =
     let
         octaveOffset =
             gridIndex // notesPerOctave
@@ -197,7 +198,7 @@ gridIndexToMusicalPosition gridIndex =
             modBy notesPerOctave gridIndex
 
         octave =
-            startingOctave + octaveOffset
+            record.startingOctave + octaveOffset
     in
     { octave = octave, noteIndex = noteIndex }
 
@@ -228,10 +229,9 @@ musicalPositionToMidi position =
 -- Main conversion functions (clean interface)
 
 
-getMidiNoteForIndex : Int -> Int
-getMidiNoteForIndex gridIndex =
-    gridIndex
-        |> gridIndexToMusicalPosition
+getMidiNoteForIndex : Int -> { a | startingOctave : Int } -> Int
+getMidiNoteForIndex gridIndex record =
+    gridIndexToMusicalPosition gridIndex record
         |> musicalPositionToMidi
 
 
@@ -239,10 +239,14 @@ getMidiNoteForIndex gridIndex =
 -- Dynamic note list based on grid size and C4 position
 
 
-noteList : List Int
-noteList =
-    List.range 0 (noteCount - 1)
-        |> List.map getMidiNoteForIndex
+generateNoteList : { a | octaveCount : Int, startingOctave : Int } -> List Int
+generateNoteList record =
+    let
+        noteCount_ =
+            noteCountFromModel record
+    in
+    List.range 0 (noteCount_ - 1)
+        |> List.map (\gridIndex -> getMidiNoteForIndex gridIndex record)
 
 
 
@@ -285,10 +289,10 @@ update msg model =
                     if nowActive then
                         let
                             midiNote =
-                                getMidiNoteForIndex noteIndex
+                                getMidiNoteForIndex noteIndex model
 
                             noteRecord =
-                                { note = midiNote, duration = noteDuration, volume = noteVolume }
+                                { note = midiNote, duration = noteDurationFromModel model, volume = model.noteVolume }
                         in
                         Cmd.batch [ wakeAudioContext (), playChord { notes = [ noteRecord ], when = model.currentTime } ]
 
@@ -354,7 +358,7 @@ update msg model =
                             if shouldSchedule then
                                 let
                                     stepNotes =
-                                        getActiveNotesForStep gridStep model.grid
+                                        getActiveNotesForStep gridStep model
                                 in
                                 if not (List.isEmpty stepNotes) then
                                     playChord { notes = stepNotes, when = stepTime }
@@ -386,15 +390,33 @@ update msg model =
 -- GRID LOGIC
 
 
-getActiveNotesForStep : Int -> List (List Bool) -> List { note : Int, duration : Float, volume : Float }
-getActiveNotesForStep stepIndex grid =
+getActiveNotesForStep :
+    Int
+    ->
+        { a
+            | grid : List (List Bool)
+            , octaveCount : Int
+            , startingOctave : Int
+            , bpm : Int
+            , splitBeats : Int
+            , noteVolume : Float
+        }
+    -> List { note : Int, duration : Float, volume : Float }
+getActiveNotesForStep stepIndex model =
+    let
+        noteList_ =
+            generateNoteList model
+
+        duration =
+            noteDurationFromModel model
+    in
     List.indexedMap
         (\noteIndex noteRow ->
             case List.drop stepIndex noteRow |> List.head of
                 Just True ->
-                    case List.drop noteIndex noteList |> List.head of
+                    case List.drop noteIndex noteList_ |> List.head of
                         Just midiNote ->
-                            Just { note = midiNote, duration = noteDuration, volume = noteVolume }
+                            Just { note = midiNote, duration = duration, volume = model.noteVolume }
 
                         Nothing ->
                             Nothing
@@ -402,7 +424,7 @@ getActiveNotesForStep stepIndex grid =
                 _ ->
                     Nothing
         )
-        grid
+        model.grid
         |> List.filterMap identity
 
 
@@ -618,6 +640,7 @@ init _ =
       , splitBeats = selectedPattern.splitBeats
       , startingOctave = selectedPattern.octaveStart
       , octaveCount = selectedPattern.octaveCount
+      , noteVolume = 0.8
       }
     , Cmd.none
     )
