@@ -123,6 +123,95 @@ noteVolume =
 
 
 
+-- HELPER FUNCTIONS WITH EXTENSIBLE RECORDS
+
+
+stepCountFromModel : { a | barCount : Int, beatsPerBar : Int, splitBeats : Int } -> Int
+stepCountFromModel record =
+    record.barCount * record.beatsPerBar * record.splitBeats
+
+
+noteCountFromModel : { a | octaveCount : Int } -> Int
+noteCountFromModel record =
+    record.octaveCount * 7
+
+
+noteDurationFromModel : { a | bpm : Int, splitBeats : Int } -> Float
+noteDurationFromModel record =
+    (60.0 / toFloat record.bpm) / toFloat record.splitBeats
+
+
+notesPerOctaveFromModel : { a | majorScaleNoteNames : List String } -> Int
+notesPerOctaveFromModel record =
+    List.length record.majorScaleNoteNames
+
+
+
+-- For functions that need to create note lists based on model parameters
+
+
+noteListFromModel : { a | octaveCount : Int, startingOctave : Int } -> List Int
+noteListFromModel record =
+    let
+        noteCount_ =
+            noteCountFromModel record
+
+        startingOctave_ =
+            record.startingOctave
+    in
+    List.range 0 (noteCount_ - 1)
+        |> List.map
+            (\gridIndex ->
+                let
+                    octaveOffset =
+                        gridIndex // 7
+
+                    noteIndex =
+                        modBy 7 gridIndex
+
+                    octave =
+                        startingOctave_ + octaveOffset
+
+                    semitoneOffset =
+                        Maybe.withDefault 0 (List.drop noteIndex majorScalePattern |> List.head)
+
+                    baseMidiForC =
+                        midiC4 + ((octave - 4) * 12)
+                in
+                baseMidiForC + semitoneOffset
+            )
+
+
+noteLabelsFromModel : { a | octaveCount : Int, startingOctave : Int } -> List String
+noteLabelsFromModel record =
+    let
+        noteCount_ =
+            noteCountFromModel record
+
+        startingOctave_ =
+            record.startingOctave
+    in
+    List.range 0 (noteCount_ - 1)
+        |> List.map
+            (\gridIndex ->
+                let
+                    octaveOffset =
+                        gridIndex // 7
+
+                    noteIndex =
+                        modBy 7 gridIndex
+
+                    octave =
+                        startingOctave_ + octaveOffset
+
+                    noteName =
+                        Maybe.withDefault "?" (List.drop noteIndex majorScaleNoteNames |> List.head)
+                in
+                noteName ++ String.fromInt octave
+            )
+
+
+
 -- MODEL
 
 
@@ -602,7 +691,7 @@ init : () -> ( Model, Cmd Msg )
 init _ =
     let
         selectedPattern =
-            Patterns.twinkleTwinkleChordsConfig
+            Patterns.vShapeConfig
     in
     ( { grid = selectedPattern.grid
       , playState = Stopped
