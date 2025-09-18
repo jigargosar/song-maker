@@ -142,6 +142,8 @@ type alias Model =
     , barCount : Int
     , beatsPerBar : Int
     , splitBeats : Int
+    , octaveStart : Int
+    , octaveCount : Int
     }
 
 
@@ -252,161 +254,9 @@ noteLabels =
 -- Initialize empty grid
 
 
-emptyGrid : List (List Bool)
-emptyGrid =
-    List.repeat noteCount (List.repeat stepCount False)
-
-
-notesToGridV2 :
-    { stepsWithNotes : List (List String)
-    , octaveStart : Int
-    , octaveCount : Int
-    , stepCount : Int
-    }
-    -> List (List Bool)
-notesToGridV2 o =
-    let
-        noteCount_ =
-            o.octaveCount * 7
-
-        emptyGridLocal =
-            List.repeat noteCount_ (List.repeat o.stepCount False)
-
-        parseNote : String -> Maybe ( String, Int )
-        parseNote noteStr =
-            case String.toList noteStr of
-                [] ->
-                    Nothing
-
-                [ _ ] ->
-                    Nothing
-
-                noteLetter :: octaveChars ->
-                    case String.fromList octaveChars |> String.toInt of
-                        Just octave ->
-                            Just ( String.fromChar noteLetter, octave )
-
-                        Nothing ->
-                            Nothing
-
-        noteToGridIndex : String -> Maybe Int
-        noteToGridIndex noteStr =
-            case parseNote noteStr of
-                Just ( noteLetter, octave ) ->
-                    let
-                        noteOffset =
-                            case noteLetter of
-                                "C" ->
-                                    0
-
-                                "D" ->
-                                    1
-
-                                "E" ->
-                                    2
-
-                                "F" ->
-                                    3
-
-                                "G" ->
-                                    4
-
-                                "A" ->
-                                    5
-
-                                "B" ->
-                                    6
-
-                                _ ->
-                                    -1
-
-                        octaveOffset =
-                            octave - o.octaveStart
-
-                        gridIndex =
-                            octaveOffset * 7 + noteOffset
-                    in
-                    if noteOffset >= 0 && octaveOffset >= 0 && gridIndex < noteCount_ then
-                        Just gridIndex
-
-                    else
-                        Nothing
-
-                Nothing ->
-                    Nothing
-
-        setNoteAtStep : String -> Int -> List (List Bool) -> List (List Bool)
-        setNoteAtStep noteName stepIndex grid =
-            case noteToGridIndex noteName of
-                Just noteIndex ->
-                    toggleGridCell noteIndex stepIndex grid
-
-                Nothing ->
-                    grid
-
-        processStep : Int -> List String -> List (List Bool) -> List (List Bool)
-        processStep stepIndex noteNames grid =
-            List.foldl (\noteName currentGrid -> setNoteAtStep noteName stepIndex currentGrid) grid noteNames
-    in
-    List.indexedMap processStep o.stepsWithNotes
-        |> List.foldl (\stepProcessor currentGrid -> stepProcessor currentGrid) emptyGridLocal
-
-
-notesToGridV1 : List (List String) -> List (List Bool)
-notesToGridV1 stepsWithNotes =
-    let
-        setNoteAtStep : String -> Int -> List (List Bool) -> List (List Bool)
-        setNoteAtStep noteName stepIndex grid =
-            case findNoteIndex noteName of
-                Just noteIndex ->
-                    toggleGridCell noteIndex stepIndex grid
-
-                Nothing ->
-                    grid
-
-        findNoteIndex : String -> Maybe Int
-        findNoteIndex noteName =
-            List.indexedMap (\index label -> ( index, label )) noteLabels
-                |> List.filter (\( _, label ) -> label == noteName)
-                |> List.head
-                |> Maybe.map Tuple.first
-
-        processStep : Int -> List String -> List (List Bool) -> List (List Bool)
-        processStep stepIndex noteNames grid =
-            List.foldl (\noteName currentGrid -> setNoteAtStep noteName stepIndex currentGrid) grid noteNames
-    in
-    List.indexedMap processStep stepsWithNotes
-        |> List.foldl (\stepProcessor currentGrid -> stepProcessor currentGrid) emptyGrid
-
-
-vShapeGrid : List (List Bool)
-vShapeGrid =
-    notesToGridV2
-        { stepsWithNotes = Patterns.vShapePattern
-        , octaveStart = startingOctave
-        , octaveCount = octaveCount
-        , stepCount = stepCount
-        }
-
-
-twinkleTwinkleGrid : List (List Bool)
-twinkleTwinkleGrid =
-    notesToGridV2
-        { stepsWithNotes = Patterns.twinkleTwinklePattern
-        , octaveStart = startingOctave
-        , octaveCount = octaveCount
-        , stepCount = stepCount
-        }
-
-
-twinkleTwinkleChordsGrid : List (List Bool)
-twinkleTwinkleChordsGrid =
-    notesToGridV2
-        { stepsWithNotes = Patterns.twinkleTwinkleChordsPattern
-        , octaveStart = startingOctave
-        , octaveCount = octaveCount
-        , stepCount = stepCount
-        }
+emptyGrid : Int -> Int -> List (List Bool)
+emptyGrid noteCount_ stepCount_ =
+    List.repeat noteCount_ (List.repeat stepCount_ False)
 
 
 
@@ -473,7 +323,14 @@ update msg model =
                     ( model, Cmd.none )
 
         ClearGrid ->
-            ( { model | grid = emptyGrid }, Cmd.none )
+            let
+                noteCount_ =
+                    model.octaveCount * 7
+
+                stepCount_ =
+                    model.barCount * model.beatsPerBar * model.splitBeats
+            in
+            ( { model | grid = emptyGrid noteCount_ stepCount_ }, Cmd.none )
 
         TimeSync currentTime ->
             -- TODO: Guard against time going backwards, NaN values, system clock adjustments
@@ -647,7 +504,7 @@ headerView model =
     header [ class "bg-white shadow-sm border-b border-gray-200 px-6 py-4" ]
         [ div [ class "flex items-center justify-between" ]
             [ h1 [ class "text-2xl font-bold text-gray-800" ]
-                [ text "Song Maker - Build 6" ]
+                [ text "Song Maker - Build 7" ]
             , div [ class "flex items-center gap-3" ]
                 [ case model.playState of
                     Playing _ ->
@@ -743,17 +600,19 @@ gridView model =
 
 init : () -> ( Model, Cmd Msg )
 init _ =
-    ( { grid =
-            notesToGridV1
-                |> always vShapeGrid
-                |> always twinkleTwinkleGrid
-                |> always twinkleTwinkleChordsGrid
+    let
+        selectedPattern =
+            Patterns.twinkleTwinkleChordsConfig
+    in
+    ( { grid = selectedPattern.grid
       , playState = Stopped
       , currentTime = 0.0
-      , bpm = 120
-      , barCount = 4
-      , beatsPerBar = 2
-      , splitBeats = 2
+      , bpm = selectedPattern.bpm
+      , barCount = selectedPattern.barCount
+      , beatsPerBar = selectedPattern.beatsPerBar
+      , splitBeats = selectedPattern.splitBeats
+      , octaveStart = selectedPattern.octaveStart
+      , octaveCount = selectedPattern.octaveCount
       }
     , Cmd.none
     )

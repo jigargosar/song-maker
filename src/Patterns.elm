@@ -1,8 +1,146 @@
 module Patterns exposing
-    ( vShapePattern
-    , twinkleTwinklePattern
-    , twinkleTwinkleChordsPattern
+    ( PatternConfig
+    , vShapeConfig
+    , twinkleTwinkleConfig
+    , twinkleTwinkleChordsConfig
     )
+
+
+-- PATTERN CONFIGURATION TYPE
+
+
+type alias PatternConfig =
+    { grid : List (List Bool)
+    , bpm : Int
+    , barCount : Int
+    , beatsPerBar : Int
+    , splitBeats : Int
+    , name : String
+    , octaveStart : Int
+    , octaveCount : Int
+    }
+
+
+-- GRID GENERATION FUNCTIONS
+
+
+toggleGridCell : Int -> Int -> List (List Bool) -> List (List Bool)
+toggleGridCell noteIndex stepIndex grid =
+    List.indexedMap
+        (\nIdx noteRow ->
+            if nIdx == noteIndex then
+                List.indexedMap
+                    (\sIdx isActive ->
+                        if sIdx == stepIndex then
+                            not isActive
+
+                        else
+                            isActive
+                    )
+                    noteRow
+
+            else
+                noteRow
+        )
+        grid
+
+
+notesToGridV2 :
+    { stepsWithNotes : List (List String)
+    , octaveStart : Int
+    , octaveCount : Int
+    , stepCount : Int
+    }
+    -> List (List Bool)
+notesToGridV2 o =
+    let
+        noteCount_ =
+            o.octaveCount * 7
+
+        emptyGridLocal =
+            List.repeat noteCount_ (List.repeat o.stepCount False)
+
+        parseNote : String -> Maybe ( String, Int )
+        parseNote noteStr =
+            case String.toList noteStr of
+                [] ->
+                    Nothing
+
+                [ _ ] ->
+                    Nothing
+
+                noteLetter :: octaveChars ->
+                    case String.fromList octaveChars |> String.toInt of
+                        Just octave ->
+                            Just ( String.fromChar noteLetter, octave )
+
+                        Nothing ->
+                            Nothing
+
+        noteToGridIndex : String -> Maybe Int
+        noteToGridIndex noteStr =
+            case parseNote noteStr of
+                Just ( noteLetter, octave ) ->
+                    let
+                        noteOffset =
+                            case noteLetter of
+                                "C" ->
+                                    0
+
+                                "D" ->
+                                    1
+
+                                "E" ->
+                                    2
+
+                                "F" ->
+                                    3
+
+                                "G" ->
+                                    4
+
+                                "A" ->
+                                    5
+
+                                "B" ->
+                                    6
+
+                                _ ->
+                                    -1
+
+                        octaveOffset =
+                            octave - o.octaveStart
+
+                        gridIndex =
+                            octaveOffset * 7 + noteOffset
+                    in
+                    if noteOffset >= 0 && octaveOffset >= 0 && gridIndex < noteCount_ then
+                        Just gridIndex
+
+                    else
+                        Nothing
+
+                Nothing ->
+                    Nothing
+
+        setNoteAtStep : String -> Int -> List (List Bool) -> List (List Bool)
+        setNoteAtStep noteName stepIndex grid =
+            case noteToGridIndex noteName of
+                Just noteIndex ->
+                    toggleGridCell noteIndex stepIndex grid
+
+                Nothing ->
+                    grid
+
+        processStep : Int -> List String -> List (List Bool) -> List (List Bool)
+        processStep stepIndex noteNames grid =
+            List.foldl (\noteName currentGrid -> setNoteAtStep noteName stepIndex currentGrid) grid noteNames
+    in
+    List.indexedMap processStep o.stepsWithNotes
+        |> List.foldl (\stepProcessor currentGrid -> stepProcessor currentGrid) emptyGridLocal
+
+
+-- PATTERN DATA
 
 
 -- V-shaped melody demo: smooth stepwise progression C3 -> C4 -> C3
@@ -173,3 +311,93 @@ twinkleTwinkleChordsPattern =
     , [ "D4" ]
     , []
     ]
+
+
+-- PATTERN CONFIGURATIONS
+
+
+vShapeConfig : PatternConfig
+vShapeConfig =
+    let
+        octaveStart =
+            3
+
+        octaveCount =
+            3
+
+        stepCount =
+            List.length vShapePattern
+    in
+    { grid =
+        notesToGridV2
+            { stepsWithNotes = vShapePattern
+            , octaveStart = octaveStart
+            , octaveCount = octaveCount
+            , stepCount = stepCount
+            }
+    , bpm = 120
+    , barCount = 4
+    , beatsPerBar = 2
+    , splitBeats = 2
+    , name = "V-Shape"
+    , octaveStart = octaveStart
+    , octaveCount = octaveCount
+    }
+
+
+twinkleTwinkleConfig : PatternConfig
+twinkleTwinkleConfig =
+    let
+        octaveStart =
+            3
+
+        octaveCount =
+            3
+
+        stepCount =
+            List.length twinkleTwinklePattern
+    in
+    { grid =
+        notesToGridV2
+            { stepsWithNotes = twinkleTwinklePattern
+            , octaveStart = octaveStart
+            , octaveCount = octaveCount
+            , stepCount = stepCount
+            }
+    , bpm = 120
+    , barCount = 16
+    , beatsPerBar = 2
+    , splitBeats = 2
+    , name = "Twinkle Twinkle"
+    , octaveStart = octaveStart
+    , octaveCount = octaveCount
+    }
+
+
+twinkleTwinkleChordsConfig : PatternConfig
+twinkleTwinkleChordsConfig =
+    let
+        octaveStart =
+            3
+
+        octaveCount =
+            3
+
+        stepCount =
+            List.length twinkleTwinkleChordsPattern
+    in
+    { grid =
+        notesToGridV2
+            { stepsWithNotes = twinkleTwinkleChordsPattern
+            , octaveStart = octaveStart
+            , octaveCount = octaveCount
+            , stepCount = stepCount
+            }
+    , bpm = 120
+    , barCount = 16
+    , beatsPerBar = 2
+    , splitBeats = 2
+    , name = "Twinkle Twinkle Chords"
+    , octaveStart = octaveStart
+    , octaveCount = octaveCount
+    }
