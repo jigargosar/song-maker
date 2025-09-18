@@ -231,7 +231,7 @@ type alias Model =
     , barCount : Int
     , beatsPerBar : Int
     , splitBeats : Int
-    , octaveStart : Int
+    , startingOctave : Int
     , octaveCount : Int
     }
 
@@ -414,10 +414,10 @@ update msg model =
         ClearGrid ->
             let
                 noteCount_ =
-                    model.octaveCount * 7
+                    noteCountFromModel model
 
                 stepCount_ =
-                    model.barCount * model.beatsPerBar * model.splitBeats
+                    stepCountFromModel model
             in
             ( { model | grid = emptyGrid noteCount_ stepCount_ }, Cmd.none )
 
@@ -433,16 +433,16 @@ update msg model =
                             currentTime - startTime
 
                         absoluteStep =
-                            floor (elapsedTime / noteDuration)
+                            floor (elapsedTime / noteDurationFromModel model)
 
                         shouldSchedule =
                             absoluteStep >= nextStepToSchedule
 
                         stepTime =
-                            startTime + toFloat nextStepToSchedule * noteDuration
+                            startTime + toFloat nextStepToSchedule * noteDurationFromModel model
 
                         gridStep =
-                            modBy stepCount nextStepToSchedule
+                            modBy (stepCountFromModel model) nextStepToSchedule
 
                         chordCmd =
                             if shouldSchedule then
@@ -622,13 +622,13 @@ headerView model =
 
 
 footerView : Model -> Html Msg
-footerView _ =
+footerView model =
     footer [ class "bg-white border-t border-gray-200 px-6 py-3" ]
         [ div [ class "flex items-center justify-between text-sm text-gray-600" ]
             [ div []
-                [ text ("BPM: " ++ String.fromInt bpm) ]
+                [ text ("BPM: " ++ String.fromInt model.bpm) ]
             , div []
-                [ text ("Grid: " ++ String.fromInt noteCount ++ " notes × " ++ String.fromInt stepCount ++ " steps | Bars: " ++ String.fromInt barCount ++ " | Beats/Bar: " ++ String.fromInt beatsPerBar ++ " | Splits: " ++ String.fromInt splitBeats) ]
+                [ text ("Grid: " ++ String.fromInt (noteCountFromModel model) ++ " notes × " ++ String.fromInt (stepCountFromModel model) ++ " steps | Bars: " ++ String.fromInt model.barCount ++ " | Beats/Bar: " ++ String.fromInt model.beatsPerBar ++ " | Splits: " ++ String.fromInt model.splitBeats) ]
             , div []
                 [ text "Use mouse to toggle notes" ]
             ]
@@ -637,11 +637,21 @@ footerView _ =
 
 gridView : Model -> Html Msg
 gridView model =
+    let
+        stepCount_ =
+            stepCountFromModel model
+
+        noteCount_ =
+            noteCountFromModel model
+
+        noteLabels_ =
+            noteLabelsFromModel model
+    in
     div [ class "h-full overflow-auto p-6" ]
         [ div
             [ class "grid gap-1 w-fit mx-auto"
-            , style "grid-template-columns" ("48px repeat(" ++ String.fromInt stepCount ++ ", 32px)")
-            , style "grid-template-rows" ("repeat(" ++ String.fromInt (noteCount + 1) ++ ", 32px)")
+            , style "grid-template-columns" ("48px repeat(" ++ String.fromInt stepCount_ ++ ", 32px)")
+            , style "grid-template-rows" ("repeat(" ++ String.fromInt (noteCount_ + 1) ++ ", 32px)")
             ]
             ([ div [ class "" ] [] -- Empty corner cell
              ]
@@ -650,13 +660,13 @@ gridView model =
                         div [ class "flex items-center justify-center text-xs font-bold text-gray-600" ]
                             [ text (String.fromInt (stepIndex + 1)) ]
                     )
-                    (List.repeat stepCount ())
+                    (List.repeat stepCount_ ())
                 ++ -- Note rows
                    (List.indexedMap
                         (\noteIndex noteRow ->
                             [ -- Note label
                               div [ class "flex items-center justify-center text-xs font-bold text-gray-700 bg-gray-200 rounded" ]
-                                [ text (Maybe.withDefault "?" (List.drop noteIndex noteLabels |> List.head)) ]
+                                [ text (Maybe.withDefault "?" (List.drop noteIndex noteLabels_ |> List.head)) ]
                             ]
                                 ++ List.indexedMap
                                     (\stepIndex isActive ->
@@ -700,7 +710,7 @@ init _ =
       , barCount = selectedPattern.barCount
       , beatsPerBar = selectedPattern.beatsPerBar
       , splitBeats = selectedPattern.splitBeats
-      , octaveStart = selectedPattern.octaveStart
+      , startingOctave = selectedPattern.octaveStart
       , octaveCount = selectedPattern.octaveCount
       }
     , Cmd.none
