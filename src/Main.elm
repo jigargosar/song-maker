@@ -422,8 +422,12 @@ update msg model =
                         elapsedTime =
                             currentTime - startTime
 
+                        -- Linear beat counting (no loops, just absolute beats)
+                        absoluteBeat =
+                            floor (elapsedTime / beatDurationSeconds)
+
                         expectedBeat =
-                            modBy beatCount (floor (elapsedTime / beatDurationSeconds))
+                            modBy beatCount absoluteBeat
 
                         beatChanged =
                             expectedBeat /= currentBeat
@@ -435,28 +439,23 @@ update msg model =
                         shouldSchedule =
                             expectedBeat /= currentBeat
 
-                        nextBeat =
-                            modBy beatCount (expectedBeat + 1)
+                        -- Next beat in linear time
+                        nextAbsoluteBeat =
+                            absoluteBeat + 1
 
-                        -- Calculate which loop the next beat will be in
-                        currentLoopNumber =
-                            floor (elapsedTime / (toFloat beatCount * beatDurationSeconds))
+                        nextBeatTime =
+                            startTime + (toFloat nextAbsoluteBeat * beatDurationSeconds)
 
-                        nextBeatLoopNumber =
-                            if nextBeat == 0 then
-                                currentLoopNumber + 1  -- Next beat wraps to new loop
-                            else
-                                currentLoopNumber       -- Next beat is in same loop
-
-                        nextBeatAbsoluteTime =
-                            startTime + (toFloat nextBeatLoopNumber * toFloat beatCount * beatDurationSeconds) + (toFloat nextBeat * beatDurationSeconds)
+                        -- Map to grid position for lookup
+                        nextBeatInGrid =
+                            modBy beatCount nextAbsoluteBeat
 
                         nextBeatNotes =
-                            getActiveNotesForBeat nextBeat model.grid
+                            getActiveNotesForBeat nextBeatInGrid model.grid
 
                         chordCmd =
                             if shouldSchedule && not (List.isEmpty nextBeatNotes) then
-                                playChord { notes = nextBeatNotes, when = nextBeatAbsoluteTime }
+                                playChord { notes = nextBeatNotes, when = nextBeatTime }
 
                             else
                                 Cmd.none
