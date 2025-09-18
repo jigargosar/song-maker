@@ -287,30 +287,49 @@ emptyGrid =
 
 
 -- V-shaped melody demo: smooth stepwise progression C3 -> C4 -> C3
+
+
 vShapeGrid : List (List Bool)
 vShapeGrid =
     emptyGrid
         -- Ascending: C3 to C4 (beats 1-8)
-        |> toggleGridCell 0 0   -- C3 at beat 1
-        |> toggleGridCell 1 1   -- D3 at beat 2
-        |> toggleGridCell 2 2   -- E3 at beat 3
-        |> toggleGridCell 3 3   -- F3 at beat 4
-        |> toggleGridCell 4 4   -- G3 at beat 5
-        |> toggleGridCell 5 5   -- A3 at beat 6
-        |> toggleGridCell 6 6   -- B3 at beat 7
-        |> toggleGridCell 7 7   -- C4 at beat 8
+        |> toggleGridCell 0 0
+        -- C3 at beat 1
+        |> toggleGridCell 1 1
+        -- D3 at beat 2
+        |> toggleGridCell 2 2
+        -- E3 at beat 3
+        |> toggleGridCell 3 3
+        -- F3 at beat 4
+        |> toggleGridCell 4 4
+        -- G3 at beat 5
+        |> toggleGridCell 5 5
+        -- A3 at beat 6
+        |> toggleGridCell 6 6
+        -- B3 at beat 7
+        |> toggleGridCell 7 7
+        -- C4 at beat 8
         -- Peak: hold C4 for 2 beats (beats 8-9)
-        |> toggleGridCell 7 8   -- C4 at beat 9 (held)
+        |> toggleGridCell 7 8
+        -- C4 at beat 9 (held)
         -- Descending: C4 back to C3 (beats 10-16)
-        |> toggleGridCell 6 9   -- B3 at beat 10
-        |> toggleGridCell 5 10  -- A3 at beat 11
-        |> toggleGridCell 4 11  -- G3 at beat 12
-        |> toggleGridCell 3 12  -- F3 at beat 13
-        |> toggleGridCell 2 13  -- E3 at beat 14
-        |> toggleGridCell 1 14  -- D3 at beat 15
-        |> toggleGridCell 0 15  -- C3 at beat 16
+        |> toggleGridCell 6 9
+        -- B3 at beat 10
+        |> toggleGridCell 5 10
+        -- A3 at beat 11
+        |> toggleGridCell 4 11
+        -- G3 at beat 12
+        |> toggleGridCell 3 12
+        -- F3 at beat 13
+        |> toggleGridCell 2 13
+        -- E3 at beat 14
+        |> toggleGridCell 1 14
+        -- D3 at beat 15
+        |> toggleGridCell 0 15
 
 
+
+-- C3 at beat 16
 -- Empty demo grid - no preset melody
 
 
@@ -382,11 +401,13 @@ update msg model =
                                 [ -- Play beat 0 now
                                   if List.isEmpty activeNotesBeat0 then
                                     Cmd.none
+
                                   else
                                     playChord { notes = activeNotesBeat0, when = model.currentTime }
                                 , -- Schedule beat 1 at the right time
                                   if List.isEmpty activeNotesBeat1 then
                                     Cmd.none
+
                                   else
                                     playChord { notes = activeNotesBeat1, when = beat1Time }
                                 ]
@@ -492,7 +513,10 @@ getActiveNotesForBeat beatIndex grid =
         |> List.filterMap identity
 
 
+
 -- Get current cell state
+
+
 getCellState : Int -> Int -> List (List Bool) -> Bool
 getCellState noteIndex beatIndex grid =
     case List.drop noteIndex grid |> List.head of
@@ -582,7 +606,7 @@ headerView model =
     header [ class "bg-white shadow-sm border-b border-gray-200 px-6 py-4" ]
         [ div [ class "flex items-center justify-between" ]
             [ h1 [ class "text-2xl font-bold text-gray-800" ]
-                [ text "Song Maker" ]
+                [ text "Song Maker - Build 2" ]
             , div [ class "flex items-center gap-3" ]
                 [ case model.playState of
                     Playing _ ->
