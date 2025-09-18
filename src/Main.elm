@@ -117,7 +117,7 @@ beatCount =
 
 bpm : Int
 bpm =
-    40
+    120
 
 
 
@@ -126,8 +126,7 @@ bpm =
 
 noteDuration : Float
 noteDuration =
-    --0.4
-    beatDurationSeconds
+    (60.0 / toFloat bpm) / toFloat splitBeats
 
 
 noteVolume : Float
@@ -137,19 +136,6 @@ noteVolume =
 
 
 -- Derived values
-
-
-beatDurationSeconds : Float
-beatDurationSeconds =
-    60.0 / toFloat bpm
-
-
-subdivisionDurationSeconds : Float
-subdivisionDurationSeconds =
-    beatDurationSeconds / toFloat splitBeats
-
-
-
 -- 120 BPM = 0.5 seconds per beat
 
 
@@ -421,13 +407,13 @@ update msg model =
                             currentTime - startTime
 
                         absoluteBeat =
-                            floor (elapsedTime / beatDurationSeconds)
+                            floor (elapsedTime / noteDuration)
 
                         shouldSchedule =
                             absoluteBeat >= nextBeatToSchedule
 
                         beatTime =
-                            startTime + toFloat nextBeatToSchedule * beatDurationSeconds
+                            startTime + toFloat nextBeatToSchedule * noteDuration
 
                         gridBeat =
                             modBy beatCount nextBeatToSchedule

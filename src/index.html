@@ -37,11 +37,10 @@
             app.ports.timeSync.send(audioContext.currentTime);
         }, 10); // 10Hz updates for display
 
-        // Listen to Elm port commands
 
-        // Listen to chord playback (multiple notes simultaneously)
         app.ports.playChord.subscribe((data) => {
             const { notes, when } = data;
+            logSPM(when);
             notes.forEach(noteData => {
                 const { note, duration, volume } = noteData;
                 player.queueWaveTable(audioContext, audioContext.destination,
@@ -55,6 +54,25 @@
                 audioContext.resume();
             }
         });
+
+
+        // SPM logging helper at end of script, inside <script>
+        function logSPM(when) {
+            if (!window._spmDebug) {
+                window._spmDebug = { prevWhen: null, intervals: [] };
+            }
+            if (window._spmDebug.prevWhen !== null) {
+                const interval = when - window._spmDebug.prevWhen;
+                window._spmDebug.intervals.push(interval);
+                if (window._spmDebug.intervals.length > 20) {
+                    window._spmDebug.intervals.shift();
+                }
+                const avgInterval = window._spmDebug.intervals.reduce((a, b) => a + b, 0) / window._spmDebug.intervals.length;
+                const runningSPM = avgInterval > 0 ? 60 / avgInterval : 0;
+                console.log(`[SPM Debug] Scheduled interval: ${interval.toFixed(3)}s, Running avg SPM: ${runningSPM.toFixed(2)}`);
+            }
+            window._spmDebug.prevWhen = when;
+        }
     </script>
 </body>
 </html>
