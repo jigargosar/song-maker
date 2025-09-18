@@ -79,32 +79,9 @@ noteCount =
     octaveCount * notesPerOctave
 
 
-barCount : Int
-barCount =
-    16
-
-
-beatsPerBar : Int
-beatsPerBar =
-    2
-
-
 splitBeats : Int
 splitBeats =
     2
-
-
-
--- Derived values
-
-
-stepCount : Int
-stepCount =
-    barCount * beatsPerBar * splitBeats
-
-
-
--- Audio settings
 
 
 bpm : Int
@@ -139,47 +116,6 @@ noteCountFromModel record =
 noteDurationFromModel : { a | bpm : Int, splitBeats : Int } -> Float
 noteDurationFromModel record =
     (60.0 / toFloat record.bpm) / toFloat record.splitBeats
-
-
-notesPerOctaveFromModel : { a | majorScaleNoteNames : List String } -> Int
-notesPerOctaveFromModel record =
-    List.length record.majorScaleNoteNames
-
-
-
--- For functions that need to create note lists based on model parameters
-
-
-noteListFromModel : { a | octaveCount : Int, startingOctave : Int } -> List Int
-noteListFromModel record =
-    let
-        noteCount_ =
-            noteCountFromModel record
-
-        startingOctave_ =
-            record.startingOctave
-    in
-    List.range 0 (noteCount_ - 1)
-        |> List.map
-            (\gridIndex ->
-                let
-                    octaveOffset =
-                        gridIndex // 7
-
-                    noteIndex =
-                        modBy 7 gridIndex
-
-                    octave =
-                        startingOctave_ + octaveOffset
-
-                    semitoneOffset =
-                        Maybe.withDefault 0 (List.drop noteIndex majorScalePattern |> List.head)
-
-                    baseMidiForC =
-                        midiC4 + ((octave - 4) * 12)
-                in
-                baseMidiForC + semitoneOffset
-            )
 
 
 noteLabelsFromModel : { a | octaveCount : Int, startingOctave : Int } -> List String
@@ -289,19 +225,6 @@ musicalPositionToMidi position =
 
 
 
--- Convert musical position to note label
-
-
-musicalPositionToLabel : MusicalPosition -> String
-musicalPositionToLabel position =
-    let
-        noteName =
-            Maybe.withDefault "?" (List.drop position.noteIndex majorScaleNoteNames |> List.head)
-    in
-    noteName ++ String.fromInt position.octave
-
-
-
 -- Main conversion functions (clean interface)
 
 
@@ -312,13 +235,6 @@ getMidiNoteForIndex gridIndex =
         |> musicalPositionToMidi
 
 
-getNoteLabelForIndex : Int -> String
-getNoteLabelForIndex gridIndex =
-    gridIndex
-        |> gridIndexToMusicalPosition
-        |> musicalPositionToLabel
-
-
 
 -- Dynamic note list based on grid size and C4 position
 
@@ -327,16 +243,6 @@ noteList : List Int
 noteList =
     List.range 0 (noteCount - 1)
         |> List.map getMidiNoteForIndex
-
-
-
--- Dynamic note labels based on C major scale
-
-
-noteLabels : List String
-noteLabels =
-    List.range 0 (noteCount - 1)
-        |> List.map getNoteLabelForIndex
 
 
 
