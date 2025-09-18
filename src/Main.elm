@@ -492,67 +492,67 @@ twinkleTwinklePattern =
 
 twinkleTwinkleChordsPattern : List (List String)
 twinkleTwinkleChordsPattern =
-    [ [ "C4", "E4", "G4" ] -- chord
+    [ [ "C4", "E4", "G4" ] -- chord (bar 1)
     , [ "C4" ]
-    , [ "G4", "B4", "D5" ] -- chord
     , [ "G4" ]
-    , [ "A4", "C5", "E5" ] -- chord
+    , [ "G4" ]
+    , [ "A4", "C5", "E5" ] -- chord (bar 2)
     , [ "A4" ]
     , [ "G4" ]
     , []
-    , [ "F4", "A4", "C5" ] -- chord
+    , [ "F4", "A4", "C5" ] -- chord (bar 3)
     , [ "F4" ]
-    , [ "E4", "G4", "C5" ] -- chord
     , [ "E4" ]
-    , [ "D4", "F4", "A4" ] -- chord
+    , [ "E4" ]
+    , [ "D4", "F4", "A4" ] -- chord (bar 4)
     , [ "D4" ]
     , [ "C4" ]
     , []
-    , [ "G4", "B4", "D5" ] -- chord
+    , [ "G4", "B4", "D5" ] -- chord (bar 5)
     , [ "G4" ]
-    , [ "F4", "A4", "C5" ] -- chord
     , [ "F4" ]
-    , [ "E4", "G4", "C5" ] -- chord
+    , [ "F4" ]
+    , [ "E4", "G4", "C5" ] -- chord (bar 6)
     , [ "E4" ]
     , [ "D4" ]
     , []
-    , [ "G4", "B4", "D5" ] -- chord
+    , [ "G4", "B4", "D5" ] -- chord (bar 7)
     , [ "G4" ]
-    , [ "F4", "A4", "C5" ] -- chord
     , [ "F4" ]
-    , [ "E4", "G4", "C5" ] -- chord
+    , [ "F4" ]
+    , [ "E4", "G4", "C5" ] -- chord (bar 8)
     , [ "E4" ]
     , [ "D4" ]
     , []
-    , [ "C4", "E4", "G4" ] -- chord
+    , [ "C4", "E4", "G4" ] -- chord (bar 9)
     , [ "C4" ]
-    , [ "G4", "B4", "D5" ] -- chord
     , [ "G4" ]
-    , [ "A4", "C5", "E5" ] -- chord
+    , [ "G4" ]
+    , [ "A4", "C5", "E5" ] -- chord (bar 10)
     , [ "A4" ]
     , [ "G4" ]
     , []
-    , [ "F4", "A4", "C5" ] -- chord
+    , [ "F4", "A4", "C5" ] -- chord (bar 11)
     , [ "F4" ]
-    , [ "E4", "G4", "C5" ] -- chord
     , [ "E4" ]
-    , [ "D4", "F4", "A4" ] -- chord
+    , [ "E4" ]
+    , [ "D4", "F4", "A4" ] -- chord (bar 12)
     , [ "D4" ]
     , [ "C4" ]
     , []
-    , [ "G4", "B4", "D5" ] -- chord
+    , [ "G4", "B4", "D5" ] -- chord (bar 13)
     , [ "G4" ]
-    , [ "F4", "A4", "C5" ] -- chord
     , [ "F4" ]
-    , [ "E4", "G4", "C5" ] -- chord
+    , [ "F4" ]
+    , [ "E4", "G4", "C5" ] -- chord (bar 14)
     , [ "E4" ]
     , [ "D4" ]
     , []
-    , [ "G4", "B4", "D5" ] -- chord
+    , [ "G4", "B4", "D5" ] -- chord (bar 15)
     , [ "G4" ]
-    , [ "F4", "A4", "C5" ] -- chord
     , [ "F4" ]
-    , [ "E4", "G4", "C5" ] -- chord
+    , [ "F4" ]
+    , [ "E4", "G4", "C5" ] -- chord (bar 16)
     , [ "E4" ]
     , [ "D4" ]
     , []
