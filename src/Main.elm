@@ -89,7 +89,7 @@ endingOctave =
 
 barCount : Int
 barCount =
-    4
+    16
 
 
 beatsPerBar : Int
@@ -413,10 +413,40 @@ vShapePattern =
     ]
 
 
+-- Twinkle Twinkle Little Star full melody pattern (64 steps)
+twinkleTwinklePattern : List (List String)
+twinkleTwinklePattern =
+    [ [ "C4" ], [ "C4" ], [ "G4" ], [ "G4" ]  -- Twinkle twinkle
+    , [ "A4" ], [ "A4" ], [ "G4" ], []       -- little star
+    , [ "F4" ], [ "F4" ], [ "E4" ], [ "E4" ]  -- How I wonder
+    , [ "D4" ], [ "D4" ], [ "C4" ], []       -- what you are
+    , [ "G4" ], [ "G4" ], [ "F4" ], [ "F4" ]  -- Up above the
+    , [ "E4" ], [ "E4" ], [ "D4" ], []       -- world so high
+    , [ "G4" ], [ "G4" ], [ "F4" ], [ "F4" ]  -- Like a diamond
+    , [ "E4" ], [ "E4" ], [ "D4" ], []       -- in the sky
+    , [ "C4" ], [ "C4" ], [ "G4" ], [ "G4" ]  -- Twinkle twinkle (repeat)
+    , [ "A4" ], [ "A4" ], [ "G4" ], []       -- little star
+    , [ "F4" ], [ "F4" ], [ "E4" ], [ "E4" ]  -- How I wonder
+    , [ "D4" ], [ "D4" ], [ "C4" ], []       -- what you are
+    , [ "G4" ], [ "G4" ], [ "F4" ], [ "F4" ]  -- Up above the
+    , [ "E4" ], [ "E4" ], [ "D4" ], []       -- world so high
+    , [ "G4" ], [ "G4" ], [ "F4" ], [ "F4" ]  -- Like a diamond
+    , [ "E4" ], [ "E4" ], [ "D4" ], []       -- in the sky
+    ]
+
 vShapeGrid : List (List Bool)
 vShapeGrid =
     notesToGridV2
         { stepsWithNotes = vShapePattern
+        , octaveStart = startingOctave
+        , octaveCount = octaveCount
+        , stepCount = stepCount
+        }
+
+twinkleTwinkleGrid : List (List Bool)
+twinkleTwinkleGrid =
+    notesToGridV2
+        { stepsWithNotes = twinkleTwinklePattern
         , octaveStart = startingOctave
         , octaveCount = octaveCount
         , stepCount = stepCount
@@ -767,7 +797,7 @@ gridView model =
 main : Program () Model Msg
 main =
     Browser.element
-        { init = \_ -> ( { grid = vShapeGrid, playState = Stopped, currentTime = 0.0 }, Cmd.none )
+        { init = \_ -> ( { grid = twinkleTwinkleGrid, playState = Stopped, currentTime = 0.0 }, Cmd.none )
         , update = update
         , subscriptions = \_ -> timeSync TimeSync
         , view = view
