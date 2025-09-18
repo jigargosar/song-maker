@@ -938,20 +938,30 @@ gridView model =
 -- MAIN
 
 
+init : () -> ( Model, Cmd Msg )
+init _ =
+    ( { grid = twinkleTwinkleChordsGrid
+      , playState = Stopped
+      , currentTime = 0.0
+      , bpm = 120
+      , barCount = 4
+      , beatsPerBar = 2
+      , splitBeats = 2
+      }
+    , Cmd.none
+    )
+
+
+subscriptions : Model -> Sub Msg
+subscriptions _ =
+    timeSync TimeSync
+
+
 main : Program () Model Msg
 main =
     Browser.element
-                { init = \_ ->
-                        ( { grid = twinkleTwinkleChordsGrid
-                            , playState = Stopped
-                            , currentTime = 0.0
-                            , bpm = 120
-                            , barCount = 4
-                            , beatsPerBar = 2
-                            , splitBeats = 2
-                            }
-                        , Cmd.none )
+        { init = init
         , update = update
-        , subscriptions = \_ -> timeSync TimeSync
+        , subscriptions = subscriptions
         , view = view
         }
