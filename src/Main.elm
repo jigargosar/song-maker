@@ -443,47 +443,39 @@ update msg model =
                         elapsedTime =
                             currentTime - startTime
 
-                        -- Linear beat counting (no loops, just absolute beats)
                         absoluteBeat =
                             floor (elapsedTime / beatDurationSeconds)
 
-                        expectedBeat =
+                        currentGridBeat =
                             modBy beatCount absoluteBeat
 
-                        beatChanged =
-                            expectedBeat /= currentBeat
-
-                        activeNotes =
-                            getActiveNotesForBeat expectedBeat model.grid
-
-                        -- Simple: schedule next beat when current beat changes
                         shouldSchedule =
-                            expectedBeat /= currentBeat
-
-                        -- Next beat in linear time
-                        nextAbsoluteBeat =
-                            absoluteBeat + 1
+                            currentGridBeat /= currentBeat
 
                         nextBeatTime =
-                            startTime + (toFloat nextAbsoluteBeat * beatDurationSeconds)
+                            startTime + toFloat (absoluteBeat + 1) * beatDurationSeconds
 
-                        -- Map to grid position for lookup
-                        nextBeatInGrid =
-                            modBy beatCount nextAbsoluteBeat
-
-                        nextBeatNotes =
-                            getActiveNotesForBeat nextBeatInGrid model.grid
+                        nextGridBeat =
+                            modBy beatCount (absoluteBeat + 1)
 
                         chordCmd =
-                            if shouldSchedule && not (List.isEmpty nextBeatNotes) then
-                                playChord { notes = nextBeatNotes, when = nextBeatTime }
+                            if shouldSchedule then
+                                let
+                                    nextBeatNotes =
+                                        getActiveNotesForBeat nextGridBeat model.grid
+                                in
+                                if not (List.isEmpty nextBeatNotes) then
+                                    playChord { notes = nextBeatNotes, when = nextBeatTime }
+
+                                else
+                                    Cmd.none
 
                             else
                                 Cmd.none
                     in
                     ( { model
                         | currentTime = currentTime
-                        , playState = Playing { startTime = startTime, currentBeat = expectedBeat }
+                        , playState = Playing { startTime = startTime, currentBeat = currentGridBeat }
                       }
                     , chordCmd
                     )
@@ -606,7 +598,7 @@ headerView model =
     header [ class "bg-white shadow-sm border-b border-gray-200 px-6 py-4" ]
         [ div [ class "flex items-center justify-between" ]
             [ h1 [ class "text-2xl font-bold text-gray-800" ]
-                [ text "Song Maker - Build 2" ]
+                [ text "Song Maker - Build 3" ]
             , div [ class "flex items-center gap-3" ]
                 [ case model.playState of
                     Playing _ ->
