@@ -1,10 +1,9 @@
 module Patterns exposing
     ( PatternConfig
-    , vShapeConfig
-    , twinkleTwinkleConfig
     , twinkleTwinkleChordsConfig
+    , twinkleTwinkleConfig
+    , vShapeConfig
     )
-
 
 -- PATTERN CONFIGURATION TYPE
 
@@ -19,6 +18,7 @@ type alias PatternConfig =
     , octaveStart : Int
     , octaveCount : Int
     }
+
 
 
 -- GRID GENERATION FUNCTIONS
@@ -45,14 +45,14 @@ toggleGridCell noteIndex stepIndex grid =
         grid
 
 
-notesToGridV2 :
+notesToGrid :
     { stepsWithNotes : List (List String)
     , octaveStart : Int
     , octaveCount : Int
     , stepCount : Int
     }
     -> List (List Bool)
-notesToGridV2 o =
+notesToGrid o =
     let
         noteCount_ =
             o.octaveCount * 7
@@ -140,9 +140,8 @@ notesToGridV2 o =
         |> List.foldl (\stepProcessor currentGrid -> stepProcessor currentGrid) emptyGridLocal
 
 
+
 -- PATTERN DATA
-
-
 -- V-shaped melody demo: smooth stepwise progression C3 -> C4 -> C3
 
 
@@ -313,6 +312,7 @@ twinkleTwinkleChordsPattern =
     ]
 
 
+
 -- PATTERN CONFIGURATIONS
 
 
@@ -329,7 +329,7 @@ vShapeConfig =
             List.length vShapePattern
     in
     { grid =
-        notesToGridV2
+        notesToGrid
             { stepsWithNotes = vShapePattern
             , octaveStart = octaveStart
             , octaveCount = octaveCount
@@ -358,7 +358,7 @@ twinkleTwinkleConfig =
             List.length twinkleTwinklePattern
     in
     { grid =
-        notesToGridV2
+        notesToGrid
             { stepsWithNotes = twinkleTwinklePattern
             , octaveStart = octaveStart
             , octaveCount = octaveCount
@@ -387,7 +387,7 @@ twinkleTwinkleChordsConfig =
             List.length twinkleTwinkleChordsPattern
     in
     { grid =
-        notesToGridV2
+        notesToGrid
             { stepsWithNotes = twinkleTwinkleChordsPattern
             , octaveStart = octaveStart
             , octaveCount = octaveCount
