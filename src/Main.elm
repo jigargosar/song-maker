@@ -162,7 +162,7 @@ type PlayState
     = Stopped
     | Playing
         { startTime : Float
-        , currentBeat : Int
+        , nextBeatToSchedule : Int
         }
 
 
@@ -384,36 +384,8 @@ update msg model =
         Play ->
             case model.playState of
                 Stopped ->
-                    let
-                        -- Play beat 0 immediately
-                        activeNotesBeat0 =
-                            getActiveNotesForBeat 0 model.grid
-
-                        -- Schedule beat 1 for proper timing
-                        activeNotesBeat1 =
-                            getActiveNotesForBeat 1 model.grid
-
-                        beat1Time =
-                            model.currentTime + beatDurationSeconds
-
-                        chordCmd =
-                            Cmd.batch
-                                [ -- Play beat 0 now
-                                  if List.isEmpty activeNotesBeat0 then
-                                    Cmd.none
-
-                                  else
-                                    playChord { notes = activeNotesBeat0, when = model.currentTime }
-                                , -- Schedule beat 1 at the right time
-                                  if List.isEmpty activeNotesBeat1 then
-                                    Cmd.none
-
-                                  else
-                                    playChord { notes = activeNotesBeat1, when = beat1Time }
-                                ]
-                    in
-                    ( { model | playState = Playing { startTime = model.currentTime, currentBeat = 0 } }
-                    , Cmd.batch [ wakeAudioContext (), chordCmd ]
+                    ( { model | playState = Playing { startTime = model.currentTime, nextBeatToSchedule = 0 } }
+                    , wakeAudioContext ()
                     )
 
                 Playing _ ->
@@ -438,7 +410,7 @@ update msg model =
                 Stopped ->
                     ( { model | currentTime = currentTime }, Cmd.none )
 
-                Playing { startTime, currentBeat } ->
+                Playing { startTime, nextBeatToSchedule } ->
                     let
                         elapsedTime =
                             currentTime - startTime
@@ -446,26 +418,23 @@ update msg model =
                         absoluteBeat =
                             floor (elapsedTime / beatDurationSeconds)
 
-                        currentGridBeat =
-                            modBy beatCount absoluteBeat
-
                         shouldSchedule =
-                            currentGridBeat /= currentBeat
+                            absoluteBeat >= nextBeatToSchedule
 
-                        nextBeatTime =
-                            startTime + toFloat (absoluteBeat + 1) * beatDurationSeconds
+                        beatTime =
+                            startTime + toFloat nextBeatToSchedule * beatDurationSeconds
 
-                        nextGridBeat =
-                            modBy beatCount (absoluteBeat + 1)
+                        gridBeat =
+                            modBy beatCount nextBeatToSchedule
 
                         chordCmd =
                             if shouldSchedule then
                                 let
-                                    nextBeatNotes =
-                                        getActiveNotesForBeat nextGridBeat model.grid
+                                    beatNotes =
+                                        getActiveNotesForBeat gridBeat model.grid
                                 in
-                                if not (List.isEmpty nextBeatNotes) then
-                                    playChord { notes = nextBeatNotes, when = nextBeatTime }
+                                if not (List.isEmpty beatNotes) then
+                                    playChord { notes = beatNotes, when = beatTime }
 
                                 else
                                     Cmd.none
@@ -475,7 +444,7 @@ update msg model =
                     in
                     ( { model
                         | currentTime = currentTime
-                        , playState = Playing { startTime = startTime, currentBeat = currentGridBeat }
+                        , playState = Playing { startTime = startTime, nextBeatToSchedule = if shouldSchedule then nextBeatToSchedule + 1 else nextBeatToSchedule }
                       }
                     , chordCmd
                     )
@@ -598,7 +567,7 @@ headerView model =
     header [ class "bg-white shadow-sm border-b border-gray-200 px-6 py-4" ]
         [ div [ class "flex items-center justify-between" ]
             [ h1 [ class "text-2xl font-bold text-gray-800" ]
-                [ text "Song Maker - Build 3" ]
+                [ text "Song Maker - Build 4" ]
             , div [ class "flex items-center gap-3" ]
                 [ case model.playState of
                     Playing _ ->
