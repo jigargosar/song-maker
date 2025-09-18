@@ -115,18 +115,23 @@ beatCount =
 -- Audio settings
 
 
-defaultBpm : Int
-defaultBpm =
-    240
+bpm : Int
+bpm =
+    40
 
 
-defaultNoteDuration : Float
-defaultNoteDuration =
-    0.4
+
+-- Note duration now matches beat duration for seamless envelope
 
 
-defaultNoteVolume : Float
-defaultNoteVolume =
+noteDuration : Float
+noteDuration =
+    --0.4
+    beatDurationSeconds
+
+
+noteVolume : Float
+noteVolume =
     0.8
 
 
@@ -136,7 +141,7 @@ defaultNoteVolume =
 
 beatDurationSeconds : Float
 beatDurationSeconds =
-    60.0 / toFloat defaultBpm
+    60.0 / toFloat bpm
 
 
 subdivisionDurationSeconds : Float
@@ -372,7 +377,7 @@ update msg model =
                                 getMidiNoteForIndex noteIndex
 
                             noteRecord =
-                                { note = midiNote, duration = defaultNoteDuration, volume = defaultNoteVolume }
+                                { note = midiNote, duration = noteDuration, volume = noteVolume }
                         in
                         Cmd.batch [ wakeAudioContext (), playChord { notes = [ noteRecord ], when = model.currentTime } ]
 
@@ -471,7 +476,7 @@ getActiveNotesForBeat beatIndex grid =
                 Just True ->
                     case List.drop noteIndex noteList |> List.head of
                         Just midiNote ->
-                            Just { note = midiNote, duration = defaultNoteDuration, volume = defaultNoteVolume }
+                            Just { note = midiNote, duration = noteDuration, volume = noteVolume }
 
                         Nothing ->
                             Nothing
@@ -609,7 +614,7 @@ footerView model =
     footer [ class "bg-white border-t border-gray-200 px-6 py-3" ]
         [ div [ class "flex items-center justify-between text-sm text-gray-600" ]
             [ div []
-                [ text ("BPM: " ++ String.fromInt defaultBpm) ]
+                [ text ("BPM: " ++ String.fromInt bpm) ]
             , div []
                 [ text ("Grid: " ++ String.fromInt noteCount ++ " notes × " ++ String.fromInt beatCount ++ " beats | Bars: " ++ String.fromInt barCount ++ " | Beats/Bar: " ++ String.fromInt beatsPerBar ++ " | Splits: " ++ String.fromInt splitBeats) ]
             , div []
