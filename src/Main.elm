@@ -151,6 +151,10 @@ type alias Model =
     { grid : List (List Bool)
     , playState : PlayState
     , currentTime : Float
+    , bpm : Int
+    , barCount : Int
+    , beatsPerBar : Int
+    , splitBeats : Int
     }
 
 
@@ -937,7 +941,16 @@ gridView model =
 main : Program () Model Msg
 main =
     Browser.element
-        { init = \_ -> ( { grid = twinkleTwinkleChordsGrid, playState = Stopped, currentTime = 0.0 }, Cmd.none )
+                { init = \_ ->
+                        ( { grid = twinkleTwinkleChordsGrid
+                            , playState = Stopped
+                            , currentTime = 0.0
+                            , bpm = 120
+                            , barCount = 4
+                            , beatsPerBar = 2
+                            , splitBeats = 2
+                            }
+                        , Cmd.none )
         , update = update
         , subscriptions = \_ -> timeSync TimeSync
         , view = view
