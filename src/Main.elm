@@ -120,9 +120,6 @@ bpm =
     120
 
 
-
-
-
 noteDuration : Float
 noteDuration =
     (60.0 / toFloat bpm) / toFloat splitBeats
@@ -131,9 +128,6 @@ noteDuration =
 noteVolume : Float
 noteVolume =
     0.8
-
-
-
 
 
 gridColumns : Int
@@ -272,6 +266,95 @@ emptyGrid =
     List.repeat noteCount (List.repeat stepCount False)
 
 
+notesToGridIndependent : { stepsWithNotes : List (List String), octaveStart : Int, octaveCount : Int, stepCount : Int } -> List (List Bool)
+notesToGridIndependent o =
+    let
+        noteCount_ =
+            o.octaveCount * 7
+
+        emptyGridLocal =
+            List.repeat noteCount_ (List.repeat o.stepCount False)
+
+        parseNote : String -> Maybe ( String, Int )
+        parseNote noteStr =
+            case String.toList noteStr of
+                [] ->
+                    Nothing
+
+                [ noteLetter ] ->
+                    Nothing
+
+                noteLetter :: octaveChars ->
+                    case String.fromList octaveChars |> String.toInt of
+                        Just octave ->
+                            Just ( String.fromChar noteLetter, octave )
+
+                        Nothing ->
+                            Nothing
+
+        noteToGridIndex : String -> Maybe Int
+        noteToGridIndex noteStr =
+            case parseNote noteStr of
+                Just ( noteLetter, octave ) ->
+                    let
+                        noteOffset =
+                            case noteLetter of
+                                "C" ->
+                                    0
+
+                                "D" ->
+                                    1
+
+                                "E" ->
+                                    2
+
+                                "F" ->
+                                    3
+
+                                "G" ->
+                                    4
+
+                                "A" ->
+                                    5
+
+                                "B" ->
+                                    6
+
+                                _ ->
+                                    -1
+
+                        octaveOffset =
+                            octave - o.octaveStart
+
+                        gridIndex =
+                            octaveOffset * 7 + noteOffset
+                    in
+                    if noteOffset >= 0 && octaveOffset >= 0 && gridIndex < noteCount_ then
+                        Just gridIndex
+
+                    else
+                        Nothing
+
+                Nothing ->
+                    Nothing
+
+        setNoteAtStep : String -> Int -> List (List Bool) -> List (List Bool)
+        setNoteAtStep noteName stepIndex grid =
+            case noteToGridIndex noteName of
+                Just noteIndex ->
+                    toggleGridCell noteIndex stepIndex grid
+
+                Nothing ->
+                    grid
+
+        processStep : Int -> List String -> List (List Bool) -> List (List Bool)
+        processStep stepIndex noteNames grid =
+            List.foldl (\noteName currentGrid -> setNoteAtStep noteName stepIndex currentGrid) grid noteNames
+    in
+    List.indexedMap processStep o.stepsWithNotes
+        |> List.foldl (\stepProcessor currentGrid -> stepProcessor currentGrid) emptyGridLocal
+
+
 notesToGrid : List (List String) -> List (List Bool)
 notesToGrid stepsWithNotes =
     let
@@ -280,13 +363,14 @@ notesToGrid stepsWithNotes =
             case findNoteIndex noteName of
                 Just noteIndex ->
                     toggleGridCell noteIndex stepIndex grid
+
                 Nothing ->
                     grid
 
         findNoteIndex : String -> Maybe Int
         findNoteIndex noteName =
-            List.indexedMap (\index label -> (index, label)) noteLabels
-                |> List.filter (\(_, label) -> label == noteName)
+            List.indexedMap (\index label -> ( index, label )) noteLabels
+                |> List.filter (\( _, label ) -> label == noteName)
                 |> List.head
                 |> Maybe.map Tuple.first
 
@@ -304,14 +388,31 @@ notesToGrid stepsWithNotes =
 
 vShapePattern : List (List String)
 vShapePattern =
-    [ ["C3"], ["D3"], ["E3"], ["F3"], ["G3"], ["A3"], ["B3"], ["C4"]  -- Ascending
-    , ["C4"], ["B3"], ["A3"], ["G3"], ["F3"], ["E3"], ["D3"], ["C3"]  -- Descending
+    [ [ "C3" ]
+    , [ "D3" ]
+    , [ "E3" ]
+    , [ "F3" ]
+    , [ "G3" ]
+    , [ "A3" ]
+    , [ "B3" ]
+    , [ "C4" ] -- Ascending
+    , [ "C4" ]
+    , [ "B3" ]
+    , [ "A3" ]
+    , [ "G3" ]
+    , [ "F3" ]
+    , [ "E3" ]
+    , [ "D3" ]
+    , [ "C3" ] -- Descending
     ]
 
 
 vShapeGrid : List (List Bool)
 vShapeGrid =
     notesToGrid vShapePattern
+
+
+
 -- Empty demo grid - no preset melody
 
 
@@ -610,8 +711,7 @@ gridView model =
             ]
             ([ div [ class "" ] [] -- Empty corner cell
              ]
-                ++
-                   List.indexedMap
+                ++ List.indexedMap
                     (\stepIndex _ ->
                         div [ class "flex items-center justify-center text-xs font-bold text-gray-600" ]
                             [ text (String.fromInt (stepIndex + 1)) ]
@@ -624,8 +724,7 @@ gridView model =
                               div [ class "flex items-center justify-center text-xs font-bold text-gray-700 bg-gray-200 rounded" ]
                                 [ text (Maybe.withDefault "?" (List.drop noteIndex noteLabels |> List.head)) ]
                             ]
-                                ++
-                                   List.indexedMap
+                                ++ List.indexedMap
                                     (\stepIndex isActive ->
                                         let
                                             cellClass =
