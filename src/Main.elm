@@ -121,7 +121,6 @@ bpm =
 
 
 
--- Note duration now matches beat duration for seamless envelope
 
 
 noteDuration : Float
@@ -135,8 +134,6 @@ noteVolume =
 
 
 
--- Derived values
--- 120 BPM = 0.5 seconds per beat
 
 
 gridColumns : Int
@@ -145,7 +142,6 @@ gridColumns =
 
 
 
--- beats + note label column
 -- MODEL
 
 
@@ -158,7 +154,7 @@ type PlayState
 
 
 type alias Model =
-    { grid : List (List Bool) -- noteCount × stepCount, [note][beat]
+    { grid : List (List Bool)
     , playState : PlayState
     , currentTime : Float
     }
@@ -283,44 +279,22 @@ emptyGrid =
 vShapeGrid : List (List Bool)
 vShapeGrid =
     emptyGrid
-        -- Ascending: C3 to C4 (beats 1-8)
         |> toggleGridCell 0 0
-        -- C3 at beat 1
         |> toggleGridCell 1 1
-        -- D3 at beat 2
         |> toggleGridCell 2 2
-        -- E3 at beat 3
         |> toggleGridCell 3 3
-        -- F3 at beat 4
         |> toggleGridCell 4 4
-        -- G3 at beat 5
         |> toggleGridCell 5 5
-        -- A3 at beat 6
         |> toggleGridCell 6 6
-        -- B3 at beat 7
         |> toggleGridCell 7 7
-        -- C4 at beat 8
-        -- Peak: hold C4 for 2 beats (beats 8-9)
         |> toggleGridCell 7 8
-        -- C4 at beat 9 (held)
-        -- Descending: C4 back to C3 (beats 10-16)
         |> toggleGridCell 6 9
-        -- B3 at beat 10
         |> toggleGridCell 5 10
-        -- A3 at beat 11
         |> toggleGridCell 4 11
-        -- G3 at beat 12
         |> toggleGridCell 3 12
-        -- F3 at beat 13
         |> toggleGridCell 2 13
-        -- E3 at beat 14
         |> toggleGridCell 1 14
-        -- D3 at beat 15
         |> toggleGridCell 0 15
-
-
-
--- C3 at beat 16
 -- Empty demo grid - no preset melody
 
 
@@ -499,8 +473,8 @@ toggleGridCell noteIndex stepIndex grid =
         (\nIdx noteRow ->
             if nIdx == noteIndex then
                 List.indexedMap
-                    (\bIdx isActive ->
-                        if bIdx == stepIndex then
+                    (\sIdx isActive ->
+                        if sIdx == stepIndex then
                             not isActive
 
                         else
@@ -539,7 +513,7 @@ formatTime seconds =
             round ((remainingSecs - toFloat wholeSeconds) * 10)
 
         -- Format with proper padding
-        secsStr =
+        secondsString =
             if wholeSeconds < 10 then
                 "0" ++ String.fromInt wholeSeconds
 
@@ -547,7 +521,7 @@ formatTime seconds =
                 String.fromInt wholeSeconds
 
         formattedTime =
-            String.fromInt minutes ++ ":" ++ secsStr ++ "." ++ String.fromInt decimalPart
+            String.fromInt minutes ++ ":" ++ secondsString ++ "." ++ String.fromInt decimalPart
     in
     formattedTime
 
@@ -602,7 +576,7 @@ footerView model =
             [ div []
                 [ text ("BPM: " ++ String.fromInt bpm) ]
             , div []
-                [ text ("Grid: " ++ String.fromInt noteCount ++ " notes × " ++ String.fromInt stepCount ++ " beats | Bars: " ++ String.fromInt barCount ++ " | Beats/Bar: " ++ String.fromInt beatsPerBar ++ " | Splits: " ++ String.fromInt splitBeats) ]
+                [ text ("Grid: " ++ String.fromInt noteCount ++ " notes × " ++ String.fromInt stepCount ++ " steps | Bars: " ++ String.fromInt barCount ++ " | Beats/Bar: " ++ String.fromInt beatsPerBar ++ " | Splits: " ++ String.fromInt splitBeats) ]
             , div []
                 [ text "Use mouse to toggle notes" ]
             ]
@@ -619,7 +593,7 @@ gridView model =
             ]
             ([ div [ class "" ] [] -- Empty corner cell
              ]
-                ++ -- Beat numbers header
+                ++
                    List.indexedMap
                     (\stepIndex _ ->
                         div [ class "flex items-center justify-center text-xs font-bold text-gray-600" ]
@@ -633,7 +607,7 @@ gridView model =
                               div [ class "flex items-center justify-center text-xs font-bold text-gray-700 bg-gray-200 rounded" ]
                                 [ text (Maybe.withDefault "?" (List.drop noteIndex noteLabels |> List.head)) ]
                             ]
-                                ++ -- Beat cells for this note
+                                ++
                                    List.indexedMap
                                     (\stepIndex isActive ->
                                         let
