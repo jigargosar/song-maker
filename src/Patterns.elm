@@ -1,15 +1,10 @@
 module Patterns exposing
     ( PatternConfig
     , twinkleTwinkleChordsConfig
-    , twinkleTwinkleChordsPattern
     , twinkleTwinkleChordsV2Config
     , twinkleTwinkleChordsV3Config
     , twinkleTwinkleConfig
-    , twinkleTwinklePattern
-    , twinkleTwinkleV2Pattern
-    , twinkleTwinkleV3Pattern
     , vShapeConfig
-    , vShapePattern
     )
 
 -- COMMON TYPES AND FUNCTIONS
@@ -25,27 +20,6 @@ type alias PatternConfig =
     , octaveStart : Int
     , octaveCount : Int
     }
-
-
-toggleGridCell : Int -> Int -> List (List Bool) -> List (List Bool)
-toggleGridCell noteIndex stepIndex grid =
-    List.indexedMap
-        (\nIdx noteRow ->
-            if nIdx == noteIndex then
-                List.indexedMap
-                    (\sIdx isActive ->
-                        if sIdx == stepIndex then
-                            not isActive
-
-                        else
-                            isActive
-                    )
-                    noteRow
-
-            else
-                noteRow
-        )
-        grid
 
 
 notesToGrid :
