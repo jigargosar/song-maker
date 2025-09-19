@@ -695,18 +695,14 @@ viewGridCell currentStep model noteIndex stepIndex =
                     False
 
         cellClass =
-            (if isActive then
+            if isActive then
                 "bg-blue-600 hover:bg-blue-700"
 
-             else
-                "bg-gray-300 hover:bg-gray-400"
-            )
-                ++ (if isCurrentColumn then
-                        " ring-2 ring-green-500"
+            else if isCurrentColumn then
+                "bg-blue-200 hover:bg-blue-300"
 
-                    else
-                        ""
-                   )
+            else
+                "bg-blue-100 hover:bg-blue-200"
     in
     div
         [ class cellClass
