@@ -7,6 +7,8 @@ module Patterns exposing
     , vShapeConfig
     )
 
+import Types exposing (ScaleType(..), RootNote(..))
+
 -- COMMON TYPES AND FUNCTIONS
 
 
@@ -19,6 +21,8 @@ type alias PatternConfig =
     , name : String
     , octaveStart : Int
     , octaveCount : Int
+    , scaleType : ScaleType
+    , rootNote : RootNote
     }
 
 
@@ -460,6 +464,8 @@ vShapeConfig =
     , name = "V-Shape"
     , octaveStart = octaveStart
     , octaveCount = octaveCount
+    , scaleType = Major
+    , rootNote = C
     }
 
 
@@ -489,6 +495,8 @@ twinkleTwinkleConfig =
     , name = "Twinkle Twinkle"
     , octaveStart = octaveStart
     , octaveCount = octaveCount
+    , scaleType = Major
+    , rootNote = C
     }
 
 
@@ -518,6 +526,8 @@ twinkleTwinkleChordsConfig =
     , name = "Twinkle Twinkle Chords"
     , octaveStart = octaveStart
     , octaveCount = octaveCount
+    , scaleType = Major
+    , rootNote = C
     }
 
 
@@ -547,6 +557,8 @@ twinkleTwinkleChordsV2Config =
     , name = "Twinkle Chords V2"
     , octaveStart = octaveStart
     , octaveCount = octaveCount
+    , scaleType = Major
+    , rootNote = C
     }
 
 
@@ -576,4 +588,6 @@ twinkleTwinkleChordsV3Config =
     , name = "Twinkle Chords V3"
     , octaveStart = octaveStart
     , octaveCount = octaveCount
+    , scaleType = Major
+    , rootNote = C
     }

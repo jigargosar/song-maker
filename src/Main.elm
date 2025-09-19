@@ -5,6 +5,7 @@ import Html as H exposing (Html, div, text)
 import Html.Attributes as HA exposing (class, style)
 import Html.Events as HE
 import Patterns
+import Types exposing (ScaleType(..), RootNote(..))
 
 
 
@@ -28,230 +29,6 @@ midiC4 =
     60
 
 
-type ScaleType
-    = Major
-    | Pentatonic
-    | Chromatic
-
-
-type RootNote
-    = C
-    | CSharp
-    | D
-    | DSharp
-    | E
-    | F
-    | FSharp
-    | G
-    | GSharp
-    | A
-    | ASharp
-    | B
-
-
-chromaticNoteNames : List String
-chromaticNoteNames =
-    [ "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B" ]
-
-
-getScalePattern : ScaleType -> List Int
-getScalePattern scaleType =
-    case scaleType of
-        Major ->
-            [ 0, 2, 4, 5, 7, 9, 11 ]
-
-        Pentatonic ->
-            [ 0, 2, 4, 7, 9 ]
-
-        Chromatic ->
-            [ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11 ]
-
-
-getRootNoteOffset : RootNote -> Int
-getRootNoteOffset rootNote =
-    case rootNote of
-        C ->
-            0
-
-        CSharp ->
-            1
-
-        D ->
-            2
-
-        DSharp ->
-            3
-
-        E ->
-            4
-
-        F ->
-            5
-
-        FSharp ->
-            6
-
-        G ->
-            7
-
-        GSharp ->
-            8
-
-        A ->
-            9
-
-        ASharp ->
-            10
-
-        B ->
-            11
-
-
-getScaleNoteNames : ScaleType -> RootNote -> List String
-getScaleNoteNames scaleType rootNote =
-    let
-        rootOffset =
-            getRootNoteOffset rootNote
-
-        scalePattern =
-            getScalePattern scaleType
-    in
-    List.map
-        (\semitoneOffset ->
-            let
-                chromaticIndex =
-                    modBy 12 (rootOffset + semitoneOffset)
-            in
-            Maybe.withDefault "?" (List.drop chromaticIndex chromaticNoteNames |> List.head)
-        )
-        scalePattern
-
-
-scaleTypeToString : ScaleType -> String
-scaleTypeToString scaleType =
-    case scaleType of
-        Major ->
-            "Major"
-
-        Pentatonic ->
-            "Pentatonic"
-
-        Chromatic ->
-            "Chromatic"
-
-
-stringToScaleType : String -> ScaleType
-stringToScaleType str =
-    case str of
-        "Major" ->
-            Major
-
-        "Pentatonic" ->
-            Pentatonic
-
-        "Chromatic" ->
-            Chromatic
-
-        _ ->
-            Major
-
-
-rootNoteToString : RootNote -> String
-rootNoteToString rootNote =
-    case rootNote of
-        C ->
-            "C"
-
-        CSharp ->
-            "C#"
-
-        D ->
-            "D"
-
-        DSharp ->
-            "D#"
-
-        E ->
-            "E"
-
-        F ->
-            "F"
-
-        FSharp ->
-            "F#"
-
-        G ->
-            "G"
-
-        GSharp ->
-            "G#"
-
-        A ->
-            "A"
-
-        ASharp ->
-            "A#"
-
-        B ->
-            "B"
-
-
-stringToRootNote : String -> RootNote
-stringToRootNote str =
-    case str of
-        "C" ->
-            C
-
-        "C#" ->
-            CSharp
-
-        "D" ->
-            D
-
-        "D#" ->
-            DSharp
-
-        "E" ->
-            E
-
-        "F" ->
-            F
-
-        "F#" ->
-            FSharp
-
-        "G" ->
-            G
-
-        "G#" ->
-            GSharp
-
-        "A" ->
-            A
-
-        "A#" ->
-            ASharp
-
-        "B" ->
-            B
-
-        _ ->
-            C
-
-
-allScaleTypes : List ScaleType
-allScaleTypes =
-    [ Major, Pentatonic, Chromatic ]
-
-
-allRootNotes : List RootNote
-allRootNotes =
-    [ C, CSharp, D, DSharp, E, F, FSharp, G, GSharp, A, ASharp, B ]
-
-
-notesPerOctave : ScaleType -> Int
-notesPerOctave scaleType =
-    List.length (getScalePattern scaleType)
 
 
 totalSteps : { a | barCount : Int, beatsPerBar : Int, splitBeats : Int } -> Int
@@ -261,7 +38,7 @@ totalSteps record =
 
 totalNotes : { a | octaveCount : Int, scaleType : ScaleType } -> Int
 totalNotes record =
-    record.octaveCount * notesPerOctave record.scaleType
+    record.octaveCount * Types.notesPerOctave record.scaleType
 
 
 noteDuration : { a | bpm : Int, splitBeats : Int } -> Float
@@ -279,17 +56,17 @@ noteLabels record =
             record.startingOctave
 
         scaleNoteNames =
-            getScaleNoteNames record.scaleType record.rootNote
+            Types.getScaleNoteNames record.scaleType record.rootNote
     in
     List.range 0 (noteCount_ - 1)
         |> List.map
             (\gridIndex ->
                 let
                     octaveOffset =
-                        gridIndex // notesPerOctave record.scaleType
+                        gridIndex // Types.notesPerOctave record.scaleType
 
                     noteIndex =
-                        modBy (notesPerOctave record.scaleType) gridIndex
+                        modBy (Types.notesPerOctave record.scaleType) gridIndex
 
                     octave =
                         startingOctave_ + octaveOffset
@@ -347,10 +124,10 @@ gridIndexToMusicalPosition : Int -> { a | startingOctave : Int, scaleType : Scal
 gridIndexToMusicalPosition gridIndex record =
     let
         octaveOffset =
-            gridIndex // notesPerOctave record.scaleType
+            gridIndex // Types.notesPerOctave record.scaleType
 
         noteIndex =
-            modBy (notesPerOctave record.scaleType) gridIndex
+            modBy (Types.notesPerOctave record.scaleType) gridIndex
 
         octave =
             record.startingOctave + octaveOffset
@@ -370,11 +147,11 @@ musicalPositionToMidi position record =
 
         -- Root note offset
         rootOffset =
-            getRootNoteOffset record.rootNote
+            Types.getRootNoteOffset record.rootNote
 
         -- Semitone offset for this note in the selected scale
         scalePattern =
-            getScalePattern record.scaleType
+            Types.getScalePattern record.scaleType
 
         semitoneOffset =
             Maybe.withDefault 0 (List.drop position.noteIndex scalePattern |> List.head)
@@ -556,6 +333,8 @@ update msg model =
                 , splitBeats = newPattern.splitBeats
                 , startingOctave = newPattern.octaveStart
                 , octaveCount = newPattern.octaveCount
+                , scaleType = newPattern.scaleType
+                , rootNote = newPattern.rootNote
                 , playState = playState
                 , drawState = NotDrawing
               }
@@ -903,31 +682,31 @@ headerView model =
                     )
                 , H.select
                     [ class "bg-white border border-gray-300 rounded-lg px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    , HE.onInput (stringToScaleType >> ChangeScaleType)
+                    , HE.onInput (Types.stringToScaleType >> ChangeScaleType)
                     ]
                     (List.map
                         (\scaleType ->
                             H.option
-                                [ HA.value (scaleTypeToString scaleType)
+                                [ HA.value (Types.scaleTypeToString scaleType)
                                 , HA.selected (scaleType == model.scaleType)
                                 ]
-                                [ text (scaleTypeToString scaleType) ]
+                                [ text (Types.scaleTypeToString scaleType) ]
                         )
-                        allScaleTypes
+                        Types.allScaleTypes
                     )
                 , H.select
                     [ class "bg-white border border-gray-300 rounded-lg px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    , HE.onInput (stringToRootNote >> ChangeRootNote)
+                    , HE.onInput (Types.stringToRootNote >> ChangeRootNote)
                     ]
                     (List.map
                         (\rootNote ->
                             H.option
-                                [ HA.value (rootNoteToString rootNote)
+                                [ HA.value (Types.rootNoteToString rootNote)
                                 , HA.selected (rootNote == model.rootNote)
                                 ]
-                                [ text (rootNoteToString rootNote) ]
+                                [ text (Types.rootNoteToString rootNote) ]
                         )
-                        allRootNotes
+                        Types.allRootNotes
                     )
                 , numberInput "Start" model.startingOctave ChangeStartingOctave
                 , numberInput "Oct" model.octaveCount ChangeOctaveCount
@@ -1125,8 +904,8 @@ init _ =
       , noteVolume = 0.8
       , selectedPatternIndex = defaultPatternIndex
       , drawState = NotDrawing
-      , scaleType = Major
-      , rootNote = C
+      , scaleType = selectedPattern.scaleType
+      , rootNote = selectedPattern.rootNote
       }
     , Cmd.none
     )
