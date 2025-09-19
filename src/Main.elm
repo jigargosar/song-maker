@@ -672,7 +672,7 @@ gridView model =
                         (\noteIndex ->
                             [ renderNoteLabel noteLabels_ noteIndex ]
                                 ++ (List.range 0 (stepCount_ - 1)
-                                        |> List.map (viewGridCell model noteIndex)
+                                        |> List.map (viewGridCell currentStep model noteIndex)
                                    )
                         )
                     |> List.concat
@@ -680,18 +680,33 @@ gridView model =
         )
 
 
-viewGridCell : Model -> Int -> Int -> Html Msg
-viewGridCell model noteIndex stepIndex =
+viewGridCell : Maybe Int -> Model -> Int -> Int -> Html Msg
+viewGridCell currentStep model noteIndex stepIndex =
     let
         isActive =
             getCellState noteIndex stepIndex model
 
+        isCurrentColumn =
+            case currentStep of
+                Just idx ->
+                    idx == stepIndex
+
+                Nothing ->
+                    False
+
         cellClass =
-            if isActive then
+            (if isActive then
                 "bg-blue-600 hover:bg-blue-700"
 
-            else
+             else
                 "bg-gray-300 hover:bg-gray-400"
+            )
+                ++ (if isCurrentColumn then
+                        " ring-2 ring-green-500"
+
+                    else
+                        ""
+                   )
     in
     div
         [ class cellClass
