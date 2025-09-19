@@ -282,7 +282,8 @@ update msg model =
 
                         scrollCmd =
                             if shouldSchedule then
-                                scrollToActiveStep { containerId = "grid-container", headerId = "active-step-header" }
+                                --scrollToActiveStep { containerId = "grid-container", headerId = "active-step-header" }
+                                Cmd.none
 
                             else
                                 Cmd.none
