@@ -1,9 +1,9 @@
 port module Main exposing (main)
 
 import Browser
-import Html exposing (Html, button, div, footer, h1, header, text)
-import Html.Attributes exposing (class, style)
-import Html.Events exposing (onClick)
+import Html as H exposing (Html, div, text)
+import Html.Attributes as HA exposing (class, style)
+import Html.Events as HE
 import Patterns
 
 
@@ -499,14 +499,14 @@ view model =
 
 headerView : Model -> Html Msg
 headerView model =
-    header [ class "bg-white shadow-sm border-b border-gray-200 px-6 py-4" ]
+    H.header [ class "bg-white shadow-sm border-b border-gray-200 px-6 py-4" ]
         [ div [ class "flex items-center justify-between" ]
-            [ h1 [ class "text-2xl font-bold text-gray-800" ]
+            [ H.h1 [ class "text-2xl font-bold text-gray-800" ]
                 [ text "Song Maker - Build 7" ]
             , div [ class "flex items-center gap-3" ]
-                [ Html.select
+                [ H.select
                     [ class "bg-white border border-gray-300 rounded-lg px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    , Html.Events.onInput
+                    , HE.onInput
                         (\indexStr ->
                             case String.toInt indexStr of
                                 Just index ->
@@ -518,9 +518,9 @@ headerView model =
                     ]
                     (List.indexedMap
                         (\index pattern ->
-                            Html.option
-                                [ Html.Attributes.value (String.fromInt index)
-                                , Html.Attributes.selected (index == model.selectedPatternIndex)
+                            H.option
+                                [ HA.value (String.fromInt index)
+                                , HA.selected (index == model.selectedPatternIndex)
                                 ]
                                 [ text pattern.name ]
                         )
@@ -528,21 +528,21 @@ headerView model =
                     )
                 , case model.playState of
                     Playing _ ->
-                        button
+                        H.button
                             [ class "bg-red-600 hover:brightness-110 text-white font-bold py-2 px-6 rounded-lg shadow-md transition-all"
-                            , onClick Stop
+                            , HE.onClick Stop
                             ]
                             [ text "Stop" ]
 
                     Stopped ->
-                        button
+                        H.button
                             [ class "bg-green-600 hover:brightness-110 text-white font-bold py-2 px-6 rounded-lg shadow-md transition-all"
-                            , onClick Play
+                            , HE.onClick Play
                             ]
                             [ text "Play" ]
-                , button
+                , H.button
                     [ class "bg-gray-600 hover:brightness-110 text-white font-bold py-2 px-4 rounded-lg shadow-md transition-all"
-                    , onClick ClearGrid
+                    , HE.onClick ClearGrid
                     ]
                     [ text "Clear" ]
                 ]
@@ -554,7 +554,7 @@ headerView model =
 
 footerView : Model -> Html Msg
 footerView model =
-    footer [ class "bg-white border-t border-gray-200 px-6 py-3" ]
+    H.footer [ class "bg-white border-t border-gray-200 px-6 py-3" ]
         [ div [ class "flex items-center justify-between text-sm text-gray-600" ]
             [ div []
                 [ text ("BPM: " ++ String.fromInt model.bpm) ]
@@ -616,7 +616,7 @@ gridView model =
                                                     in
                                                     div
                                                         [ class cellClass
-                                                        , onClick (ToggleCell noteIndex stepIndex)
+                                                        , HE.onClick (ToggleCell noteIndex stepIndex)
                                                         ]
                                                         []
                                                 )
