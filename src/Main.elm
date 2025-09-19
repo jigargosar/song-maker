@@ -28,19 +28,230 @@ midiC4 =
     60
 
 
-majorScalePattern : List Int
-majorScalePattern =
-    [ 0, 2, 4, 5, 7, 9, 11 ]
+type ScaleType
+    = Major
+    | Pentatonic
+    | Chromatic
 
 
-majorScaleNoteNames : List String
-majorScaleNoteNames =
-    [ "C", "D", "E", "F", "G", "A", "B" ]
+type RootNote
+    = C
+    | CSharp
+    | D
+    | DSharp
+    | E
+    | F
+    | FSharp
+    | G
+    | GSharp
+    | A
+    | ASharp
+    | B
 
 
-notesPerOctave : Int
-notesPerOctave =
-    List.length majorScaleNoteNames
+chromaticNoteNames : List String
+chromaticNoteNames =
+    [ "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B" ]
+
+
+getScalePattern : ScaleType -> List Int
+getScalePattern scaleType =
+    case scaleType of
+        Major ->
+            [ 0, 2, 4, 5, 7, 9, 11 ]
+
+        Pentatonic ->
+            [ 0, 2, 4, 7, 9 ]
+
+        Chromatic ->
+            [ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11 ]
+
+
+getRootNoteOffset : RootNote -> Int
+getRootNoteOffset rootNote =
+    case rootNote of
+        C ->
+            0
+
+        CSharp ->
+            1
+
+        D ->
+            2
+
+        DSharp ->
+            3
+
+        E ->
+            4
+
+        F ->
+            5
+
+        FSharp ->
+            6
+
+        G ->
+            7
+
+        GSharp ->
+            8
+
+        A ->
+            9
+
+        ASharp ->
+            10
+
+        B ->
+            11
+
+
+getScaleNoteNames : ScaleType -> RootNote -> List String
+getScaleNoteNames scaleType rootNote =
+    let
+        rootOffset =
+            getRootNoteOffset rootNote
+
+        scalePattern =
+            getScalePattern scaleType
+    in
+    List.map
+        (\semitoneOffset ->
+            let
+                chromaticIndex =
+                    modBy 12 (rootOffset + semitoneOffset)
+            in
+            Maybe.withDefault "?" (List.drop chromaticIndex chromaticNoteNames |> List.head)
+        )
+        scalePattern
+
+
+scaleTypeToString : ScaleType -> String
+scaleTypeToString scaleType =
+    case scaleType of
+        Major ->
+            "Major"
+
+        Pentatonic ->
+            "Pentatonic"
+
+        Chromatic ->
+            "Chromatic"
+
+
+stringToScaleType : String -> ScaleType
+stringToScaleType str =
+    case str of
+        "Major" ->
+            Major
+
+        "Pentatonic" ->
+            Pentatonic
+
+        "Chromatic" ->
+            Chromatic
+
+        _ ->
+            Major
+
+
+rootNoteToString : RootNote -> String
+rootNoteToString rootNote =
+    case rootNote of
+        C ->
+            "C"
+
+        CSharp ->
+            "C#"
+
+        D ->
+            "D"
+
+        DSharp ->
+            "D#"
+
+        E ->
+            "E"
+
+        F ->
+            "F"
+
+        FSharp ->
+            "F#"
+
+        G ->
+            "G"
+
+        GSharp ->
+            "G#"
+
+        A ->
+            "A"
+
+        ASharp ->
+            "A#"
+
+        B ->
+            "B"
+
+
+stringToRootNote : String -> RootNote
+stringToRootNote str =
+    case str of
+        "C" ->
+            C
+
+        "C#" ->
+            CSharp
+
+        "D" ->
+            D
+
+        "D#" ->
+            DSharp
+
+        "E" ->
+            E
+
+        "F" ->
+            F
+
+        "F#" ->
+            FSharp
+
+        "G" ->
+            G
+
+        "G#" ->
+            GSharp
+
+        "A" ->
+            A
+
+        "A#" ->
+            ASharp
+
+        "B" ->
+            B
+
+        _ ->
+            C
+
+
+allScaleTypes : List ScaleType
+allScaleTypes =
+    [ Major, Pentatonic, Chromatic ]
+
+
+allRootNotes : List RootNote
+allRootNotes =
+    [ C, CSharp, D, DSharp, E, F, FSharp, G, GSharp, A, ASharp, B ]
+
+
+notesPerOctave : ScaleType -> Int
+notesPerOctave scaleType =
+    List.length (getScalePattern scaleType)
 
 
 totalSteps : { a | barCount : Int, beatsPerBar : Int, splitBeats : Int } -> Int
@@ -48,9 +259,9 @@ totalSteps record =
     record.barCount * record.beatsPerBar * record.splitBeats
 
 
-totalNotes : { a | octaveCount : Int } -> Int
+totalNotes : { a | octaveCount : Int, scaleType : ScaleType } -> Int
 totalNotes record =
-    record.octaveCount * notesPerOctave
+    record.octaveCount * notesPerOctave record.scaleType
 
 
 noteDuration : { a | bpm : Int, splitBeats : Int } -> Float
@@ -58,7 +269,7 @@ noteDuration record =
     (60.0 / toFloat record.bpm) / toFloat record.splitBeats
 
 
-noteLabels : { a | octaveCount : Int, startingOctave : Int } -> List String
+noteLabels : { a | octaveCount : Int, startingOctave : Int, scaleType : ScaleType, rootNote : RootNote } -> List String
 noteLabels record =
     let
         noteCount_ =
@@ -66,22 +277,25 @@ noteLabels record =
 
         startingOctave_ =
             record.startingOctave
+
+        scaleNoteNames =
+            getScaleNoteNames record.scaleType record.rootNote
     in
     List.range 0 (noteCount_ - 1)
         |> List.map
             (\gridIndex ->
                 let
                     octaveOffset =
-                        gridIndex // notesPerOctave
+                        gridIndex // notesPerOctave record.scaleType
 
                     noteIndex =
-                        modBy notesPerOctave gridIndex
+                        modBy (notesPerOctave record.scaleType) gridIndex
 
                     octave =
                         startingOctave_ + octaveOffset
 
                     noteName =
-                        Maybe.withDefault "?" (List.drop noteIndex majorScaleNoteNames |> List.head)
+                        Maybe.withDefault "?" (List.drop noteIndex scaleNoteNames |> List.head)
                 in
                 noteName ++ String.fromInt octave
             )
@@ -118,6 +332,8 @@ type alias Model =
     , noteVolume : Float
     , selectedPatternIndex : Int
     , drawState : DrawState
+    , scaleType : ScaleType
+    , rootNote : RootNote
     }
 
 
@@ -127,14 +343,14 @@ type alias MusicalPosition =
     }
 
 
-gridIndexToMusicalPosition : Int -> { a | startingOctave : Int } -> MusicalPosition
+gridIndexToMusicalPosition : Int -> { a | startingOctave : Int, scaleType : ScaleType } -> MusicalPosition
 gridIndexToMusicalPosition gridIndex record =
     let
         octaveOffset =
-            gridIndex // notesPerOctave
+            gridIndex // notesPerOctave record.scaleType
 
         noteIndex =
-            modBy notesPerOctave gridIndex
+            modBy (notesPerOctave record.scaleType) gridIndex
 
         octave =
             record.startingOctave + octaveOffset
@@ -142,8 +358,8 @@ gridIndexToMusicalPosition gridIndex record =
     { octave = octave, noteIndex = noteIndex }
 
 
-musicalPositionToMidi : MusicalPosition -> Int
-musicalPositionToMidi position =
+musicalPositionToMidi : MusicalPosition -> { a | scaleType : ScaleType, rootNote : RootNote } -> Int
+musicalPositionToMidi position record =
     let
         octaveOffsetFromC4 =
             position.octave - 4
@@ -152,20 +368,27 @@ musicalPositionToMidi position =
         baseMidiForC =
             midiC4 + (octaveOffsetFromC4 * 12)
 
-        -- Semitone offset for this note in major scale
+        -- Root note offset
+        rootOffset =
+            getRootNoteOffset record.rootNote
+
+        -- Semitone offset for this note in the selected scale
+        scalePattern =
+            getScalePattern record.scaleType
+
         semitoneOffset =
-            Maybe.withDefault 0 (List.drop position.noteIndex majorScalePattern |> List.head)
+            Maybe.withDefault 0 (List.drop position.noteIndex scalePattern |> List.head)
     in
-    baseMidiForC + semitoneOffset
+    baseMidiForC + rootOffset + semitoneOffset
 
 
-getMidiNoteForIndex : Int -> { a | startingOctave : Int } -> Int
+getMidiNoteForIndex : Int -> { a | startingOctave : Int, scaleType : ScaleType, rootNote : RootNote } -> Int
 getMidiNoteForIndex gridIndex record =
     gridIndexToMusicalPosition gridIndex record
-        |> musicalPositionToMidi
+        |> (\position -> musicalPositionToMidi position record)
 
 
-generateNoteList : { a | octaveCount : Int, startingOctave : Int } -> List Int
+generateNoteList : { a | octaveCount : Int, startingOctave : Int, scaleType : ScaleType, rootNote : RootNote } -> List Int
 generateNoteList record =
     let
         noteCount_ =
@@ -207,6 +430,8 @@ type Msg
     | ClearGrid
     | TimeSync Float
     | ChangePattern Int
+    | ChangeScaleType ScaleType
+    | ChangeRootNote RootNote
     | StartDrawing Int Int -- noteIndex, stepIndex
     | ContinueDrawing Int Int -- noteIndex, stepIndex
     | StopDrawing
@@ -395,6 +620,22 @@ update msg model =
         StopDrawing ->
             ( { model | drawState = NotDrawing }, Cmd.none )
 
+        ChangeScaleType newScaleType ->
+            let
+                noteCount_ =
+                    totalNotes { model | scaleType = newScaleType }
+
+                stepCount_ =
+                    totalSteps model
+
+                newGrid =
+                    emptyGrid noteCount_ stepCount_
+            in
+            ( { model | scaleType = newScaleType, grid = newGrid }, Cmd.none )
+
+        ChangeRootNote newRootNote ->
+            ( { model | rootNote = newRootNote }, Cmd.none )
+
 
 getActiveNotesForStep : Int -> Model -> List { note : Int, duration : Float, volume : Float }
 getActiveNotesForStep stepIndex model =
@@ -569,6 +810,34 @@ headerView model =
                                 [ text pattern.name ]
                         )
                         getAllPatterns
+                    )
+                , H.select
+                    [ class "bg-white border border-gray-300 rounded-lg px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    , HE.onInput (stringToScaleType >> ChangeScaleType)
+                    ]
+                    (List.map
+                        (\scaleType ->
+                            H.option
+                                [ HA.value (scaleTypeToString scaleType)
+                                , HA.selected (scaleType == model.scaleType)
+                                ]
+                                [ text (scaleTypeToString scaleType) ]
+                        )
+                        allScaleTypes
+                    )
+                , H.select
+                    [ class "bg-white border border-gray-300 rounded-lg px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    , HE.onInput (stringToRootNote >> ChangeRootNote)
+                    ]
+                    (List.map
+                        (\rootNote ->
+                            H.option
+                                [ HA.value (rootNoteToString rootNote)
+                                , HA.selected (rootNote == model.rootNote)
+                                ]
+                                [ text (rootNoteToString rootNote) ]
+                        )
+                        allRootNotes
                     )
                 , case model.playState of
                     Playing _ ->
@@ -761,6 +1030,8 @@ init _ =
       , noteVolume = 0.8
       , selectedPatternIndex = defaultPatternIndex
       , drawState = NotDrawing
+      , scaleType = Major
+      , rootNote = C
       }
     , Cmd.none
     )
