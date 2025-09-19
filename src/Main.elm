@@ -652,17 +652,18 @@ gridView model =
             ++ List.indexedMap
                 (\stepIndex _ ->
                     let
-                        stepHeaderClasses =
-                            if currentStep == Just stepIndex then
-                                "text-white bg-green-500"
+                        isCurrentStep =
+                            currentStep == Just stepIndex
+
+                        stepHeaderClass =
+                            if isCurrentStep then
+                                "flex items-center justify-center text-xs font-bold text-gray-700 bg-blue-200 rounded"
 
                             else
-                                "text-gray-600"
+                                "flex items-center justify-center text-xs font-bold text-gray-700 bg-gray-200 rounded"
                     in
                     div
-                        [ class "flex items-center justify-center text-xs font-bold"
-                        , class stepHeaderClasses
-                        ]
+                        [ class stepHeaderClass ]
                         [ text (String.fromInt (stepIndex + 1)) ]
                 )
                 (List.repeat stepCount_ ())
