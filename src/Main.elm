@@ -580,11 +580,13 @@ gridView model =
     in
     div [ class "h-full overflow-auto" ]
         [ div
-            [ class "grid gap-1"
-            , style "grid-template-columns" ("64px repeat(" ++ String.fromInt stepCount_ ++ ", minmax(24px, 1fr))")
-            , style "grid-template-rows" ("auto repeat(" ++ String.fromInt noteCount_ ++ ", minmax(24px, 1fr))")
+            [ class "grid gap-[1px]"
+            , style "grid-template-columns" ("repeat(" ++ String.fromInt (stepCount_ + 1) ++ ", minmax(50px, 1fr))")
+            , style "grid-template-rows" ("repeat(" ++ String.fromInt (noteCount_ + 1) ++ ", minmax(25px, 1fr))")
             , style "width" "max-content"
             , style "height" "max-content"
+            , style "min-width" "100%"
+            , style "min-height" "100%"
             ]
             ([ div [ class "" ] [] -- Empty corner cell
              ]
