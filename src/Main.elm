@@ -411,23 +411,28 @@ getCellState noteIndex stepIndex grid =
 
 toggleGridCell : Int -> Int -> List (List Bool) -> List (List Bool)
 toggleGridCell noteIndex stepIndex grid =
-    List.indexedMap
-        (\nIdx noteRow ->
-            if nIdx == noteIndex then
-                List.indexedMap
-                    (\sIdx isActive ->
-                        if sIdx == stepIndex then
-                            not isActive
-
-                        else
-                            isActive
-                    )
-                    noteRow
-
-            else
-                noteRow
-        )
+    -- Return grid unchanged if indices are out of bounds
+    if noteIndex < 0 || stepIndex < 0 then
         grid
+
+    else
+        List.indexedMap
+            (\nIdx noteRow ->
+                if nIdx == noteIndex then
+                    List.indexedMap
+                        (\sIdx isActive ->
+                            if sIdx == stepIndex then
+                                not isActive
+
+                            else
+                                isActive
+                        )
+                        noteRow
+
+                else
+                    noteRow
+            )
+            grid
 
 
 
@@ -552,31 +557,35 @@ gridView model =
                     )
                     (List.repeat stepCount_ ())
                 ++ -- Note rows
-                   (List.indexedMap
-                        (\noteIndex noteRow ->
-                            [ -- Note label
-                              div [ class "flex items-center justify-center text-xs font-bold text-gray-700 bg-gray-200 rounded" ]
-                                [ text (Maybe.withDefault "?" (List.drop noteIndex noteLabels_ |> List.head)) ]
-                            ]
-                                ++ List.indexedMap
-                                    (\stepIndex isActive ->
-                                        let
-                                            cellClass =
-                                                if isActive then
-                                                    "bg-blue-600 hover:bg-blue-700 rounded cursor-pointer"
+                   (List.range 0 (noteCount_ - 1)
+                        |> List.map
+                            (\noteIndex ->
+                                [ -- Note label
+                                  div [ class "flex items-center justify-center text-xs font-bold text-gray-700 bg-gray-200 rounded" ]
+                                    [ text (Maybe.withDefault "?" (List.drop noteIndex noteLabels_ |> List.head)) ]
+                                ]
+                                    ++ (List.range 0 (stepCount_ - 1)
+                                            |> List.map
+                                                (\stepIndex ->
+                                                    let
+                                                        isActive =
+                                                            getCellState noteIndex stepIndex model.grid
 
-                                                else
-                                                    "bg-gray-300 hover:bg-gray-400 rounded cursor-pointer"
-                                        in
-                                        div
-                                            [ class cellClass
-                                            , onClick (ToggleCell noteIndex stepIndex)
-                                            ]
-                                            []
-                                    )
-                                    noteRow
-                        )
-                        model.grid
+                                                        cellClass =
+                                                            if isActive then
+                                                                "bg-blue-600 hover:bg-blue-700 rounded cursor-pointer"
+
+                                                            else
+                                                                "bg-gray-300 hover:bg-gray-400 rounded cursor-pointer"
+                                                    in
+                                                    div
+                                                        [ class cellClass
+                                                        , onClick (ToggleCell noteIndex stepIndex)
+                                                        ]
+                                                        []
+                                                )
+                                       )
+                            )
                         |> List.concat
                    )
             )

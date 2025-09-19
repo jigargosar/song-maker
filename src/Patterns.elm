@@ -498,7 +498,7 @@ twinkleTwinkleChordsV3Config =
             , stepCount = stepCount
             }
     , bpm = 120
-    , barCount = 20
+    , barCount = 13
     , beatsPerBar = 2
     , splitBeats = 2
     , name = "Twinkle V3 (No Low Chords)"
