@@ -180,6 +180,51 @@ emptyGrid noteCount_ stepCount_ =
     List.repeat noteCount_ (List.repeat stepCount_ False)
 
 
+resizeGrid : Int -> Int -> List (List Bool) -> List (List Bool)
+resizeGrid newNoteCount newStepCount existingGrid =
+    let
+        -- Helper to resize a single note row (horizontal resize)
+        resizeNoteRow : List Bool -> List Bool
+        resizeNoteRow existingRow =
+            let
+                currentLength =
+                    List.length existingRow
+
+                truncatedRow =
+                    List.take newStepCount existingRow
+
+                paddedRow =
+                    if currentLength < newStepCount then
+                        truncatedRow ++ List.repeat (newStepCount - currentLength) False
+                    else
+                        truncatedRow
+            in
+            paddedRow
+
+        -- Resize existing note rows
+        resizedExistingRows =
+            List.map resizeNoteRow existingGrid
+
+        -- Take only the rows we need (vertical resize - truncate)
+        truncatedRows =
+            List.take newNoteCount resizedExistingRows
+
+        -- Add new empty rows if we need more notes (vertical resize - pad)
+        currentNoteCount =
+            List.length truncatedRows
+
+        newEmptyRows =
+            if currentNoteCount < newNoteCount then
+                List.repeat (newNoteCount - currentNoteCount) (List.repeat newStepCount False)
+            else
+                []
+
+        finalGrid =
+            truncatedRows ++ newEmptyRows
+    in
+    finalGrid
+
+
 getAllPatterns : List Patterns.PatternConfig
 getAllPatterns =
     [ Patterns.twinkleTwinkleConfig
@@ -413,7 +458,7 @@ update msg model =
                     totalSteps model
 
                 newGrid =
-                    emptyGrid noteCount_ stepCount_
+                    resizeGrid noteCount_ stepCount_ model.grid
             in
             ( { model | scaleType = newScaleType, grid = newGrid }, Cmd.none )
 
@@ -432,7 +477,7 @@ update msg model =
                     totalSteps model
 
                 newGrid =
-                    emptyGrid noteCount_ stepCount_
+                    resizeGrid noteCount_ stepCount_ model.grid
             in
             ( { model | octaveCount = clampedOctaveCount, grid = newGrid }, Cmd.none )
 
@@ -455,7 +500,7 @@ update msg model =
                     totalSteps { model | barCount = clampedBarCount }
 
                 newGrid =
-                    emptyGrid noteCount_ stepCount_
+                    resizeGrid noteCount_ stepCount_ model.grid
             in
             ( { model | barCount = clampedBarCount, grid = newGrid }, Cmd.none )
 
@@ -471,7 +516,7 @@ update msg model =
                     totalSteps { model | beatsPerBar = clampedBeatsPerBar }
 
                 newGrid =
-                    emptyGrid noteCount_ stepCount_
+                    resizeGrid noteCount_ stepCount_ model.grid
             in
             ( { model | beatsPerBar = clampedBeatsPerBar, grid = newGrid }, Cmd.none )
 
@@ -487,7 +532,7 @@ update msg model =
                     totalSteps { model | splitBeats = clampedSplitBeats }
 
                 newGrid =
-                    emptyGrid noteCount_ stepCount_
+                    resizeGrid noteCount_ stepCount_ model.grid
             in
             ( { model | splitBeats = clampedSplitBeats, grid = newGrid }, Cmd.none )
 
