@@ -433,6 +433,7 @@ type Msg
     | ChangeScaleType ScaleType
     | ChangeRootNote RootNote
     | ChangeOctaveCount Int
+    | ChangeStartingOctave Int
     | ChangeBarCount Int
     | ChangeBeatsPerBar Int
     | ChangeSplitBeats Int
@@ -655,6 +656,13 @@ update msg model =
                     emptyGrid noteCount_ stepCount_
             in
             ( { model | octaveCount = clampedOctaveCount, grid = newGrid }, Cmd.none )
+
+        ChangeStartingOctave newStartingOctave ->
+            let
+                clampedStartingOctave =
+                    max 1 (min 8 newStartingOctave)
+            in
+            ( { model | startingOctave = clampedStartingOctave }, Cmd.none )
 
         ChangeBarCount newBarCount ->
             let
@@ -921,6 +929,7 @@ headerView model =
                         )
                         allRootNotes
                     )
+                , numberInput "Start" model.startingOctave ChangeStartingOctave
                 , numberInput "Oct" model.octaveCount ChangeOctaveCount
                 , numberInput "Bars" model.barCount ChangeBarCount
                 , numberInput "Beats" model.beatsPerBar ChangeBeatsPerBar
