@@ -300,8 +300,8 @@ twinkleTwinkleChordsPattern =
     ]
 
 
-twinkleTwinkleV2Pattern : List (List String)
-twinkleTwinkleV2Pattern =
+twinkleTwinkleChordsV2Pattern : List (List String)
+twinkleTwinkleChordsV2Pattern =
     [ [ "C4", "C5", "E5", "G5" ]
     , [ "C4" ]
     , [ "G4", "G5", "B5", "D6" ]
@@ -377,8 +377,8 @@ twinkleTwinkleV2Pattern =
     ]
 
 
-twinkleTwinkleV3Pattern : List (List String)
-twinkleTwinkleV3Pattern =
+twinkleTwinkleChordsV3Pattern : List (List String)
+twinkleTwinkleChordsV3Pattern =
     [ [ "C4", "E4", "G4", "C5" ]
     , [ "C4" ]
     , [ "G4", "B4", "D5", "G5" ]
@@ -531,11 +531,11 @@ twinkleTwinkleChordsV2Config =
             2
 
         stepCount =
-            List.length twinkleTwinkleV2Pattern
+            List.length twinkleTwinkleChordsV2Pattern
     in
     { grid =
         notesToGrid
-            { stepsWithNotes = twinkleTwinkleV2Pattern
+            { stepsWithNotes = twinkleTwinkleChordsV2Pattern
             , octaveStart = octaveStart
             , octaveCount = octaveCount
             , stepCount = stepCount
@@ -560,11 +560,11 @@ twinkleTwinkleChordsV3Config =
             2
 
         stepCount =
-            List.length twinkleTwinkleV3Pattern
+            List.length twinkleTwinkleChordsV3Pattern
     in
     { grid =
         notesToGrid
-            { stepsWithNotes = twinkleTwinkleV3Pattern
+            { stepsWithNotes = twinkleTwinkleChordsV3Pattern
             , octaveStart = octaveStart
             , octaveCount = octaveCount
             , stepCount = stepCount
