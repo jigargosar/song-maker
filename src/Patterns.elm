@@ -7,7 +7,9 @@ module Patterns exposing
     , vShapeConfig
     )
 
-import Types exposing (ScaleType(..), RootNote(..))
+import Types exposing (RootNote(..), ScaleType(..))
+
+
 
 -- COMMON TYPES AND FUNCTIONS
 
