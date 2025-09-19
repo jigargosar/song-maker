@@ -482,10 +482,10 @@ twinkleTwinkleChordsV3Config : PatternConfig
 twinkleTwinkleChordsV3Config =
     let
         octaveStart =
-            3
+            4
 
         octaveCount =
-            4
+            2
 
         stepCount =
             List.length twinkleTwinkleV3Pattern
@@ -540,10 +540,10 @@ twinkleTwinkleConfig : PatternConfig
 twinkleTwinkleConfig =
     let
         octaveStart =
-            3
+            4
 
         octaveCount =
-            3
+            1
 
         stepCount =
             List.length twinkleTwinklePattern
@@ -569,10 +569,10 @@ twinkleTwinkleChordsConfig : PatternConfig
 twinkleTwinkleChordsConfig =
     let
         octaveStart =
-            3
+            4
 
         octaveCount =
-            3
+            2
 
         stepCount =
             List.length twinkleTwinkleChordsPattern
@@ -598,10 +598,10 @@ twinkleTwinkleChordsV2Config : PatternConfig
 twinkleTwinkleChordsV2Config =
     let
         octaveStart =
-            3
+            4
 
         octaveCount =
-            4
+            2
 
         stepCount =
             List.length twinkleTwinkleV2Pattern
