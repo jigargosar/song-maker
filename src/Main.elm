@@ -361,7 +361,20 @@ update msg model =
         ContinueDrawing noteIndex stepIndex ->
             case model.drawState of
                 Drawing ->
-                    ( setCellState noteIndex stepIndex True model, Cmd.none )
+                    let
+                        updatedModel =
+                            setCellState noteIndex stepIndex True model
+
+                        midiNote =
+                            getMidiNoteForIndex noteIndex model
+
+                        noteRecord =
+                            { note = midiNote, duration = noteDuration model, volume = model.noteVolume }
+
+                        playNoteCmd =
+                            Cmd.batch [ wakeAudioContext (), playChord { notes = [ noteRecord ], when = model.currentTime } ]
+                    in
+                    ( updatedModel, playNoteCmd )
 
                 Erasing ->
                     ( setCellState noteIndex stepIndex False model, Cmd.none )
