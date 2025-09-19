@@ -40,26 +40,26 @@ notesPerOctave =
     List.length majorScaleNoteNames
 
 
-stepCountFromModel : { a | barCount : Int, beatsPerBar : Int, splitBeats : Int } -> Int
-stepCountFromModel record =
+totalSteps : { a | barCount : Int, beatsPerBar : Int, splitBeats : Int } -> Int
+totalSteps record =
     record.barCount * record.beatsPerBar * record.splitBeats
 
 
-noteCountFromModel : { a | octaveCount : Int } -> Int
-noteCountFromModel record =
+totalNotes : { a | octaveCount : Int } -> Int
+totalNotes record =
     record.octaveCount * notesPerOctave
 
 
-noteDurationFromModel : { a | bpm : Int, splitBeats : Int } -> Float
-noteDurationFromModel record =
+noteDuration : { a | bpm : Int, splitBeats : Int } -> Float
+noteDuration record =
     (60.0 / toFloat record.bpm) / toFloat record.splitBeats
 
 
-noteLabelsFromModel : { a | octaveCount : Int, startingOctave : Int } -> List String
-noteLabelsFromModel record =
+noteLabels : { a | octaveCount : Int, startingOctave : Int } -> List String
+noteLabels record =
     let
         noteCount_ =
-            noteCountFromModel record
+            totalNotes record
 
         startingOctave_ =
             record.startingOctave
@@ -159,7 +159,7 @@ generateNoteList : { a | octaveCount : Int, startingOctave : Int } -> List Int
 generateNoteList record =
     let
         noteCount_ =
-            noteCountFromModel record
+            totalNotes record
     in
     List.range 0 (noteCount_ - 1)
         |> List.map (\gridIndex -> getMidiNoteForIndex gridIndex record)
@@ -221,7 +221,7 @@ update msg model =
                                 getMidiNoteForIndex noteIndex model
 
                             noteRecord =
-                                { note = midiNote, duration = noteDurationFromModel model, volume = model.noteVolume }
+                                { note = midiNote, duration = noteDuration model, volume = model.noteVolume }
                         in
                         Cmd.batch [ wakeAudioContext (), playChord { notes = [ noteRecord ], when = model.currentTime } ]
 
@@ -251,10 +251,10 @@ update msg model =
         ClearGrid ->
             let
                 noteCount_ =
-                    noteCountFromModel model
+                    totalNotes model
 
                 stepCount_ =
-                    stepCountFromModel model
+                    totalSteps model
             in
             ( { model | grid = emptyGrid noteCount_ stepCount_ }, Cmd.none )
 
@@ -270,16 +270,16 @@ update msg model =
                             currentTime - startTime
 
                         absoluteStep =
-                            floor (elapsedTime / noteDurationFromModel model)
+                            floor (elapsedTime / noteDuration model)
 
                         shouldSchedule =
                             absoluteStep >= nextStepToSchedule
 
                         stepTime =
-                            startTime + toFloat nextStepToSchedule * noteDurationFromModel model
+                            startTime + toFloat nextStepToSchedule * noteDuration model
 
                         gridStep =
-                            modBy (stepCountFromModel model) nextStepToSchedule
+                            modBy (totalSteps model) nextStepToSchedule
 
                         chordCmd =
                             if shouldSchedule then
@@ -347,10 +347,10 @@ getActiveNotesForStep stepIndex model =
             generateNoteList model
 
         duration =
-            noteDurationFromModel model
+            noteDuration model
 
         noteCount_ =
-            noteCountFromModel model
+            totalNotes model
     in
     List.range 0 (noteCount_ - 1)
         |> List.map
@@ -373,10 +373,10 @@ getCellState : Int -> Int -> Model -> Bool
 getCellState noteIndex stepIndex model =
     let
         noteCount_ =
-            noteCountFromModel model
+            totalNotes model
 
         stepCount_ =
-            stepCountFromModel model
+            totalSteps model
 
         isWithinBounds =
             noteIndex >= 0 && noteIndex < noteCount_ && stepIndex >= 0 && stepIndex < stepCount_
@@ -402,10 +402,10 @@ setCellState : Int -> Int -> Bool -> Model -> Model
 setCellState noteIndex stepIndex isActive model =
     let
         noteCount_ =
-            noteCountFromModel model
+            totalNotes model
 
         stepCount_ =
-            stepCountFromModel model
+            totalSteps model
 
         isWithinBounds =
             noteIndex >= 0 && noteIndex < noteCount_ && stepIndex >= 0 && stepIndex < stepCount_
@@ -559,7 +559,7 @@ footerView model =
             [ div []
                 [ text ("BPM: " ++ String.fromInt model.bpm) ]
             , div []
-                [ text ("Grid: " ++ String.fromInt (noteCountFromModel model) ++ " notes × " ++ String.fromInt (stepCountFromModel model) ++ " steps | Bars: " ++ String.fromInt model.barCount ++ " | Beats/Bar: " ++ String.fromInt model.beatsPerBar ++ " | Splits: " ++ String.fromInt model.splitBeats) ]
+                [ text ("Grid: " ++ String.fromInt (totalNotes model) ++ " notes × " ++ String.fromInt (totalSteps model) ++ " steps | Bars: " ++ String.fromInt model.barCount ++ " | Beats/Bar: " ++ String.fromInt model.beatsPerBar ++ " | Splits: " ++ String.fromInt model.splitBeats) ]
             , div []
                 [ text "Use mouse to toggle notes" ]
             ]
@@ -570,13 +570,13 @@ gridView : Model -> Html Msg
 gridView model =
     let
         stepCount_ =
-            stepCountFromModel model
+            totalSteps model
 
         noteCount_ =
-            noteCountFromModel model
+            totalNotes model
 
         noteLabels_ =
-            noteLabelsFromModel model
+            noteLabels model
     in
     div [ class "h-full overflow-auto p-6" ]
         [ div
