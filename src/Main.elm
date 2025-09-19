@@ -617,6 +617,12 @@ getCurrentPlayingStep model =
             Nothing
 
 
+renderNoteLabel : List String -> Int -> Html msg
+renderNoteLabel noteLabels_ noteIndex =
+    div [ class "flex items-center justify-center text-xs font-bold text-gray-700 bg-gray-200 rounded" ]
+        [ text (Maybe.withDefault "?" (List.drop noteIndex noteLabels_ |> List.head)) ]
+
+
 gridView : Model -> Html Msg
 gridView model =
     let
@@ -661,10 +667,7 @@ gridView model =
                (List.range 0 (noteCount_ - 1)
                     |> List.map
                         (\noteIndex ->
-                            [ -- Note label
-                              div [ class "flex items-center justify-center text-xs font-bold text-gray-700 bg-gray-200 rounded" ]
-                                [ text (Maybe.withDefault "?" (List.drop noteIndex noteLabels_ |> List.head)) ]
-                            ]
+                            [ renderNoteLabel noteLabels_ noteIndex ]
                                 ++ (List.range 0 (stepCount_ - 1)
                                         |> List.map (viewGridCell model noteIndex)
                                    )
