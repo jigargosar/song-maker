@@ -20,22 +20,9 @@ port wakeAudioContext : () -> Cmd msg
 port timeSync : (Float -> msg) -> Sub msg
 
 
-
--- CONSTANTS
--- Grid dimensions
--- MUSICAL CONFIGURATION
--- All music-related constants in one place
--- Grid octave configuration
--- MIDI reference point (standard)
-
-
 midiC4 : Int
 midiC4 =
     60
-
-
-
--- Major scale definition
 
 
 majorScalePattern : List Int
@@ -43,26 +30,14 @@ majorScalePattern =
     [ 0, 2, 4, 5, 7, 9, 11 ]
 
 
-
--- Semitones from root: C D E F G A B
-
-
 majorScaleNoteNames : List String
 majorScaleNoteNames =
     [ "C", "D", "E", "F", "G", "A", "B" ]
 
 
-
--- Derived values
-
-
 notesPerOctave : Int
 notesPerOctave =
     List.length majorScaleNoteNames
-
-
-
--- HELPER FUNCTIONS WITH EXTENSIBLE RECORDS
 
 
 stepCountFromModel : { a | barCount : Int, beatsPerBar : Int, splitBeats : Int } -> Int
@@ -136,15 +111,6 @@ type alias Model =
     }
 
 
-
--- MIDI Note Mapping
--- C4-centered system: C4 (MIDI 60) positioned at specific grid index
--- All other notes calculated relative to C4's position
--- SYSTEMATIC GRID-TO-MIDI CONVERSION
--- Clean functions without magic numbers
--- Convert grid index to musical position
-
-
 type alias MusicalPosition =
     { octave : Int
     , noteIndex : Int -- 0-6 for C-B
@@ -166,14 +132,9 @@ gridIndexToMusicalPosition gridIndex record =
     { octave = octave, noteIndex = noteIndex }
 
 
-
--- Convert musical position to MIDI note
-
-
 musicalPositionToMidi : MusicalPosition -> Int
 musicalPositionToMidi position =
     let
-        -- Octave offset from C4 reference point
         octaveOffsetFromC4 =
             position.octave - 4
 
@@ -188,18 +149,10 @@ musicalPositionToMidi position =
     baseMidiForC + semitoneOffset
 
 
-
--- Main conversion functions (clean interface)
-
-
 getMidiNoteForIndex : Int -> { a | startingOctave : Int } -> Int
 getMidiNoteForIndex gridIndex record =
     gridIndexToMusicalPosition gridIndex record
         |> musicalPositionToMidi
-
-
-
--- Dynamic note list based on grid size and C4 position
 
 
 generateNoteList : { a | octaveCount : Int, startingOctave : Int } -> List Int
@@ -212,17 +165,9 @@ generateNoteList record =
         |> List.map (\gridIndex -> getMidiNoteForIndex gridIndex record)
 
 
-
--- Initialize empty grid
-
-
 emptyGrid : Int -> Int -> List (List Bool)
 emptyGrid noteCount_ stepCount_ =
     List.repeat noteCount_ (List.repeat stepCount_ False)
-
-
-
--- Pattern management
 
 
 getAllPatterns : List Patterns.PatternConfig
@@ -293,7 +238,6 @@ update msg model =
                     )
 
                 Playing _ ->
-                    -- Already playing, ignore duplicate Play message
                     ( model, Cmd.none )
 
         Stop ->
@@ -302,7 +246,6 @@ update msg model =
                     ( { model | playState = Stopped }, Cmd.none )
 
                 Stopped ->
-                    -- Already stopped, ignore duplicate Stop message
                     ( model, Cmd.none )
 
         ClearGrid ->
@@ -397,10 +340,6 @@ update msg model =
             )
 
 
-
--- GRID LOGIC
-
-
 getActiveNotesForStep : Int -> Model -> List { note : Int, duration : Float, volume : Float }
 getActiveNotesForStep stepIndex model =
     let
@@ -428,10 +367,6 @@ getActiveNotesForStep stepIndex model =
                     Nothing
             )
         |> List.filterMap identity
-
-
-
--- Get current cell state
 
 
 getCellState : Int -> Int -> Model -> Bool
