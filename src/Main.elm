@@ -634,6 +634,9 @@ gridView model =
 
         noteLabels_ =
             noteLabels model
+
+        currentStep =
+            getCurrentPlayingStep model
     in
     div
         [ class "grid gap-1"
@@ -650,7 +653,7 @@ gridView model =
                 (\stepIndex _ ->
                     let
                         stepHeaderClasses =
-                            if getCurrentPlayingStep model == Just stepIndex then
+                            if currentStep == Just stepIndex then
                                 "text-white bg-green-500"
 
                             else
