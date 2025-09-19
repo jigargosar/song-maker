@@ -199,8 +199,7 @@ getPatternByIndex index =
 
 
 type Msg
-    = ToggleCell Int Int -- noteIndex, stepIndex
-    | Play
+    = Play
     | Stop
     | ClearGrid
     | TimeSync Float
@@ -213,32 +212,6 @@ type Msg
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
-        ToggleCell noteIndex stepIndex ->
-            let
-                wasActive =
-                    getCellState noteIndex stepIndex model
-
-                newModel =
-                    toggleCellState noteIndex stepIndex model
-
-                nowActive =
-                    not wasActive
-
-                playNoteCmd =
-                    if nowActive then
-                        let
-                            midiNote =
-                                getMidiNoteForIndex noteIndex model
-
-                            noteRecord =
-                                { note = midiNote, duration = noteDuration model, volume = model.noteVolume }
-                        in
-                        Cmd.batch [ wakeAudioContext (), playChord { notes = [ noteRecord ], when = model.currentTime } ]
-
-                    else
-                        Cmd.none
-            in
-            ( newModel, playNoteCmd )
 
         Play ->
             case model.playState of
@@ -497,16 +470,6 @@ setCellState noteIndex stepIndex isActive model =
         model
 
 
-toggleCellState : Int -> Int -> Model -> Model
-toggleCellState noteIndex stepIndex model =
-    let
-        currentState =
-            getCellState noteIndex stepIndex model
-
-        newState =
-            not currentState
-    in
-    setCellState noteIndex stepIndex newState model
 
 
 
