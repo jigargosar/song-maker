@@ -212,7 +212,6 @@ type Msg
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
-
         Play ->
             case model.playState of
                 Stopped ->
@@ -333,6 +332,7 @@ update msg model =
                         newDrawState =
                             if currentState then
                                 Erasing
+
                             else
                                 Drawing
 
@@ -471,8 +471,6 @@ setCellState noteIndex stepIndex isActive model =
 
 
 
-
-
 -- VIEW
 
 
@@ -512,9 +510,9 @@ formatTime seconds =
 
 view : Model -> Html Msg
 view model =
-    div [ class "h-screen bg-gray-50 flex flex-col" ]
+    div [ class "h-screen bg-gray-50 flex flex-col select-none" ]
         [ headerView model
-        , div [ class "flex-1 overflow-hidden" ]
+        , div [ class "flex-1 overflow-auto" ]
             [ gridView model ]
         , footerView model
         ]
@@ -601,60 +599,58 @@ gridView model =
         noteLabels_ =
             noteLabels model
     in
-    div [ class "h-full overflow-auto" ]
-        [ div
-            [ class "grid gap-[1px]"
-            , style "grid-template-columns" ("repeat(" ++ String.fromInt (stepCount_ + 1) ++ ", minmax(50px, 1fr))")
-            , style "grid-template-rows" ("repeat(" ++ String.fromInt (noteCount_ + 1) ++ ", minmax(25px, 1fr))")
-            , style "width" "max-content"
-            , style "height" "max-content"
-            , style "min-width" "100%"
-            , style "min-height" "100%"
-            ]
-            ([ div [ class "" ] [] -- Empty corner cell
-             ]
-                ++ List.indexedMap
-                    (\stepIndex _ ->
-                        div [ class "flex items-center justify-center text-xs font-bold text-gray-600" ]
-                            [ text (String.fromInt (stepIndex + 1)) ]
-                    )
-                    (List.repeat stepCount_ ())
-                ++ -- Note rows
-                   (List.range 0 (noteCount_ - 1)
-                        |> List.map
-                            (\noteIndex ->
-                                [ -- Note label
-                                  div [ class "flex items-center justify-center text-xs font-bold text-gray-700 bg-gray-200 rounded" ]
-                                    [ text (Maybe.withDefault "?" (List.drop noteIndex noteLabels_ |> List.head)) ]
-                                ]
-                                    ++ (List.range 0 (stepCount_ - 1)
-                                            |> List.map
-                                                (\stepIndex ->
-                                                    let
-                                                        isActive =
-                                                            getCellState noteIndex stepIndex model
-
-                                                        cellClass =
-                                                            if isActive then
-                                                                "bg-blue-600 hover:bg-blue-700 rounded cursor-pointer"
-
-                                                            else
-                                                                "bg-gray-300 hover:bg-gray-400 rounded cursor-pointer"
-                                                    in
-                                                    div
-                                                        [ class cellClass
-                                                        , HE.onMouseDown (StartDrawing noteIndex stepIndex)
-                                                        , HE.onMouseEnter (ContinueDrawing noteIndex stepIndex)
-                                                        , HE.onMouseUp StopDrawing
-                                                        ]
-                                                        []
-                                                )
-                                       )
-                            )
-                        |> List.concat
-                   )
-            )
+    div
+        [ class "grid gap-[1px]"
+        , style "grid-template-columns" ("repeat(" ++ String.fromInt (stepCount_ + 1) ++ ", minmax(50px, 1fr))")
+        , style "grid-template-rows" ("repeat(" ++ String.fromInt (noteCount_ + 1) ++ ", minmax(25px, 1fr))")
+        , style "width" "max-content"
+        , style "height" "max-content"
+        , style "min-width" "100%"
+        , style "min-height" "100%"
         ]
+        ([ div [ class "" ] [] -- Empty corner cell
+         ]
+            ++ List.indexedMap
+                (\stepIndex _ ->
+                    div [ class "flex items-center justify-center text-xs font-bold text-gray-600" ]
+                        [ text (String.fromInt (stepIndex + 1)) ]
+                )
+                (List.repeat stepCount_ ())
+            ++ -- Note rows
+               (List.range 0 (noteCount_ - 1)
+                    |> List.map
+                        (\noteIndex ->
+                            [ -- Note label
+                              div [ class "flex items-center justify-center text-xs font-bold text-gray-700 bg-gray-200 rounded" ]
+                                [ text (Maybe.withDefault "?" (List.drop noteIndex noteLabels_ |> List.head)) ]
+                            ]
+                                ++ (List.range 0 (stepCount_ - 1)
+                                        |> List.map
+                                            (\stepIndex ->
+                                                let
+                                                    isActive =
+                                                        getCellState noteIndex stepIndex model
+
+                                                    cellClass =
+                                                        if isActive then
+                                                            "bg-blue-600 hover:bg-blue-700 rounded cursor-pointer"
+
+                                                        else
+                                                            "bg-gray-300 hover:bg-gray-400 rounded cursor-pointer"
+                                                in
+                                                div
+                                                    [ class cellClass
+                                                    , HE.onMouseDown (StartDrawing noteIndex stepIndex)
+                                                    , HE.onMouseEnter (ContinueDrawing noteIndex stepIndex)
+                                                    , HE.onMouseUp StopDrawing
+                                                    ]
+                                                    []
+                                            )
+                                   )
+                        )
+                    |> List.concat
+               )
+        )
 
 
 
