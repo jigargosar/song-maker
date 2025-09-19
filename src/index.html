@@ -55,6 +55,19 @@
             }
         });
 
+        // Horizontal scroll-to-active-step port handler
+        app.ports.scrollToActiveStep.subscribe(({ containerId, headerId }) => {
+            const container = document.getElementById(containerId);
+            const header = document.getElementById(headerId);
+            if (container && header) {
+                const containerRect = container.getBoundingClientRect();
+                const headerRect = header.getBoundingClientRect();
+                // Calculate the left position of the header relative to the container's scroll area
+                const left = headerRect.left - containerRect.left + container.scrollLeft;
+                // Center the header horizontally in the container
+                container.scrollLeft = left - (container.clientWidth / 2) + (header.clientWidth / 2);
+            }
+        });
 
         // SPM logging helper at end of script, inside <script>
         function logSPM(when) {
@@ -76,4 +89,3 @@
     </script>
 </body>
 </html>
-

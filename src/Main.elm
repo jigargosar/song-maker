@@ -20,6 +20,9 @@ port wakeAudioContext : () -> Cmd msg
 port timeSync : (Float -> msg) -> Sub msg
 
 
+port scrollToActiveStep : { containerId : String, headerId : String } -> Cmd msg
+
+
 midiC4 : Int
 midiC4 =
     60
@@ -241,7 +244,6 @@ update msg model =
             ( { model | grid = emptyGrid noteCount_ stepCount_ }, Cmd.none )
 
         TimeSync currentTime ->
-            -- TODO: Guard against time going backwards, NaN values, system clock adjustments
             case model.playState of
                 Stopped ->
                     ( { model | currentTime = currentTime }, Cmd.none )
@@ -277,6 +279,13 @@ update msg model =
 
                             else
                                 Cmd.none
+
+                        scrollCmd =
+                            if shouldSchedule then
+                                scrollToActiveStep { containerId = "grid-container", headerId = "active-step-header" }
+
+                            else
+                                Cmd.none
                     in
                     ( { model
                         | currentTime = currentTime
@@ -291,7 +300,7 @@ update msg model =
                                         nextStepToSchedule
                                 }
                       }
-                    , chordCmd
+                    , Cmd.batch [ chordCmd, scrollCmd ]
                     )
 
         ChangePattern newIndex ->
@@ -639,13 +648,14 @@ gridView model =
             getCurrentPlayingStep model
     in
     div
-        [ class "grid gap-1 p-1"
+        [ class "grid gap-1 p-1 overflow-x-auto w-screen max-w-full"
         , style "grid-template-columns" ("repeat(" ++ String.fromInt (stepCount_ + 1) ++ ", minmax(50px, 1fr))")
         , style "grid-template-rows" ("repeat(" ++ String.fromInt (noteCount_ + 1) ++ ", minmax(25px, 1fr))")
         , style "width" "max-content"
         , style "height" "max-content"
         , style "min-width" "100%"
         , style "min-height" "100%"
+        , HA.id "grid-container"
         ]
         ([ div [ class "" ] [] -- Empty corner cell
          ]
@@ -661,9 +671,15 @@ gridView model =
 
                             else
                                 "flex items-center justify-center text-xs font-bold text-gray-700 bg-gray-200 rounded"
+
+                        stepHeaderAttrs =
+                            if isCurrentStep then
+                                [ HA.id "active-step-header" ]
+
+                            else
+                                []
                     in
-                    div
-                        [ class stepHeaderClass ]
+                    div ([ class stepHeaderClass ] ++ stepHeaderAttrs)
                         [ text (String.fromInt (stepIndex + 1)) ]
                 )
                 (List.repeat stepCount_ ())
