@@ -703,7 +703,7 @@ viewGridCell currentStep model noteIndex stepIndex =
         isActive =
             getCellState noteIndex stepIndex model
 
-        isCurrentColumn =
+        isCurrentStep =
             case currentStep of
                 Just idx ->
                     idx == stepIndex
@@ -712,14 +712,18 @@ viewGridCell currentStep model noteIndex stepIndex =
                     False
 
         cellClass =
-            if isActive && isCurrentColumn then
-                "bg-blue-600 hover:bg-blue-700 just-played"
+            case ( isActive, isCurrentStep ) of
+                ( True, True ) ->
+                    "bg-blue-600 hover:bg-blue-700 just-played"
 
-            else if isActive then
-                "bg-blue-600 hover:bg-blue-700"
+                ( True, False ) ->
+                    "bg-blue-600 hover:bg-blue-700"
 
-            else
-                "bg-blue-100 hover:bg-blue-200"
+                ( False, True ) ->
+                    "bg-blue-200 hover:bg-blue-300"
+
+                ( False, False ) ->
+                    "bg-blue-100 hover:bg-blue-200"
     in
     div
         [ class cellClass
