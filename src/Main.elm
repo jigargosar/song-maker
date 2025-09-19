@@ -639,7 +639,7 @@ gridView model =
             getCurrentPlayingStep model
     in
     div
-        [ class "grid gap-1"
+        [ class "grid gap-1 p-1"
         , style "grid-template-columns" ("repeat(" ++ String.fromInt (stepCount_ + 1) ++ ", minmax(50px, 1fr))")
         , style "grid-template-rows" ("repeat(" ++ String.fromInt (noteCount_ + 1) ++ ", minmax(25px, 1fr))")
         , style "width" "max-content"
