@@ -96,6 +96,12 @@ type PlayState
         }
 
 
+type DrawState
+    = NotDrawing
+    | Drawing
+    | Erasing
+
+
 type alias Model =
     { grid : List (List Bool)
     , playState : PlayState
@@ -108,6 +114,7 @@ type alias Model =
     , octaveCount : Int
     , noteVolume : Float
     , selectedPatternIndex : Int
+    , drawState : DrawState
     }
 
 
@@ -198,6 +205,9 @@ type Msg
     | ClearGrid
     | TimeSync Float
     | ChangePattern Int
+    | StartDrawing Int Int -- noteIndex, stepIndex
+    | ContinueDrawing Int Int -- noteIndex, stepIndex
+    | StopDrawing
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -335,9 +345,59 @@ update msg model =
                 , startingOctave = newPattern.octaveStart
                 , octaveCount = newPattern.octaveCount
                 , playState = playState
+                , drawState = NotDrawing
               }
             , cmd
             )
+
+        StartDrawing noteIndex stepIndex ->
+            case model.drawState of
+                NotDrawing ->
+                    let
+                        currentState =
+                            getCellState noteIndex stepIndex model
+
+                        newDrawState =
+                            if currentState then
+                                Erasing
+                            else
+                                Drawing
+
+                        updatedModel =
+                            setCellState noteIndex stepIndex (not currentState) model
+
+                        playNoteCmd =
+                            if not currentState then
+                                let
+                                    midiNote =
+                                        getMidiNoteForIndex noteIndex model
+
+                                    noteRecord =
+                                        { note = midiNote, duration = noteDuration model, volume = model.noteVolume }
+                                in
+                                Cmd.batch [ wakeAudioContext (), playChord { notes = [ noteRecord ], when = model.currentTime } ]
+
+                            else
+                                Cmd.none
+                    in
+                    ( { updatedModel | drawState = newDrawState }, playNoteCmd )
+
+                _ ->
+                    ( model, Cmd.none )
+
+        ContinueDrawing noteIndex stepIndex ->
+            case model.drawState of
+                Drawing ->
+                    ( setCellState noteIndex stepIndex True model, Cmd.none )
+
+                Erasing ->
+                    ( setCellState noteIndex stepIndex False model, Cmd.none )
+
+                NotDrawing ->
+                    ( model, Cmd.none )
+
+        StopDrawing ->
+            ( { model | drawState = NotDrawing }, Cmd.none )
 
 
 getActiveNotesForStep : Int -> Model -> List { note : Int, duration : Float, volume : Float }
@@ -620,7 +680,9 @@ gridView model =
                                                     in
                                                     div
                                                         [ class cellClass
-                                                        , HE.onClick (ToggleCell noteIndex stepIndex)
+                                                        , HE.onMouseDown (StartDrawing noteIndex stepIndex)
+                                                        , HE.onMouseEnter (ContinueDrawing noteIndex stepIndex)
+                                                        , HE.onMouseUp StopDrawing
                                                         ]
                                                         []
                                                 )
@@ -656,6 +718,7 @@ init _ =
       , octaveCount = selectedPattern.octaveCount
       , noteVolume = 0.8
       , selectedPatternIndex = defaultPatternIndex
+      , drawState = NotDrawing
       }
     , Cmd.none
     )
