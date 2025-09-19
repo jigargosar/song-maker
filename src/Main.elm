@@ -600,7 +600,7 @@ gridView model =
             noteLabels model
     in
     div
-        [ class "grid gap-[1px]"
+        [ class "grid gap-1"
         , style "grid-template-columns" ("repeat(" ++ String.fromInt (stepCount_ + 1) ++ ", minmax(50px, 1fr))")
         , style "grid-template-rows" ("repeat(" ++ String.fromInt (noteCount_ + 1) ++ ", minmax(25px, 1fr))")
         , style "width" "max-content"
@@ -633,13 +633,14 @@ gridView model =
 
                                                     cellClass =
                                                         if isActive then
-                                                            "bg-blue-600 hover:bg-blue-700 rounded cursor-pointer"
+                                                            "bg-blue-600 hover:bg-blue-700"
 
                                                         else
-                                                            "bg-gray-300 hover:bg-gray-400 rounded cursor-pointer"
+                                                            "bg-gray-300 hover:bg-gray-400"
                                                 in
                                                 div
                                                     [ class cellClass
+                                                    , class "rounded-lg cursor-pointer"
                                                     , HE.onMouseDown (StartDrawing noteIndex stepIndex)
                                                     , HE.onMouseEnter (ContinueDrawing noteIndex stepIndex)
                                                     , HE.onMouseUp StopDrawing
