@@ -1,1 +1,15 @@
 @import "tailwindcss";
+
+.just-played {
+    opacity: 1;
+    animation: justPlayedFadeIn 0.4s;
+}
+
+@keyframes justPlayedFadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
