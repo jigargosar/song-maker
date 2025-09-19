@@ -235,14 +235,10 @@ getAllPatterns =
     ]
 
 
-getPatternByIndex : Int -> Maybe Patterns.PatternConfig
+getPatternByIndex : Int -> Patterns.PatternConfig
 getPatternByIndex index =
-    List.drop index getAllPatterns |> List.head
-
-
-getCurrentPattern : Int -> Patterns.PatternConfig
-getCurrentPattern selectedPatternIndex =
-    getPatternByIndex selectedPatternIndex
+    List.drop index getAllPatterns
+        |> List.head
         |> Maybe.withDefault Patterns.twinkleTwinkleChordsV3Config
 
 
@@ -376,7 +372,15 @@ update msg model =
         ChangePattern newIndex ->
             let
                 newPattern =
-                    getCurrentPattern newIndex
+                    getPatternByIndex newIndex
+
+                ( playState, cmd ) =
+                    case model.playState of
+                        Playing _ ->
+                            ( Playing { startTime = model.currentTime, nextStepToSchedule = 0 }, wakeAudioContext () )
+
+                        Stopped ->
+                            ( Stopped, Cmd.none )
             in
             ( { model
                 | selectedPatternIndex = newIndex
@@ -387,9 +391,9 @@ update msg model =
                 , splitBeats = newPattern.splitBeats
                 , startingOctave = newPattern.octaveStart
                 , octaveCount = newPattern.octaveCount
-                , playState = Stopped
+                , playState = playState
               }
-            , Cmd.none
+            , cmd
             )
 
 
@@ -699,9 +703,8 @@ init _ =
         defaultPatternIndex =
             3
 
-        -- Twinkle Chords V3
         selectedPattern =
-            getCurrentPattern defaultPatternIndex
+            getPatternByIndex defaultPatternIndex
     in
     ( { grid = selectedPattern.grid
       , playState = Stopped
