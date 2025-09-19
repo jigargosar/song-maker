@@ -236,13 +236,24 @@ update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
         ToggleCell noteIndex stepIndex ->
-            -- TODO: Guard against invalid indices (noteIndex/stepIndex out of bounds)
             let
+                noteCount_ =
+                    noteCountFromModel model
+
+                stepCount_ =
+                    stepCountFromModel model
+
+                isWithinBounds =
+                    noteIndex >= 0 && noteIndex < noteCount_ && stepIndex >= 0 && stepIndex < stepCount_
+
                 wasActive =
                     getCellState noteIndex stepIndex model.grid
 
                 newGrid =
-                    toggleGridCell noteIndex stepIndex model.grid
+                    if isWithinBounds then
+                        toggleGridCell noteIndex stepIndex model.grid
+                    else
+                        model.grid
 
                 nowActive =
                     not wasActive
@@ -371,11 +382,14 @@ getActiveNotesForStep stepIndex model =
 
         duration =
             noteDurationFromModel model
+
+        noteCount_ =
+            noteCountFromModel model
     in
-    List.indexedMap
-        (\noteIndex noteRow ->
-            case List.drop stepIndex noteRow |> List.head of
-                Just True ->
+    List.range 0 (noteCount_ - 1)
+        |> List.map
+            (\noteIndex ->
+                if getCellState noteIndex stepIndex model.grid then
                     case List.drop noteIndex noteList_ |> List.head of
                         Just midiNote ->
                             Just { note = midiNote, duration = duration, volume = model.noteVolume }
@@ -383,10 +397,9 @@ getActiveNotesForStep stepIndex model =
                         Nothing ->
                             Nothing
 
-                _ ->
+                else
                     Nothing
-        )
-        model.grid
+            )
         |> List.filterMap identity
 
 
