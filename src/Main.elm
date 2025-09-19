@@ -536,7 +536,7 @@ view model =
     div [ class "h-screen bg-gray-50 flex flex-col select-none" ]
         [ headerView model
         , div [ class "flex-1 overflow-auto" ]
-            [ gridView model ]
+            [ viewGrid model ]
         , footerView model
         ]
 
@@ -627,14 +627,14 @@ getCurrentPlayingStep model =
             Nothing
 
 
-renderNoteLabel : List String -> Int -> Html msg
-renderNoteLabel noteLabels_ noteIndex =
+viewNoteLabel : List String -> Int -> Html msg
+viewNoteLabel noteLabels_ noteIndex =
     div [ class "flex items-center justify-center text-xs font-bold text-gray-700 bg-gray-200 rounded" ]
         [ text (Maybe.withDefault "?" (List.drop noteIndex noteLabels_ |> List.head)) ]
 
 
-gridView : Model -> Html Msg
-gridView model =
+viewGrid : Model -> Html Msg
+viewGrid model =
     let
         stepCount_ =
             totalSteps model
@@ -650,8 +650,8 @@ gridView model =
     in
     div
         [ class "grid gap-1 p-1 overflow-x-auto w-screen max-w-full"
-        , style "grid-template-columns" ("repeat(" ++ String.fromInt (stepCount_ + 1) ++ ", minmax(50px, 1fr))")
-        , style "grid-template-rows" ("repeat(" ++ String.fromInt (noteCount_ + 1) ++ ", minmax(25px, 1fr))")
+        , style "grid-template-columns" ("repeat(" ++ String.fromInt (stepCount_ + 1) ++ ", minmax(48px, 1fr))")
+        , style "grid-template-rows" ("repeat(" ++ String.fromInt (noteCount_ + 1) ++ ", minmax(24px, 1fr))")
         , style "width" "max-content"
         , style "height" "max-content"
         , style "min-width" "100%"
@@ -688,7 +688,7 @@ gridView model =
                (List.range 0 (noteCount_ - 1)
                     |> List.map
                         (\noteIndex ->
-                            [ renderNoteLabel noteLabels_ noteIndex ]
+                            [ viewNoteLabel noteLabels_ noteIndex ]
                                 ++ (List.range 0 (stepCount_ - 1)
                                         |> List.map (viewGridCell currentStep model noteIndex)
                                    )
