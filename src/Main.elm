@@ -432,6 +432,10 @@ type Msg
     | ChangePattern Int
     | ChangeScaleType ScaleType
     | ChangeRootNote RootNote
+    | ChangeOctaveCount Int
+    | ChangeBarCount Int
+    | ChangeBeatsPerBar Int
+    | ChangeSplitBeats Int
     | StartDrawing Int Int -- noteIndex, stepIndex
     | ContinueDrawing Int Int -- noteIndex, stepIndex
     | StopDrawing
@@ -636,6 +640,70 @@ update msg model =
         ChangeRootNote newRootNote ->
             ( { model | rootNote = newRootNote }, Cmd.none )
 
+        ChangeOctaveCount newOctaveCount ->
+            let
+                clampedOctaveCount =
+                    max 1 (min 8 newOctaveCount)
+
+                noteCount_ =
+                    totalNotes { model | octaveCount = clampedOctaveCount }
+
+                stepCount_ =
+                    totalSteps model
+
+                newGrid =
+                    emptyGrid noteCount_ stepCount_
+            in
+            ( { model | octaveCount = clampedOctaveCount, grid = newGrid }, Cmd.none )
+
+        ChangeBarCount newBarCount ->
+            let
+                clampedBarCount =
+                    max 1 (min 16 newBarCount)
+
+                noteCount_ =
+                    totalNotes model
+
+                stepCount_ =
+                    totalSteps { model | barCount = clampedBarCount }
+
+                newGrid =
+                    emptyGrid noteCount_ stepCount_
+            in
+            ( { model | barCount = clampedBarCount, grid = newGrid }, Cmd.none )
+
+        ChangeBeatsPerBar newBeatsPerBar ->
+            let
+                clampedBeatsPerBar =
+                    max 1 (min 16 newBeatsPerBar)
+
+                noteCount_ =
+                    totalNotes model
+
+                stepCount_ =
+                    totalSteps { model | beatsPerBar = clampedBeatsPerBar }
+
+                newGrid =
+                    emptyGrid noteCount_ stepCount_
+            in
+            ( { model | beatsPerBar = clampedBeatsPerBar, grid = newGrid }, Cmd.none )
+
+        ChangeSplitBeats newSplitBeats ->
+            let
+                clampedSplitBeats =
+                    max 1 (min 8 newSplitBeats)
+
+                noteCount_ =
+                    totalNotes model
+
+                stepCount_ =
+                    totalSteps { model | splitBeats = clampedSplitBeats }
+
+                newGrid =
+                    emptyGrid noteCount_ stepCount_
+            in
+            ( { model | splitBeats = clampedSplitBeats, grid = newGrid }, Cmd.none )
+
 
 getActiveNotesForStep : Int -> Model -> List { note : Int, duration : Float, volume : Float }
 getActiveNotesForStep stepIndex model =
@@ -772,6 +840,20 @@ formatTime seconds =
     formattedTime
 
 
+numberInput : String -> Int -> (Int -> Msg) -> Html Msg
+numberInput label value onChange =
+    div [ class "flex items-center gap-1" ]
+        [ H.label [ class "text-xs font-medium text-gray-600" ] [ text label ]
+        , H.input
+            [ HA.type_ "number"
+            , HA.value (String.fromInt value)
+            , class "w-16 px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+            , HE.onInput (\str -> Maybe.withDefault value (String.toInt str) |> onChange)
+            ]
+            []
+        ]
+
+
 view : Model -> Html Msg
 view model =
     div [ class "h-screen bg-gray-50 flex flex-col select-none" ]
@@ -839,6 +921,10 @@ headerView model =
                         )
                         allRootNotes
                     )
+                , numberInput "Oct" model.octaveCount ChangeOctaveCount
+                , numberInput "Bars" model.barCount ChangeBarCount
+                , numberInput "Beats" model.beatsPerBar ChangeBeatsPerBar
+                , numberInput "Split" model.splitBeats ChangeSplitBeats
                 , case model.playState of
                     Playing _ ->
                         H.button
