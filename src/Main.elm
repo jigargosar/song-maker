@@ -237,23 +237,11 @@ update msg model =
     case msg of
         ToggleCell noteIndex stepIndex ->
             let
-                noteCount_ =
-                    noteCountFromModel model
-
-                stepCount_ =
-                    stepCountFromModel model
-
-                isWithinBounds =
-                    noteIndex >= 0 && noteIndex < noteCount_ && stepIndex >= 0 && stepIndex < stepCount_
-
                 wasActive =
-                    getCellState noteIndex stepIndex model.grid
+                    getCellState noteIndex stepIndex model
 
-                newGrid =
-                    if isWithinBounds then
-                        toggleGridCell noteIndex stepIndex model.grid
-                    else
-                        model.grid
+                newModel =
+                    toggleCellState noteIndex stepIndex model
 
                 nowActive =
                     not wasActive
@@ -272,7 +260,7 @@ update msg model =
                     else
                         Cmd.none
             in
-            ( { model | grid = newGrid }, playNoteCmd )
+            ( newModel, playNoteCmd )
 
         Play ->
             case model.playState of
@@ -363,18 +351,7 @@ update msg model =
 -- GRID LOGIC
 
 
-getActiveNotesForStep :
-    Int
-    ->
-        { a
-            | grid : List (List Bool)
-            , octaveCount : Int
-            , startingOctave : Int
-            , bpm : Int
-            , splitBeats : Int
-            , noteVolume : Float
-        }
-    -> List { note : Int, duration : Float, volume : Float }
+getActiveNotesForStep : Int -> Model -> List { note : Int, duration : Float, volume : Float }
 getActiveNotesForStep stepIndex model =
     let
         noteList_ =
@@ -389,7 +366,7 @@ getActiveNotesForStep stepIndex model =
     List.range 0 (noteCount_ - 1)
         |> List.map
             (\noteIndex ->
-                if getCellState noteIndex stepIndex model.grid then
+                if getCellState noteIndex stepIndex model then
                     case List.drop noteIndex noteList_ |> List.head of
                         Just midiNote ->
                             Just { note = midiNote, duration = duration, volume = model.noteVolume }
@@ -407,45 +384,69 @@ getActiveNotesForStep stepIndex model =
 -- Get current cell state
 
 
-getCellState : Int -> Int -> List (List Bool) -> Bool
-getCellState noteIndex stepIndex grid =
-    case List.drop noteIndex grid |> List.head of
-        Just noteRow ->
-            case List.drop stepIndex noteRow |> List.head of
-                Just isActive ->
-                    isActive
+getCellState : Int -> Int -> Model -> Bool
+getCellState noteIndex stepIndex model =
+    let
+        noteCount_ = noteCountFromModel model
+        stepCount_ = stepCountFromModel model
+        isWithinBounds = noteIndex >= 0 && noteIndex < noteCount_ && stepIndex >= 0 && stepIndex < stepCount_
+    in
+    if isWithinBounds then
+        case List.drop noteIndex model.grid |> List.head of
+            Just noteRow ->
+                case List.drop stepIndex noteRow |> List.head of
+                    Just isActive ->
+                        isActive
 
-                Nothing ->
-                    False
+                    Nothing ->
+                        False
 
-        Nothing ->
-            False
-
-
-toggleGridCell : Int -> Int -> List (List Bool) -> List (List Bool)
-toggleGridCell noteIndex stepIndex grid =
-    -- Return grid unchanged if indices are out of bounds
-    if noteIndex < 0 || stepIndex < 0 then
-        grid
-
+            Nothing ->
+                False
     else
-        List.indexedMap
-            (\nIdx noteRow ->
-                if nIdx == noteIndex then
-                    List.indexedMap
-                        (\sIdx isActive ->
-                            if sIdx == stepIndex then
-                                not isActive
+        False
 
-                            else
-                                isActive
-                        )
-                        noteRow
 
-                else
-                    noteRow
-            )
-            grid
+setCellState : Int -> Int -> Bool -> Model -> Model
+setCellState noteIndex stepIndex isActive model =
+    let
+        noteCount_ = noteCountFromModel model
+        stepCount_ = stepCountFromModel model
+        isWithinBounds = noteIndex >= 0 && noteIndex < noteCount_ && stepIndex >= 0 && stepIndex < stepCount_
+    in
+    if isWithinBounds then
+        let
+            newGrid =
+                List.indexedMap
+                    (\nIdx noteRow ->
+                        if nIdx == noteIndex then
+                            List.indexedMap
+                                (\sIdx currentState ->
+                                    if sIdx == stepIndex then
+                                        isActive
+                                    else
+                                        currentState
+                                )
+                                noteRow
+                        else
+                            noteRow
+                    )
+                    model.grid
+        in
+        { model | grid = newGrid }
+    else
+        model
+
+
+toggleCellState : Int -> Int -> Model -> Model
+toggleCellState noteIndex stepIndex model =
+    let
+        currentState = getCellState noteIndex stepIndex model
+        newState = not currentState
+    in
+    setCellState noteIndex stepIndex newState model
+
+
 
 
 
@@ -582,7 +583,7 @@ gridView model =
                                                 (\stepIndex ->
                                                     let
                                                         isActive =
-                                                            getCellState noteIndex stepIndex model.grid
+                                                            getCellState noteIndex stepIndex model
 
                                                         cellClass =
                                                             if isActive then
