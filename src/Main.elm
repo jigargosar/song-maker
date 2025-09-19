@@ -600,6 +600,23 @@ footerView model =
         ]
 
 
+getCurrentPlayingStep : Model -> Maybe Int
+getCurrentPlayingStep model =
+    case model.playState of
+        Playing { startTime, nextStepToSchedule } ->
+            if model.currentTime == startTime then
+                -- since we use modulo for looping, on play start very first step should be 0
+                -- modulo approach would give us last step instead
+                Just 0
+
+            else
+                -- using nextStepToSchedule - 1 to get currently playing step
+                Just (modBy (totalSteps model) (nextStepToSchedule - 1))
+
+        Stopped ->
+            Nothing
+
+
 gridView : Model -> Html Msg
 gridView model =
     let
@@ -625,7 +642,18 @@ gridView model =
          ]
             ++ List.indexedMap
                 (\stepIndex _ ->
-                    div [ class "flex items-center justify-center text-xs font-bold text-gray-600" ]
+                    let
+                        stepHeaderClasses =
+                            if getCurrentPlayingStep model == Just stepIndex then
+                                "text-white bg-green-500"
+
+                            else
+                                "text-gray-600"
+                    in
+                    div
+                        [ class "flex items-center justify-center text-xs font-bold"
+                        , class stepHeaderClasses
+                        ]
                         [ text (String.fromInt (stepIndex + 1)) ]
                 )
                 (List.repeat stepCount_ ())
