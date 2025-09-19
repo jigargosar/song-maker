@@ -578,11 +578,13 @@ gridView model =
         noteLabels_ =
             noteLabels model
     in
-    div [ class "h-full overflow-auto p-6" ]
+    div [ class "h-full overflow-auto" ]
         [ div
-            [ class "grid gap-1 w-fit mx-auto"
-            , style "grid-template-columns" ("48px repeat(" ++ String.fromInt stepCount_ ++ ", 32px)")
-            , style "grid-template-rows" ("repeat(" ++ String.fromInt (noteCount_ + 1) ++ ", 32px)")
+            [ class "grid gap-1"
+            , style "grid-template-columns" ("64px repeat(" ++ String.fromInt stepCount_ ++ ", minmax(24px, 1fr))")
+            , style "grid-template-rows" ("auto repeat(" ++ String.fromInt noteCount_ ++ ", minmax(24px, 1fr))")
+            , style "width" "max-content"
+            , style "height" "max-content"
             ]
             ([ div [ class "" ] [] -- Empty corner cell
              ]
