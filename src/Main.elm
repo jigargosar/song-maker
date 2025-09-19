@@ -666,33 +666,35 @@ gridView model =
                                 [ text (Maybe.withDefault "?" (List.drop noteIndex noteLabels_ |> List.head)) ]
                             ]
                                 ++ (List.range 0 (stepCount_ - 1)
-                                        |> List.map
-                                            (\stepIndex ->
-                                                let
-                                                    isActive =
-                                                        getCellState noteIndex stepIndex model
-
-                                                    cellClass =
-                                                        if isActive then
-                                                            "bg-blue-600 hover:bg-blue-700"
-
-                                                        else
-                                                            "bg-gray-300 hover:bg-gray-400"
-                                                in
-                                                div
-                                                    [ class cellClass
-                                                    , class "rounded-lg cursor-pointer"
-                                                    , HE.onMouseDown (StartDrawing noteIndex stepIndex)
-                                                    , HE.onMouseEnter (ContinueDrawing noteIndex stepIndex)
-                                                    , HE.onMouseUp StopDrawing
-                                                    ]
-                                                    []
-                                            )
+                                        |> List.map (viewGridCell model noteIndex)
                                    )
                         )
                     |> List.concat
                )
         )
+
+
+viewGridCell : Model -> Int -> Int -> Html Msg
+viewGridCell model noteIndex stepIndex =
+    let
+        isActive =
+            getCellState noteIndex stepIndex model
+
+        cellClass =
+            if isActive then
+                "bg-blue-600 hover:bg-blue-700"
+
+            else
+                "bg-gray-300 hover:bg-gray-400"
+    in
+    div
+        [ class cellClass
+        , class "rounded-lg cursor-pointer"
+        , HE.onMouseDown (StartDrawing noteIndex stepIndex)
+        , HE.onMouseEnter (ContinueDrawing noteIndex stepIndex)
+        , HE.onMouseUp StopDrawing
+        ]
+        []
 
 
 
