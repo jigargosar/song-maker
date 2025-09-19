@@ -132,6 +132,7 @@ type alias Model =
     , startingOctave : Int
     , octaveCount : Int
     , noteVolume : Float
+    , selectedPatternIndex : Int
     }
 
 
@@ -221,6 +222,31 @@ emptyGrid noteCount_ stepCount_ =
 
 
 
+-- Pattern management
+
+
+getAllPatterns : List Patterns.PatternConfig
+getAllPatterns =
+    [ Patterns.twinkleTwinkleConfig
+    , Patterns.twinkleTwinkleChordsConfig
+    , Patterns.twinkleTwinkleChordsV2Config
+    , Patterns.twinkleTwinkleChordsV3Config
+    , Patterns.vShapeConfig
+    ]
+
+
+getPatternByIndex : Int -> Maybe Patterns.PatternConfig
+getPatternByIndex index =
+    List.drop index getAllPatterns |> List.head
+
+
+getCurrentPattern : Int -> Patterns.PatternConfig
+getCurrentPattern selectedPatternIndex =
+    getPatternByIndex selectedPatternIndex
+        |> Maybe.withDefault Patterns.twinkleTwinkleChordsV3Config
+
+
+
 -- UPDATE
 
 
@@ -230,6 +256,7 @@ type Msg
     | Stop
     | ClearGrid
     | TimeSync Float
+    | ChangePattern Int
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -346,6 +373,25 @@ update msg model =
                     , chordCmd
                     )
 
+        ChangePattern newIndex ->
+            let
+                newPattern =
+                    getCurrentPattern newIndex
+            in
+            ( { model
+                | selectedPatternIndex = newIndex
+                , grid = newPattern.grid
+                , bpm = newPattern.bpm
+                , barCount = newPattern.barCount
+                , beatsPerBar = newPattern.beatsPerBar
+                , splitBeats = newPattern.splitBeats
+                , startingOctave = newPattern.octaveStart
+                , octaveCount = newPattern.octaveCount
+                , playState = Stopped
+              }
+            , Cmd.none
+            )
+
 
 
 -- GRID LOGIC
@@ -387,9 +433,14 @@ getActiveNotesForStep stepIndex model =
 getCellState : Int -> Int -> Model -> Bool
 getCellState noteIndex stepIndex model =
     let
-        noteCount_ = noteCountFromModel model
-        stepCount_ = stepCountFromModel model
-        isWithinBounds = noteIndex >= 0 && noteIndex < noteCount_ && stepIndex >= 0 && stepIndex < stepCount_
+        noteCount_ =
+            noteCountFromModel model
+
+        stepCount_ =
+            stepCountFromModel model
+
+        isWithinBounds =
+            noteIndex >= 0 && noteIndex < noteCount_ && stepIndex >= 0 && stepIndex < stepCount_
     in
     if isWithinBounds then
         case List.drop noteIndex model.grid |> List.head of
@@ -403,6 +454,7 @@ getCellState noteIndex stepIndex model =
 
             Nothing ->
                 False
+
     else
         False
 
@@ -410,9 +462,14 @@ getCellState noteIndex stepIndex model =
 setCellState : Int -> Int -> Bool -> Model -> Model
 setCellState noteIndex stepIndex isActive model =
     let
-        noteCount_ = noteCountFromModel model
-        stepCount_ = stepCountFromModel model
-        isWithinBounds = noteIndex >= 0 && noteIndex < noteCount_ && stepIndex >= 0 && stepIndex < stepCount_
+        noteCount_ =
+            noteCountFromModel model
+
+        stepCount_ =
+            stepCountFromModel model
+
+        isWithinBounds =
+            noteIndex >= 0 && noteIndex < noteCount_ && stepIndex >= 0 && stepIndex < stepCount_
     in
     if isWithinBounds then
         let
@@ -424,16 +481,19 @@ setCellState noteIndex stepIndex isActive model =
                                 (\sIdx currentState ->
                                     if sIdx == stepIndex then
                                         isActive
+
                                     else
                                         currentState
                                 )
                                 noteRow
+
                         else
                             noteRow
                     )
                     model.grid
         in
         { model | grid = newGrid }
+
     else
         model
 
@@ -441,12 +501,13 @@ setCellState noteIndex stepIndex isActive model =
 toggleCellState : Int -> Int -> Model -> Model
 toggleCellState noteIndex stepIndex model =
     let
-        currentState = getCellState noteIndex stepIndex model
-        newState = not currentState
+        currentState =
+            getCellState noteIndex stepIndex model
+
+        newState =
+            not currentState
     in
     setCellState noteIndex stepIndex newState model
-
-
 
 
 
@@ -504,7 +565,29 @@ headerView model =
             [ h1 [ class "text-2xl font-bold text-gray-800" ]
                 [ text "Song Maker - Build 7" ]
             , div [ class "flex items-center gap-3" ]
-                [ case model.playState of
+                [ Html.select
+                    [ class "bg-white border border-gray-300 rounded-lg px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    , Html.Events.onInput
+                        (\indexStr ->
+                            case String.toInt indexStr of
+                                Just index ->
+                                    ChangePattern index
+
+                                Nothing ->
+                                    ChangePattern 0
+                        )
+                    ]
+                    (List.indexedMap
+                        (\index pattern ->
+                            Html.option
+                                [ Html.Attributes.value (String.fromInt index)
+                                , Html.Attributes.selected (index == model.selectedPatternIndex)
+                                ]
+                                [ text pattern.name ]
+                        )
+                        getAllPatterns
+                    )
+                , case model.playState of
                     Playing _ ->
                         button
                             [ class "bg-red-600 hover:brightness-110 text-white font-bold py-2 px-6 rounded-lg shadow-md transition-all"
@@ -613,8 +696,12 @@ gridView model =
 init : () -> ( Model, Cmd Msg )
 init _ =
     let
+        defaultPatternIndex =
+            3
+
+        -- Twinkle Chords V3
         selectedPattern =
-            Patterns.twinkleTwinkleChordsV3Config
+            getCurrentPattern defaultPatternIndex
     in
     ( { grid = selectedPattern.grid
       , playState = Stopped
@@ -626,6 +713,7 @@ init _ =
       , startingOctave = selectedPattern.octaveStart
       , octaveCount = selectedPattern.octaveCount
       , noteVolume = 0.8
+      , selectedPatternIndex = defaultPatternIndex
       }
     , Cmd.none
     )

@@ -501,7 +501,7 @@ twinkleTwinkleChordsV3Config =
     , barCount = 13
     , beatsPerBar = 2
     , splitBeats = 2
-    , name = "Twinkle V3 (No Low Chords)"
+    , name = "Twinkle Chords V3"
     , octaveStart = octaveStart
     , octaveCount = octaveCount
     }
@@ -617,7 +617,7 @@ twinkleTwinkleChordsV2Config =
     , barCount = 20
     , beatsPerBar = 2
     , splitBeats = 2
-    , name = "Twinkle V2 (Bright Chords)"
+    , name = "Twinkle Chords V2"
     , octaveStart = octaveStart
     , octaveCount = octaveCount
     }
