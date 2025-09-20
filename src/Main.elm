@@ -868,9 +868,12 @@ viewGrid model =
                             else
                                 []
                     in
-                    div ([ class "flex items-center justify-center text-xs font-bold text-gray-700"
+                    div
+                        ([ class "flex items-center justify-center text-xs font-bold text-gray-700"
                          , class stepHeaderClass
-                         ] ++ stepHeaderAttrs)
+                         ]
+                            ++ stepHeaderAttrs
+                        )
                         [ text (String.fromInt (stepIndex + 1)) ]
                 )
                 (List.repeat stepCount_ ())
@@ -911,14 +914,14 @@ viewGridCell currentStep model noteIndex stepIndex =
                     "bg-blue-600 hover:bg-blue-700"
 
                 ( False, True ) ->
-                    "bg-blue-200 hover:bg-blue-300"
+                    "bg-blue-300 hover:bg-blue-400"
 
                 ( False, False ) ->
                     "bg-blue-100 hover:bg-blue-200"
     in
     div
         [ class cellClass
-        , class "border border-blue-200 cursor-pointer"
+        , class "border-[0.5px] border-blue-200 cursor-pointer"
         , HE.onMouseDown (StartDrawing noteIndex stepIndex)
         , HE.onMouseEnter (ContinueDrawing noteIndex stepIndex)
         , HE.onMouseUp StopDrawing
