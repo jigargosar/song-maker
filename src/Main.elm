@@ -674,7 +674,7 @@ formatTime seconds =
 
 numberInput : String -> Int -> (Int -> Msg) -> Html Msg
 numberInput label value onChange =
-    div [ class "flex items-center gap-1" ]
+    div [ class "flex flex-col gap-1" ]
         [ H.label [ class "text-xs font-medium text-gray-600" ] [ text label ]
         , H.input
             [ HA.type_ "number"
@@ -703,56 +703,65 @@ headerView model =
             [ H.h1 [ class "text-2xl font-bold text-gray-800" ]
                 [ text "Song Maker - Build 7" ]
             , div [ class "flex items-center gap-3" ]
-                [ H.select
-                    [ class "bg-white border border-gray-300 rounded-lg px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    , HE.onInput
-                        (\indexStr ->
-                            case String.toInt indexStr of
-                                Just index ->
-                                    ChangePattern index
+                [ div [ class "flex flex-col gap-1" ]
+                    [ H.label [ class "text-xs font-medium text-gray-600" ] [ text "Pattern" ]
+                    , H.select
+                        [ class "bg-white border border-gray-300 rounded px-2 py-1 text-xs font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                        , HE.onInput
+                            (\indexStr ->
+                                case String.toInt indexStr of
+                                    Just index ->
+                                        ChangePattern index
 
-                                Nothing ->
-                                    ChangePattern 0
+                                    Nothing ->
+                                        ChangePattern 0
+                            )
+                        ]
+                        (List.indexedMap
+                            (\index pattern ->
+                                H.option
+                                    [ HA.value (String.fromInt index)
+                                    , HA.selected (index == model.selectedPatternIndex)
+                                    ]
+                                    [ text pattern.name ]
+                            )
+                            getAllPatterns
                         )
                     ]
-                    (List.indexedMap
-                        (\index pattern ->
-                            H.option
-                                [ HA.value (String.fromInt index)
-                                , HA.selected (index == model.selectedPatternIndex)
-                                ]
-                                [ text pattern.name ]
+                , div [ class "flex flex-col gap-1" ]
+                    [ H.label [ class "text-xs font-medium text-gray-600" ] [ text "Scale" ]
+                    , H.select
+                        [ class "bg-white border border-gray-300 rounded px-2 py-1 text-xs font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                        , HE.onInput (Types.stringToScaleType >> ChangeScaleType)
+                        ]
+                        (List.map
+                            (\scaleType ->
+                                H.option
+                                    [ HA.value (Types.scaleTypeToString scaleType)
+                                    , HA.selected (scaleType == model.scaleType)
+                                    ]
+                                    [ text (Types.scaleTypeToString scaleType) ]
+                            )
+                            Types.allScaleTypes
                         )
-                        getAllPatterns
-                    )
-                , H.select
-                    [ class "bg-white border border-gray-300 rounded-lg px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    , HE.onInput (Types.stringToScaleType >> ChangeScaleType)
                     ]
-                    (List.map
-                        (\scaleType ->
-                            H.option
-                                [ HA.value (Types.scaleTypeToString scaleType)
-                                , HA.selected (scaleType == model.scaleType)
-                                ]
-                                [ text (Types.scaleTypeToString scaleType) ]
+                , div [ class "flex flex-col gap-1" ]
+                    [ H.label [ class "text-xs font-medium text-gray-600" ] [ text "Root" ]
+                    , H.select
+                        [ class "bg-white border border-gray-300 rounded px-2 py-1 text-xs font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                        , HE.onInput (Types.stringToRootNote >> ChangeRootNote)
+                        ]
+                        (List.map
+                            (\rootNote ->
+                                H.option
+                                    [ HA.value (Types.rootNoteToString rootNote)
+                                    , HA.selected (rootNote == model.rootNote)
+                                    ]
+                                    [ text (Types.rootNoteToString rootNote) ]
+                            )
+                            Types.allRootNotes
                         )
-                        Types.allScaleTypes
-                    )
-                , H.select
-                    [ class "bg-white border border-gray-300 rounded-lg px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    , HE.onInput (Types.stringToRootNote >> ChangeRootNote)
                     ]
-                    (List.map
-                        (\rootNote ->
-                            H.option
-                                [ HA.value (Types.rootNoteToString rootNote)
-                                , HA.selected (rootNote == model.rootNote)
-                                ]
-                                [ text (Types.rootNoteToString rootNote) ]
-                        )
-                        Types.allRootNotes
-                    )
                 , numberInput "Start" model.startingOctave ChangeStartingOctave
                 , numberInput "Oct" model.octaveCount ChangeOctaveCount
                 , numberInput "Bars" model.barCount ChangeBarCount
