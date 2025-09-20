@@ -890,7 +890,7 @@ viewGrid model =
             getCurrentPlayingStep model
     in
     div
-        [ class "grid overflow-x-auto w-screen max-w-full"
+        [ class "grid w-screen h-screen"
         , style "grid-template-columns" ("repeat(" ++ String.fromInt (stepCount_ + 1) ++ ", minmax(48px, 1fr))")
         , style "grid-template-rows" ("repeat(" ++ String.fromInt (noteCount_ + 1) ++ ", minmax(24px, 1fr))")
         , style "width" "max-content"
