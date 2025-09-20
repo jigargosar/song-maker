@@ -334,8 +334,8 @@ update msg model =
 
                         scrollCmd =
                             if shouldSchedule then
-                                --scrollToActiveStep { containerId = "grid-container", headerId = "active-step-header" }
-                                Cmd.none
+                                scrollToActiveStep { containerId = "grid-container", headerId = "active-step-header" }
+                                    |> always Cmd.none
 
                             else
                                 Cmd.none
@@ -821,31 +821,6 @@ viewNoteLabel noteLabels_ noteIndex =
         [ text (Maybe.withDefault "?" (List.drop noteIndex noteLabels_ |> List.head)) ]
 
 
-getBorderClasses : Int -> Model -> String
-getBorderClasses stepIndex model =
-    let
-        stepsPerBeat =
-            model.splitBeats
-
-        stepsPerBar =
-            model.beatsPerBar * model.splitBeats
-
-        isBarStart =
-            modBy stepsPerBar stepIndex == 0 && stepIndex > 0
-
-        isBeatStart =
-            modBy stepsPerBeat stepIndex == 0 && stepIndex > 0 && not isBarStart
-    in
-    if isBarStart then
-        "border-l-2 border-gray-800"
-
-    else if isBeatStart then
-        "border-l border-gray-600"
-
-    else
-        ""
-
-
 viewGrid : Model -> Html Msg
 viewGrid model =
     let
@@ -879,15 +854,12 @@ viewGrid model =
                         isCurrentStep =
                             currentStep == Just stepIndex
 
-                        borderClasses =
-                            getBorderClasses stepIndex model
-
                         stepHeaderClass =
                             if isCurrentStep then
-                                "flex items-center justify-center text-xs font-bold text-gray-700 bg-blue-200 " ++ borderClasses
+                                "bg-blue-200"
 
                             else
-                                "flex items-center justify-center text-xs font-bold text-gray-700 bg-gray-200 " ++ borderClasses
+                                "bg-gray-200"
 
                         stepHeaderAttrs =
                             if isCurrentStep then
@@ -896,7 +868,9 @@ viewGrid model =
                             else
                                 []
                     in
-                    div ([ class stepHeaderClass ] ++ stepHeaderAttrs)
+                    div ([ class "flex items-center justify-center text-xs font-bold text-gray-700"
+                         , class stepHeaderClass
+                         ] ++ stepHeaderAttrs)
                         [ text (String.fromInt (stepIndex + 1)) ]
                 )
                 (List.repeat stepCount_ ())
@@ -944,8 +918,7 @@ viewGridCell currentStep model noteIndex stepIndex =
     in
     div
         [ class cellClass
-        , class (getBorderClasses stepIndex model)
-        , class "cursor-pointer"
+        , class "border border-blue-200 cursor-pointer"
         , HE.onMouseDown (StartDrawing noteIndex stepIndex)
         , HE.onMouseEnter (ContinueDrawing noteIndex stepIndex)
         , HE.onMouseUp StopDrawing
