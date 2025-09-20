@@ -815,9 +815,28 @@ getCurrentPlayingStep model =
             Nothing
 
 
-viewNoteLabel : List String -> Int -> Html msg
-viewNoteLabel noteLabels_ noteIndex =
-    div [ class "flex items-center justify-center text-xs font-bold text-gray-700 bg-gray-200" ]
+getOctaveBorderClasses : Int -> { a | scaleType : ScaleType } -> String
+getOctaveBorderClasses noteIndex model =
+    let
+        notesPerOctave_ =
+            Types.notesPerOctave model.scaleType
+
+        isOctaveStart =
+            modBy notesPerOctave_ noteIndex == 0 && noteIndex > 0
+    in
+    if isOctaveStart then
+        "border-t-blue-300 border-t-2"
+
+    else
+        ""
+
+
+viewNoteLabel : List String -> Int -> { a | scaleType : ScaleType } -> Html msg
+viewNoteLabel noteLabels_ noteIndex model =
+    div
+        [ class "flex items-center justify-center text-xs font-bold text-gray-700 bg-blue-100"
+        , class (getOctaveBorderClasses noteIndex model)
+        ]
         [ text (Maybe.withDefault "?" (List.drop noteIndex noteLabels_ |> List.head)) ]
 
 
@@ -837,7 +856,7 @@ viewGrid model =
             getCurrentPlayingStep model
     in
     div
-        [ class "grid p-1 overflow-x-auto w-screen max-w-full"
+        [ class "grid overflow-x-auto w-screen max-w-full"
         , style "grid-template-columns" ("repeat(" ++ String.fromInt (stepCount_ + 1) ++ ", minmax(48px, 1fr))")
         , style "grid-template-rows" ("repeat(" ++ String.fromInt (noteCount_ + 1) ++ ", minmax(24px, 1fr))")
         , style "width" "max-content"
@@ -846,7 +865,7 @@ viewGrid model =
         , style "min-height" "100%"
         , HA.id "grid-container"
         ]
-        ([ div [ class "" ] [] -- Empty corner cell
+        ([ div [ class "bg-blue-100" ] [] -- Empty corner cell
          ]
             ++ List.indexedMap
                 (\stepIndex _ ->
@@ -859,7 +878,7 @@ viewGrid model =
                                 "bg-blue-200"
 
                             else
-                                "bg-gray-200"
+                                "bg-blue-100"
 
                         stepHeaderAttrs =
                             if isCurrentStep then
@@ -881,7 +900,7 @@ viewGrid model =
                (List.range 0 (noteCount_ - 1)
                     |> List.map
                         (\noteIndex ->
-                            [ viewNoteLabel noteLabels_ noteIndex ]
+                            [ viewNoteLabel noteLabels_ noteIndex model ]
                                 ++ (List.range 0 (stepCount_ - 1)
                                         |> List.map (viewGridCell currentStep model noteIndex)
                                    )
@@ -908,20 +927,21 @@ viewGridCell currentStep model noteIndex stepIndex =
         cellClass =
             case ( isActive, isCurrentStep ) of
                 ( True, True ) ->
-                    "bg-blue-600 hover:bg-blue-700 just-played"
+                    "bg-blue-600 just-played"
 
                 ( True, False ) ->
                     "bg-blue-600 hover:bg-blue-700"
 
                 ( False, True ) ->
-                    "bg-blue-300 hover:bg-blue-400"
+                    "bg-blue-100"
 
                 ( False, False ) ->
-                    "bg-blue-100 hover:bg-blue-200"
+                    "bg-blue-50 hover:bg-blue-100"
     in
     div
         [ class cellClass
         , class "border-[0.5px] border-blue-200 cursor-pointer"
+        , class (getOctaveBorderClasses noteIndex model)
         , HE.onMouseDown (StartDrawing noteIndex stepIndex)
         , HE.onMouseEnter (ContinueDrawing noteIndex stepIndex)
         , HE.onMouseUp StopDrawing
