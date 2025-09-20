@@ -698,96 +698,98 @@ view model =
 
 headerView : Model -> Html Msg
 headerView model =
-    H.header [ class "bg-white shadow-sm border-b border-gray-200 py-4" ]
-        [ div [ class "flex items-center gap-3 flex-wrap px-6" ]
-            [ H.h1 [ class "text-2xl font-bold text-gray-800 flex-shrink-0" ]
-                [ text "Song Maker - Build 7" ]
-            , div [ class "flex flex-col gap-1" ]
-                    [ H.label [ class "text-xs font-medium text-gray-600" ] [ text "Pattern" ]
-                    , H.select
-                        [ class "bg-white border border-gray-300 rounded px-2 py-1 text-xs font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-1 focus:ring-blue-500"
-                        , HE.onInput
-                            (\indexStr ->
-                                case String.toInt indexStr of
-                                    Just index ->
-                                        ChangePattern index
+    H.header
+        [ class "bg-white shadow-sm border-b border-gray-200 py-4 flex items-center gap-3 px-6"
+        , class "flex-wrap" -- prevents children from overflowing, which causes outer scroll bars to appear.
+        , class "overflow-auto" -- add scrolling to header, when any one of its children can be contained/overflows
+        ]
+        [ H.h1 [ class "text-2xl font-bold text-gray-800 flex-shrink-0" ]
+            [ text "Song Maker - Build 7" ]
+        , div [ class "flex flex-col gap-1" ]
+            [ H.label [ class "text-xs font-medium text-gray-600" ] [ text "Pattern" ]
+            , H.select
+                [ class "bg-white border border-gray-300 rounded px-2 py-1 text-xs font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                , HE.onInput
+                    (\indexStr ->
+                        case String.toInt indexStr of
+                            Just index ->
+                                ChangePattern index
 
-                                    Nothing ->
-                                        ChangePattern 0
-                            )
-                        ]
-                        (List.indexedMap
-                            (\index pattern ->
-                                H.option
-                                    [ HA.value (String.fromInt index)
-                                    , HA.selected (index == model.selectedPatternIndex)
-                                    ]
-                                    [ text pattern.name ]
-                            )
-                            getAllPatterns
-                        )
-                    ]
-                , div [ class "flex flex-col gap-1" ]
-                    [ H.label [ class "text-xs font-medium text-gray-600" ] [ text "Scale" ]
-                    , H.select
-                        [ class "bg-white border border-gray-300 rounded px-2 py-1 text-xs font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-1 focus:ring-blue-500"
-                        , HE.onInput (Types.stringToScaleType >> ChangeScaleType)
-                        ]
-                        (List.map
-                            (\scaleType ->
-                                H.option
-                                    [ HA.value (Types.scaleTypeToString scaleType)
-                                    , HA.selected (scaleType == model.scaleType)
-                                    ]
-                                    [ text (Types.scaleTypeToString scaleType) ]
-                            )
-                            Types.allScaleTypes
-                        )
-                    ]
-                , div [ class "flex flex-col gap-1" ]
-                    [ H.label [ class "text-xs font-medium text-gray-600" ] [ text "Root" ]
-                    , H.select
-                        [ class "bg-white border border-gray-300 rounded px-2 py-1 text-xs font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-1 focus:ring-blue-500"
-                        , HE.onInput (Types.stringToRootNote >> ChangeRootNote)
-                        ]
-                        (List.map
-                            (\rootNote ->
-                                H.option
-                                    [ HA.value (Types.rootNoteToString rootNote)
-                                    , HA.selected (rootNote == model.rootNote)
-                                    ]
-                                    [ text (Types.rootNoteToString rootNote) ]
-                            )
-                            Types.allRootNotes
-                        )
-                    ]
-                , numberInput "Start" model.startingOctave ChangeStartingOctave
-                , numberInput "Oct" model.octaveCount ChangeOctaveCount
-                , numberInput "Bars" model.barCount ChangeBarCount
-                , numberInput "Beats" model.beatsPerBar ChangeBeatsPerBar
-                , numberInput "Split" model.splitBeats ChangeSplitBeats
-                , case model.playState of
-                    Playing _ ->
-                        H.button
-                            [ class "bg-red-600 hover:brightness-110 text-white font-bold py-2 px-6 rounded-lg shadow-md transition-all"
-                            , HE.onClick Stop
-                            ]
-                            [ text "Stop" ]
-
-                    Stopped ->
-                        H.button
-                            [ class "bg-green-600 hover:brightness-110 text-white font-bold py-2 px-6 rounded-lg shadow-md transition-all"
-                            , HE.onClick Play
-                            ]
-                            [ text "Play" ]
-                , H.button
-                    [ class "bg-gray-600 hover:brightness-110 text-white font-bold py-2 px-4 rounded-lg shadow-md transition-all"
-                    , HE.onClick ClearGrid
-                    ]
-                    [ text "Clear" ]
-                , div [ class "text-sm text-gray-600 flex-shrink-0" ]
-                    [ text (formatTime model.currentTime) ]
+                            Nothing ->
+                                ChangePattern 0
+                    )
                 ]
+                (List.indexedMap
+                    (\index pattern ->
+                        H.option
+                            [ HA.value (String.fromInt index)
+                            , HA.selected (index == model.selectedPatternIndex)
+                            ]
+                            [ text pattern.name ]
+                    )
+                    getAllPatterns
+                )
+            ]
+        , div [ class "flex flex-col gap-1" ]
+            [ H.label [ class "text-xs font-medium text-gray-600" ] [ text "Scale" ]
+            , H.select
+                [ class "bg-white border border-gray-300 rounded px-2 py-1 text-xs font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                , HE.onInput (Types.stringToScaleType >> ChangeScaleType)
+                ]
+                (List.map
+                    (\scaleType ->
+                        H.option
+                            [ HA.value (Types.scaleTypeToString scaleType)
+                            , HA.selected (scaleType == model.scaleType)
+                            ]
+                            [ text (Types.scaleTypeToString scaleType) ]
+                    )
+                    Types.allScaleTypes
+                )
+            ]
+        , div [ class "flex flex-col gap-1" ]
+            [ H.label [ class "text-xs font-medium text-gray-600" ] [ text "Root" ]
+            , H.select
+                [ class "bg-white border border-gray-300 rounded px-2 py-1 text-xs font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                , HE.onInput (Types.stringToRootNote >> ChangeRootNote)
+                ]
+                (List.map
+                    (\rootNote ->
+                        H.option
+                            [ HA.value (Types.rootNoteToString rootNote)
+                            , HA.selected (rootNote == model.rootNote)
+                            ]
+                            [ text (Types.rootNoteToString rootNote) ]
+                    )
+                    Types.allRootNotes
+                )
+            ]
+        , numberInput "Start" model.startingOctave ChangeStartingOctave
+        , numberInput "Oct" model.octaveCount ChangeOctaveCount
+        , numberInput "Bars" model.barCount ChangeBarCount
+        , numberInput "Beats" model.beatsPerBar ChangeBeatsPerBar
+        , numberInput "Split" model.splitBeats ChangeSplitBeats
+        , case model.playState of
+            Playing _ ->
+                H.button
+                    [ class "bg-red-600 hover:brightness-110 text-white font-bold py-2 px-6 rounded-lg shadow-md transition-all"
+                    , HE.onClick Stop
+                    ]
+                    [ text "Stop" ]
+
+            Stopped ->
+                H.button
+                    [ class "bg-green-600 hover:brightness-110 text-white font-bold py-2 px-6 rounded-lg shadow-md transition-all"
+                    , HE.onClick Play
+                    ]
+                    [ text "Play" ]
+        , H.button
+            [ class "bg-gray-600 hover:brightness-110 text-white font-bold py-2 px-4 rounded-lg shadow-md transition-all"
+            , HE.onClick ClearGrid
+            ]
+            [ text "Clear" ]
+        , div [ class "text-sm text-gray-600 flex-shrink-0" ]
+            [ text (formatTime model.currentTime) ]
         ]
 
 
