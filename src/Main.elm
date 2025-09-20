@@ -938,7 +938,7 @@ viewGrid model =
                         (\noteIndex ->
                             [ viewNoteLabel noteLabels_ noteIndex model ]
                                 ++ (List.range 0 (stepCount_ - 1)
-                                        |> List.map (viewGridCell currentStep model noteIndex)
+                                        |> List.map (\stepIndex -> viewGridCell currentStep model noteIndex stepIndex)
                                    )
                         )
                     |> List.concat
