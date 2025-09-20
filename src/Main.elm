@@ -931,19 +931,22 @@ viewGrid model =
         ]
         ([ div [ class "bg-blue-100" ] [] -- Empty corner cell
          ]
-            ++ List.map (viewStepHeader currentStep model) (List.range 0 (stepCount_ - 1))
+            ++ -- Step header row
+               List.map (viewStepHeader currentStep model) (List.range 0 (stepCount_ - 1))
             ++ -- Note rows
                (List.range 0 (noteCount_ - 1)
-                    |> List.map
-                        (\noteIndex ->
-                            [ viewNoteLabel noteLabels_ noteIndex model ]
-                                ++ (List.range 0 (stepCount_ - 1)
-                                        |> List.map (\stepIndex -> viewGridCell currentStep model noteIndex stepIndex)
-                                   )
-                        )
+                    |> List.map (viewNoteRow currentStep model noteLabels_ stepCount_)
                     |> List.concat
                )
         )
+
+
+viewNoteRow : Maybe Int -> Model -> List String -> Int -> Int -> List (Html Msg)
+viewNoteRow currentStep model noteLabels_ stepCount_ noteIndex =
+    [ viewNoteLabel noteLabels_ noteIndex model ]
+        ++ (List.range 0 (stepCount_ - 1)
+                |> List.map (\stepIndex -> viewGridCell currentStep model noteIndex stepIndex)
+           )
 
 
 viewGridCell : Maybe Int -> Model -> Int -> Int -> Html Msg
