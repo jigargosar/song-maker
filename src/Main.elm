@@ -865,6 +865,36 @@ getTimingBorderClasses stepIndex model =
         ""
 
 
+viewStepHeader : Maybe Int -> { a | beatsPerBar : Int, splitBeats : Int } -> Int -> Html msg
+viewStepHeader currentStep model stepIndex =
+    let
+        isCurrentStep =
+            currentStep == Just stepIndex
+
+        stepHeaderClass =
+            if isCurrentStep then
+                "bg-blue-200"
+
+            else
+                "bg-blue-100"
+
+        stepHeaderAttrs =
+            if isCurrentStep then
+                [ HA.id "active-step-header" ]
+
+            else
+                []
+    in
+    div
+        ([ class "flex items-center justify-center text-xs font-bold text-gray-700"
+         , class stepHeaderClass
+         , class (getTimingBorderClasses stepIndex model)
+         ]
+            ++ stepHeaderAttrs
+        )
+        [ text (String.fromInt (stepIndex + 1)) ]
+
+
 viewNoteLabel : List String -> Int -> { a | scaleType : ScaleType } -> Html msg
 viewNoteLabel noteLabels_ noteIndex model =
     div
@@ -901,36 +931,7 @@ viewGrid model =
         ]
         ([ div [ class "bg-blue-100" ] [] -- Empty corner cell
          ]
-            ++ List.indexedMap
-                (\stepIndex _ ->
-                    let
-                        isCurrentStep =
-                            currentStep == Just stepIndex
-
-                        stepHeaderClass =
-                            if isCurrentStep then
-                                "bg-blue-200"
-
-                            else
-                                "bg-blue-100"
-
-                        stepHeaderAttrs =
-                            if isCurrentStep then
-                                [ HA.id "active-step-header" ]
-
-                            else
-                                []
-                    in
-                    div
-                        ([ class "flex items-center justify-center text-xs font-bold text-gray-700"
-                         , class stepHeaderClass
-                         , class (getTimingBorderClasses stepIndex model)
-                         ]
-                            ++ stepHeaderAttrs
-                        )
-                        [ text (String.fromInt (stepIndex + 1)) ]
-                )
-                (List.repeat stepCount_ ())
+            ++ List.map (viewStepHeader currentStep model) (List.range 0 (stepCount_ - 1))
             ++ -- Note rows
                (List.range 0 (noteCount_ - 1)
                     |> List.map
