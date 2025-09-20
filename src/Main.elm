@@ -698,12 +698,11 @@ view model =
 
 headerView : Model -> Html Msg
 headerView model =
-    H.header [ class "bg-white shadow-sm border-b border-gray-200 px-6 py-4" ]
-        [ div [ class "flex items-center justify-between" ]
-            [ H.h1 [ class "text-2xl font-bold text-gray-800" ]
+    H.header [ class "bg-white shadow-sm border-b border-gray-200 py-4" ]
+        [ div [ class "flex items-center gap-3 flex-wrap px-6" ]
+            [ H.h1 [ class "text-2xl font-bold text-gray-800 flex-shrink-0" ]
                 [ text "Song Maker - Build 7" ]
-            , div [ class "flex items-center gap-3" ]
-                [ div [ class "flex flex-col gap-1" ]
+            , div [ class "flex flex-col gap-1" ]
                     [ H.label [ class "text-xs font-medium text-gray-600" ] [ text "Pattern" ]
                     , H.select
                         [ class "bg-white border border-gray-300 rounded px-2 py-1 text-xs font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-1 focus:ring-blue-500"
@@ -786,10 +785,9 @@ headerView model =
                     , HE.onClick ClearGrid
                     ]
                     [ text "Clear" ]
+                , div [ class "text-sm text-gray-600 flex-shrink-0" ]
+                    [ text (formatTime model.currentTime) ]
                 ]
-            , div [ class "text-sm text-gray-600" ]
-                [ text (formatTime model.currentTime) ]
-            ]
         ]
 
 
