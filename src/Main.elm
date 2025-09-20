@@ -920,9 +920,9 @@ viewGrid model =
             getCurrentPlayingStep model
     in
     div
-        [ class "grid w-screen h-screen"
+        [ class "grid w-screen h-screen relative"
         , style "grid-template-columns" ("repeat(" ++ String.fromInt (stepCount_ + 1) ++ ", minmax(48px, 1fr))")
-        , style "grid-template-rows" ("repeat(" ++ String.fromInt (noteCount_ + 1) ++ ", minmax(24px, 1fr))")
+        , style "grid-template-rows" ("repeat(" ++ String.fromInt (noteCount_ + 3) ++ ", minmax(24px, 1fr))")
         , style "width" "max-content"
         , style "height" "max-content"
         , style "min-width" "100%"
@@ -938,7 +938,68 @@ viewGrid model =
                     |> List.map (viewNoteRow currentStep model noteLabels_ stepCount_)
                     |> List.concat
                )
+            ++ -- Percussion rows (sticky at bottom)
+               viewPercussionRows currentStep model stepCount_
         )
+
+
+viewPercussionRows : Maybe Int -> Model -> Int -> List (Html Msg)
+viewPercussionRows currentStep model stepCount_ =
+    [ -- Kick drum row
+      div [ class "flex items-center justify-center text-xs font-bold text-gray-700 bg-red-100 sticky z-10", style "bottom" "24px" ]
+          [ text "Kick" ]
+    ]
+        ++ List.map (viewPercussionCell currentStep model 0) (List.range 0 (stepCount_ - 1))
+        ++ [ -- Snare drum row
+             div [ class "flex items-center justify-center text-xs font-bold text-gray-700 bg-orange-100 sticky bottom-0 z-10" ]
+                 [ text "Snare" ]
+           ]
+        ++ List.map (viewPercussionCell currentStep model 1) (List.range 0 (stepCount_ - 1))
+
+
+viewPercussionCell : Maybe Int -> Model -> Int -> Int -> Html Msg
+viewPercussionCell currentStep model drumIndex stepIndex =
+    let
+        isCurrentStep =
+            case currentStep of
+                Just idx ->
+                    idx == stepIndex
+
+                Nothing ->
+                    False
+
+        cellClass =
+            if isCurrentStep then
+                if drumIndex == 0 then
+                    "bg-red-200"
+                else
+                    "bg-orange-200"
+            else
+                if drumIndex == 0 then
+                    "bg-red-50 hover:bg-red-100"
+                else
+                    "bg-orange-50 hover:bg-orange-100"
+
+        stickyClass =
+            if drumIndex == 0 then
+                "sticky z-10"
+            else
+                "sticky bottom-0 z-10"
+
+        bottomStyle =
+            if drumIndex == 0 then
+                style "bottom" "24px"
+            else
+                style "bottom" "0px"
+    in
+    div
+        [ class cellClass
+        , class stickyClass
+        , bottomStyle
+        , class "border-[0.5px] border-gray-300 cursor-pointer"
+        , class (getTimingBorderClasses stepIndex model)
+        ]
+        []
 
 
 viewNoteRow : Maybe Int -> Model -> List String -> Int -> Int -> List (Html Msg)
