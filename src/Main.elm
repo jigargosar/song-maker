@@ -825,7 +825,32 @@ getOctaveBorderClasses noteIndex model =
             modBy notesPerOctave_ noteIndex == 0 && noteIndex > 0
     in
     if isOctaveStart then
-        "border-t-blue-300 border-t-2"
+        "border-t-blue-300 border-t-[1.5px]"
+
+    else
+        ""
+
+
+getTimingBorderClasses : Int -> { a | beatsPerBar : Int, splitBeats : Int } -> String
+getTimingBorderClasses stepIndex model =
+    let
+        stepsPerBeat =
+            model.splitBeats
+
+        stepsPerBar =
+            model.beatsPerBar * model.splitBeats
+
+        isBarStart =
+            modBy stepsPerBar stepIndex == 0 && stepIndex > 0
+
+        isBeatStart =
+            modBy stepsPerBeat stepIndex == 0 && stepIndex > 0 && not isBarStart
+    in
+    if isBarStart then
+        "border-l-blue-300 border-l-[1.5px]"
+
+    else if isBeatStart then
+        "border-l-blue-300 border-l-[0.5px]"
 
     else
         ""
@@ -890,6 +915,7 @@ viewGrid model =
                     div
                         ([ class "flex items-center justify-center text-xs font-bold text-gray-700"
                          , class stepHeaderClass
+                         , class (getTimingBorderClasses stepIndex model)
                          ]
                             ++ stepHeaderAttrs
                         )
@@ -942,6 +968,7 @@ viewGridCell currentStep model noteIndex stepIndex =
         [ class cellClass
         , class "border-[0.5px] border-blue-200 cursor-pointer"
         , class (getOctaveBorderClasses noteIndex model)
+        , class (getTimingBorderClasses stepIndex model)
         , HE.onMouseDown (StartDrawing noteIndex stepIndex)
         , HE.onMouseEnter (ContinueDrawing noteIndex stepIndex)
         , HE.onMouseUp StopDrawing
