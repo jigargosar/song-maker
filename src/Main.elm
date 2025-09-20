@@ -5,7 +5,7 @@ import Html as H exposing (Html, div, text)
 import Html.Attributes as HA exposing (class, style)
 import Html.Events as HE
 import Patterns
-import Types exposing (ScaleType(..), RootNote(..))
+import Types exposing (RootNote(..), ScaleType(..))
 
 
 
@@ -27,8 +27,6 @@ port scrollToActiveStep : { containerId : String, headerId : String } -> Cmd msg
 midiC4 : Int
 midiC4 =
     60
-
-
 
 
 totalSteps : { a | barCount : Int, beatsPerBar : Int, splitBeats : Int } -> Int
@@ -196,6 +194,7 @@ resizeGrid newNoteCount newStepCount existingGrid =
                 paddedRow =
                     if currentLength < newStepCount then
                         truncatedRow ++ List.repeat (newStepCount - currentLength) False
+
                     else
                         truncatedRow
             in
@@ -216,6 +215,7 @@ resizeGrid newNoteCount newStepCount existingGrid =
         newEmptyRows =
             if currentNoteCount < newNoteCount then
                 List.repeat (newNoteCount - currentNoteCount) (List.repeat newStepCount False)
+
             else
                 []
 
@@ -817,12 +817,12 @@ getCurrentPlayingStep model =
 
 viewNoteLabel : List String -> Int -> Html msg
 viewNoteLabel noteLabels_ noteIndex =
-    div [ class "flex items-center justify-center text-xs font-bold text-gray-700 bg-gray-200 rounded" ]
+    div [ class "flex items-center justify-center text-xs font-bold text-gray-700 bg-gray-200" ]
         [ text (Maybe.withDefault "?" (List.drop noteIndex noteLabels_ |> List.head)) ]
 
 
-getMarkerType : Int -> Model -> String
-getMarkerType stepIndex model =
+getBorderClasses : Int -> Model -> String
+getBorderClasses stepIndex model =
     let
         stepsPerBeat =
             model.splitBeats
@@ -830,18 +830,20 @@ getMarkerType stepIndex model =
         stepsPerBar =
             model.beatsPerBar * model.splitBeats
 
-        isBarMarker =
+        isBarStart =
             modBy stepsPerBar stepIndex == 0 && stepIndex > 0
 
-        isBeatMarker =
-            modBy stepsPerBeat stepIndex == 0 && stepIndex > 0 && not isBarMarker
+        isBeatStart =
+            modBy stepsPerBeat stepIndex == 0 && stepIndex > 0 && not isBarStart
     in
-    if isBarMarker then
-        "bar"
-    else if isBeatMarker then
-        "beat"
+    if isBarStart then
+        "border-l-2 border-gray-800"
+
+    else if isBeatStart then
+        "border-l border-gray-600"
+
     else
-        "none"
+        ""
 
 
 viewGrid : Model -> Html Msg
@@ -860,7 +862,7 @@ viewGrid model =
             getCurrentPlayingStep model
     in
     div
-        [ class "grid gap-1 p-1 overflow-x-auto w-screen max-w-full"
+        [ class "grid p-1 overflow-x-auto w-screen max-w-full"
         , style "grid-template-columns" ("repeat(" ++ String.fromInt (stepCount_ + 1) ++ ", minmax(48px, 1fr))")
         , style "grid-template-rows" ("repeat(" ++ String.fromInt (noteCount_ + 1) ++ ", minmax(24px, 1fr))")
         , style "width" "max-content"
@@ -877,12 +879,15 @@ viewGrid model =
                         isCurrentStep =
                             currentStep == Just stepIndex
 
+                        borderClasses =
+                            getBorderClasses stepIndex model
+
                         stepHeaderClass =
                             if isCurrentStep then
-                                "flex items-center justify-center text-xs font-bold text-gray-700 bg-blue-200 rounded relative"
+                                "flex items-center justify-center text-xs font-bold text-gray-700 bg-blue-200 " ++ borderClasses
 
                             else
-                                "flex items-center justify-center text-xs font-bold text-gray-700 bg-gray-200 rounded relative"
+                                "flex items-center justify-center text-xs font-bold text-gray-700 bg-gray-200 " ++ borderClasses
 
                         stepHeaderAttrs =
                             if isCurrentStep then
@@ -890,22 +895,9 @@ viewGrid model =
 
                             else
                                 []
-
-                        -- Add timing marker if needed
-                        markerType = getMarkerType stepIndex model
-
-                        markerDiv =
-                            if markerType == "bar" then
-                                div [ class "absolute left-0 top-0 bottom-0 w-1 bg-gray-800" ] []
-                            else if markerType == "beat" then
-                                div [ class "absolute left-0 top-0 bottom-0 w-0.5 bg-gray-600" ] []
-                            else
-                                text ""
                     in
                     div ([ class stepHeaderClass ] ++ stepHeaderAttrs)
-                        [ markerDiv
-                        , text (String.fromInt (stepIndex + 1))
-                        ]
+                        [ text (String.fromInt (stepIndex + 1)) ]
                 )
                 (List.repeat stepCount_ ())
             ++ -- Note rows
@@ -952,7 +944,8 @@ viewGridCell currentStep model noteIndex stepIndex =
     in
     div
         [ class cellClass
-        , class "rounded-lg cursor-pointer"
+        , class (getBorderClasses stepIndex model)
+        , class "cursor-pointer"
         , HE.onMouseDown (StartDrawing noteIndex stepIndex)
         , HE.onMouseEnter (ContinueDrawing noteIndex stepIndex)
         , HE.onMouseUp StopDrawing
