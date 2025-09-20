@@ -821,6 +821,29 @@ viewNoteLabel noteLabels_ noteIndex =
         [ text (Maybe.withDefault "?" (List.drop noteIndex noteLabels_ |> List.head)) ]
 
 
+getMarkerType : Int -> Model -> String
+getMarkerType stepIndex model =
+    let
+        stepsPerBeat =
+            model.splitBeats
+
+        stepsPerBar =
+            model.beatsPerBar * model.splitBeats
+
+        isBarMarker =
+            modBy stepsPerBar stepIndex == 0 && stepIndex > 0
+
+        isBeatMarker =
+            modBy stepsPerBeat stepIndex == 0 && stepIndex > 0 && not isBarMarker
+    in
+    if isBarMarker then
+        "bar"
+    else if isBeatMarker then
+        "beat"
+    else
+        "none"
+
+
 viewGrid : Model -> Html Msg
 viewGrid model =
     let
@@ -856,10 +879,10 @@ viewGrid model =
 
                         stepHeaderClass =
                             if isCurrentStep then
-                                "flex items-center justify-center text-xs font-bold text-gray-700 bg-blue-200 rounded"
+                                "flex items-center justify-center text-xs font-bold text-gray-700 bg-blue-200 rounded relative"
 
                             else
-                                "flex items-center justify-center text-xs font-bold text-gray-700 bg-gray-200 rounded"
+                                "flex items-center justify-center text-xs font-bold text-gray-700 bg-gray-200 rounded relative"
 
                         stepHeaderAttrs =
                             if isCurrentStep then
@@ -867,9 +890,22 @@ viewGrid model =
 
                             else
                                 []
+
+                        -- Add timing marker if needed
+                        markerType = getMarkerType stepIndex model
+
+                        markerDiv =
+                            if markerType == "bar" then
+                                div [ class "absolute left-0 top-0 bottom-0 w-1 bg-gray-800" ] []
+                            else if markerType == "beat" then
+                                div [ class "absolute left-0 top-0 bottom-0 w-0.5 bg-gray-600" ] []
+                            else
+                                text ""
                     in
                     div ([ class stepHeaderClass ] ++ stepHeaderAttrs)
-                        [ text (String.fromInt (stepIndex + 1)) ]
+                        [ markerDiv
+                        , text (String.fromInt (stepIndex + 1))
+                        ]
                 )
                 (List.repeat stepCount_ ())
             ++ -- Note rows
