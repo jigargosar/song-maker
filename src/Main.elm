@@ -94,6 +94,11 @@ type DrawState
     | Erasing
 
 
+type CellType
+    = NoteCell Int
+    | PercussionCell Int
+
+
 type alias Model =
     { grid : List (List Bool)
     , playState : PlayState
@@ -922,7 +927,7 @@ viewGrid model =
     div
         [ class "grid w-screen h-screen relative"
         , style "grid-template-columns" ("repeat(" ++ String.fromInt (stepCount_ + 1) ++ ", minmax(48px, 1fr))")
-        , style "grid-template-rows" ("minmax(24px, 1fr) repeat(" ++ String.fromInt noteCount_ ++ ", minmax(24px, 1fr)) 24px 24px")
+        , style "grid-template-rows" ("minmax(24px, 1fr) repeat(" ++ String.fromInt noteCount_ ++ ", minmax(24px, 1fr)) 32px 32px")
         , style "width" "max-content"
         , style "height" "max-content"
         , style "min-width" "100%"
@@ -946,61 +951,16 @@ viewGrid model =
 viewPercussionRows : Maybe Int -> Model -> Int -> List (Html Msg)
 viewPercussionRows currentStep model stepCount_ =
     [ -- Kick drum row
-      div [ class "flex items-center justify-center text-xs font-bold text-gray-700 bg-red-100 sticky z-10", style "bottom" "24px", style "height" "24px", style "min-height" "24px", style "max-height" "24px" ]
+      div [ class "flex items-center justify-center text-xs font-bold text-gray-700 bg-red-100 sticky z-10", style "bottom" "32px", style "height" "32px", style "min-height" "32px", style "max-height" "32px" ]
           [ text "Kick" ]
     ]
-        ++ List.map (viewPercussionCell currentStep model 0) (List.range 0 (stepCount_ - 1))
+        ++ List.map (\stepIndex -> viewCell (PercussionCell 0) currentStep model stepIndex) (List.range 0 (stepCount_ - 1))
         ++ [ -- Snare drum row
-             div [ class "flex items-center justify-center text-xs font-bold text-gray-700 bg-orange-100 sticky bottom-0 z-10", style "height" "24px", style "min-height" "24px", style "max-height" "24px" ]
+             div [ class "flex items-center justify-center text-xs font-bold text-gray-700 bg-orange-100 sticky bottom-0 z-10", style "height" "32px", style "min-height" "32px", style "max-height" "32px" ]
                  [ text "Snare" ]
            ]
-        ++ List.map (viewPercussionCell currentStep model 1) (List.range 0 (stepCount_ - 1))
+        ++ List.map (\stepIndex -> viewCell (PercussionCell 1) currentStep model stepIndex) (List.range 0 (stepCount_ - 1))
 
-
-viewPercussionCell : Maybe Int -> Model -> Int -> Int -> Html Msg
-viewPercussionCell currentStep model drumIndex stepIndex =
-    let
-        isCurrentStep =
-            case currentStep of
-                Just idx ->
-                    idx == stepIndex
-
-                Nothing ->
-                    False
-
-        cellClass =
-            if isCurrentStep then
-                if drumIndex == 0 then
-                    "bg-red-200"
-                else
-                    "bg-orange-200"
-            else
-                if drumIndex == 0 then
-                    "bg-red-50 hover:bg-red-100"
-                else
-                    "bg-orange-50 hover:bg-orange-100"
-
-        stickyClass =
-            "sticky z-10"
-
-        positionStyles =
-            if drumIndex == 0 then
-                [ style "bottom" "24px" ]
-            else
-                [ style "bottom" "0px" ]
-    in
-    div
-        ([ class cellClass
-         , class stickyClass
-         , style "height" "24px"
-         , style "min-height" "24px"
-         , style "max-height" "24px"
-         , class "border-[0.5px] border-gray-300 cursor-pointer"
-         , class (getTimingBorderClasses stepIndex model)
-         ]
-            ++ positionStyles
-        )
-        []
 
 
 viewNoteRow : Maybe Int -> Model -> List String -> Int -> Int -> List (Html Msg)
@@ -1011,12 +971,9 @@ viewNoteRow currentStep model noteLabels_ stepCount_ noteIndex =
            )
 
 
-viewGridCell : Maybe Int -> Model -> Int -> Int -> Html Msg
-viewGridCell currentStep model noteIndex stepIndex =
+viewCell : CellType -> Maybe Int -> Model -> Int -> Html Msg
+viewCell cellType currentStep model stepIndex =
     let
-        isActive =
-            getCellState noteIndex stepIndex model
-
         isCurrentStep =
             case currentStep of
                 Just idx ->
@@ -1025,30 +982,80 @@ viewGridCell currentStep model noteIndex stepIndex =
                 Nothing ->
                     False
 
-        cellClass =
-            case ( isActive, isCurrentStep ) of
-                ( True, True ) ->
-                    "bg-blue-600 just-played"
+        cellConfig =
+            case cellType of
+                NoteCell noteIndex ->
+                    let
+                        isActive =
+                            getCellState noteIndex stepIndex model
 
-                ( True, False ) ->
-                    "bg-blue-600 hover:bg-blue-700"
+                        noteClass =
+                            case ( isActive, isCurrentStep ) of
+                                ( True, True ) ->
+                                    "bg-blue-600 just-played"
 
-                ( False, True ) ->
-                    "bg-blue-100"
+                                ( True, False ) ->
+                                    "bg-blue-600 hover:bg-blue-700"
 
-                ( False, False ) ->
-                    "bg-blue-50 hover:bg-blue-100"
+                                ( False, True ) ->
+                                    "bg-blue-100"
+
+                                ( False, False ) ->
+                                    "bg-blue-50 hover:bg-blue-100"
+                    in
+                    { cellClass = noteClass
+                    , borderClass = "border-[0.5px] border-blue-200 " ++ getOctaveBorderClasses noteIndex model
+                    , eventHandlers = [ HE.onMouseDown (StartDrawing noteIndex stepIndex)
+                                      , HE.onMouseEnter (ContinueDrawing noteIndex stepIndex)
+                                      , HE.onMouseUp StopDrawing
+                                      ]
+                    , extraStyles = []
+                    }
+
+                PercussionCell drumIndex ->
+                    let
+                        percussionClass =
+                            if isCurrentStep then
+                                if drumIndex == 0 then
+                                    "bg-red-200"
+                                else
+                                    "bg-orange-200"
+                            else if drumIndex == 0 then
+                                "bg-red-50 hover:bg-red-100"
+                            else
+                                "bg-orange-50 hover:bg-orange-100"
+
+                        positionStyles =
+                            if drumIndex == 0 then
+                                [ style "bottom" "32px" ]
+                            else
+                                [ style "bottom" "0px" ]
+                    in
+                    { cellClass = percussionClass
+                    , borderClass = "border-[0.5px] border-gray-300"
+                    , eventHandlers = []
+                    , extraStyles = [ class "sticky z-10"
+                                   , style "height" "32px"
+                                   , style "min-height" "32px"
+                                   , style "max-height" "32px"
+                                   ] ++ positionStyles
+                    }
     in
     div
-        [ class cellClass
-        , class "border-[0.5px] border-blue-200 cursor-pointer"
-        , class (getOctaveBorderClasses noteIndex model)
-        , class (getTimingBorderClasses stepIndex model)
-        , HE.onMouseDown (StartDrawing noteIndex stepIndex)
-        , HE.onMouseEnter (ContinueDrawing noteIndex stepIndex)
-        , HE.onMouseUp StopDrawing
-        ]
+        ([ class cellConfig.cellClass
+         , class cellConfig.borderClass
+         , class "cursor-pointer"
+         , class (getTimingBorderClasses stepIndex model)
+         ]
+            ++ cellConfig.eventHandlers
+            ++ cellConfig.extraStyles
+        )
         []
+
+
+viewGridCell : Maybe Int -> Model -> Int -> Int -> Html Msg
+viewGridCell currentStep model noteIndex stepIndex =
+    viewCell (NoteCell noteIndex) currentStep model stepIndex
 
 
 
