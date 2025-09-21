@@ -108,7 +108,7 @@ viewGrid =
             "minmax(32px, auto) repeat($pitchRowsCount, minmax($rowMinHeight, 1fr)) repeat(2, $percussionRowHeight)"
                 |> String.replace "$pitchRowsCount" (String.fromInt pitchRowsCount)
                 |> String.replace "$rowMinHeight" (px 32)
-                |> String.replace "$percussionRowHeight" (px 40)
+                |> String.replace "$percussionRowHeight" (px 48)
     in
     div
         [ class "grid bg-neutral-800 border border-neutral-700 w-max h-max min-w-full min-h-full"
