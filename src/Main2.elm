@@ -90,22 +90,22 @@ centerView =
 viewGrid : Html Msg
 viewGrid =
     let
-        stepColumnsCount =
+        totalStepColumns =
             16
 
-        pitchRowsCount =
+        totalPitchRows =
             8
 
         gridTemplateColumns =
             "minmax($labelColumnMinWidth, auto) repeat($stepColumnsCount, minmax($stepColumnMinWidth, 1fr))"
                 |> String.replace "$labelColumnMinWidth" (px 48)
-                |> String.replace "$stepColumnsCount" (String.fromInt stepColumnsCount)
+                |> String.replace "$stepColumnsCount" (String.fromInt totalStepColumns)
                 |> String.replace "$stepColumnMinWidth" (px 48)
 
         gridTemplateRows =
             "minmax($headerRowMinHeight, auto) repeat($pitchRowsCount, minmax($rowMinHeight, 1fr)) repeat(2, $percussionRowHeight)"
                 |> String.replace "$headerRowMinHeight" (px 32)
-                |> String.replace "$pitchRowsCount" (String.fromInt pitchRowsCount)
+                |> String.replace "$pitchRowsCount" (String.fromInt totalPitchRows)
                 |> String.replace "$rowMinHeight" (px 32)
                 |> String.replace "$percussionRowHeight" (px 48)
     in
@@ -115,9 +115,9 @@ viewGrid =
         , style "grid-template-rows" gridTemplateRows
         ]
         ([ {- Empty corner cell -} div [ class "bg-neutral-700" ] [] ]
-            ++ {- Step headers row -} times viewStepHeader stepColumnsCount
-            ++ {- Pitch rows -} (times (viewPitchRow stepColumnsCount) pitchRowsCount |> List.concat)
-            ++ {- Percussion rows -} viewPercussionRows stepColumnsCount
+            ++ {- Step headers row -} times viewStepHeader totalStepColumns
+            ++ {- Pitch rows -} (times (viewPitchRow totalStepColumns) totalPitchRows |> List.concat)
+            ++ {- Percussion rows -} viewPercussionRows totalStepColumns
         )
 
 
