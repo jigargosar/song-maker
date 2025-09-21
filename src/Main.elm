@@ -873,22 +873,12 @@ getTimingBorderClasses stepIndex model =
 viewStepHeader : Maybe Int -> { a | beatsPerBar : Int, splitBeats : Int } -> Int -> Html msg
 viewStepHeader currentStep model stepIndex =
     let
-        isCurrentStep =
-            currentStep == Just stepIndex
-
-        stepHeaderClass =
-            if isCurrentStep then
-                "bg-blue-200"
+        ( stepHeaderClass, stepHeaderAttrs ) =
+            if currentStep == Just stepIndex then
+                ( "bg-blue-200", [ HA.id "active-step-header" ] )
 
             else
-                "bg-blue-100"
-
-        stepHeaderAttrs =
-            if isCurrentStep then
-                [ HA.id "active-step-header" ]
-
-            else
-                []
+                ( "bg-blue-100", [] )
     in
     div
         ([ class "flex items-center justify-center text-xs font-bold text-gray-700"
@@ -950,16 +940,25 @@ viewGrid model =
 
 viewPercussionRows : Maybe Int -> Model -> Int -> List (Html Msg)
 viewPercussionRows currentStep model stepCount_ =
-    [ -- Kick drum row
-      div [ class "flex items-center justify-center text-xs font-bold text-gray-700 bg-red-100 sticky z-10", style "bottom" "32px", style "height" "32px", style "min-height" "32px", style "max-height" "32px" ]
-          [ text "Kick" ]
-    ]
-        ++ List.map (\stepIndex -> viewCell (PercussionCell 0) currentStep model stepIndex) (List.range 0 (stepCount_ - 1))
-        ++ [ -- Snare drum row
-             div [ class "flex items-center justify-center text-xs font-bold text-gray-700 bg-orange-100 sticky bottom-0 z-10", style "height" "32px", style "min-height" "32px", style "max-height" "32px" ]
-                 [ text "Snare" ]
-           ]
-        ++ List.map (\stepIndex -> viewCell (PercussionCell 1) currentStep model stepIndex) (List.range 0 (stepCount_ - 1))
+    let
+        drumConfigs =
+            [ { name = "Kick", bgClass = "bg-red-100", bottomPosition = "32px", index = 0 }
+            , { name = "Snare", bgClass = "bg-orange-100", bottomPosition = "0px", index = 1 }
+            ]
+
+        viewPercussionRow { name, bgClass, bottomPosition, index } =
+            [ div
+                [ class ("flex items-center justify-center text-xs font-bold text-gray-700 sticky z-10 " ++ bgClass)
+                , style "bottom" bottomPosition
+                , style "height" "32px"
+                , style "min-height" "32px"
+                , style "max-height" "32px"
+                ]
+                [ text name ]
+            ]
+                ++ List.map (\stepIndex -> viewCell (PercussionCell index) currentStep model stepIndex) (List.range 0 (stepCount_ - 1))
+    in
+    List.concatMap viewPercussionRow drumConfigs
 
 
 
@@ -1014,22 +1013,19 @@ viewCell cellType currentStep model stepIndex =
 
                 PercussionCell drumIndex ->
                     let
-                        percussionClass =
-                            if isCurrentStep then
-                                if drumIndex == 0 then
-                                    "bg-red-200"
-                                else
-                                    "bg-orange-200"
-                            else if drumIndex == 0 then
-                                "bg-red-50 hover:bg-red-100"
-                            else
-                                "bg-orange-50 hover:bg-orange-100"
+                        ( percussionClass, bottomPosition ) =
+                            case ( isCurrentStep, drumIndex ) of
+                                ( True, 0 ) ->
+                                    ( "bg-red-200", "32px" )
 
-                        positionStyles =
-                            if drumIndex == 0 then
-                                [ style "bottom" "32px" ]
-                            else
-                                [ style "bottom" "0px" ]
+                                ( True, _ ) ->
+                                    ( "bg-orange-200", "0px" )
+
+                                ( False, 0 ) ->
+                                    ( "bg-red-50 hover:bg-red-100", "32px" )
+
+                                ( False, _ ) ->
+                                    ( "bg-orange-50 hover:bg-orange-100", "0px" )
                     in
                     { cellClass = percussionClass
                     , borderClass = "border-[0.5px] border-gray-300"
@@ -1038,7 +1034,8 @@ viewCell cellType currentStep model stepIndex =
                                    , style "height" "32px"
                                    , style "min-height" "32px"
                                    , style "max-height" "32px"
-                                   ] ++ positionStyles
+                                   , style "bottom" bottomPosition
+                                   ]
                     }
     in
     div
