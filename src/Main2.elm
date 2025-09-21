@@ -97,13 +97,9 @@ viewGrid =
             8
     in
     div
-        [ class "grid bg-neutral-800 border border-neutral-700"
+        [ class "grid bg-neutral-800 border border-neutral-700 w-max h-max min-w-full min-h-full"
         , style "grid-template-columns" ("repeat(" ++ String.fromInt (stepCount + 1) ++ ", minmax(48px, 1fr))")
         , style "grid-template-rows" ("minmax(32px, auto) repeat(" ++ String.fromInt noteCount ++ ", minmax(32px, 1fr)) 40px 40px")
-        , style "width" "max-content"
-        , style "height" "max-content"
-        , style "min-width" "100%"
-        , style "min-height" "100%"
         ]
         ([ div [ class "bg-neutral-700" ] [] -- Empty corner cell
          ]
