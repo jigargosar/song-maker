@@ -58,7 +58,7 @@ update msg model =
 
 view : Model -> Html Msg
 view model =
-    div [ class "min-h-screen bg-surface-900 text-white flex flex-col" ]
+    div [ class "min-h-screen bg-neutral-900 text-white flex flex-col" ]
         [ headerView
         , centerView
         , footerView
@@ -67,14 +67,14 @@ view model =
 
 headerView : Html Msg
 headerView =
-    div [ class "bg-surface-800 border-b border-surface-700 px-6 py-4" ]
+    div [ class "bg-neutral-800 border-b border-neutral-700 px-6 py-4" ]
         [ div [ class "flex items-center justify-between" ]
             [ div [ class "text-2xl font-bold text-white" ]
                 [ text "Song Maker V2" ]
             , div [ class "flex items-center gap-4" ]
-                [ div [ class "text-ink-300 text-sm" ]
+                [ div [ class "text-neutral-300 text-sm" ]
                     [ text "BPM: 120" ]
-                , div [ class "bg-accent-700 hover:bg-accent-800 text-white font-bold py-2 px-6 rounded-lg transition-colors cursor-pointer" ]
+                , div [ class "bg-accent-700 hover:bg-fuchsia-800 text-white font-bold py-2 px-6 rounded-lg transition-colors cursor-pointer" ]
                     [ text "Play" ]
                 ]
             ]
@@ -83,14 +83,14 @@ headerView =
 
 centerView : Html Msg
 centerView =
-    div [ class "flex-1 bg-surface-900 p-6" ]
+    div [ class "flex-1 bg-neutral-900 p-6" ]
         [ div [ class "max-w-full mx-auto" ]
-            [ div [ class "bg-surface-800 rounded-lg p-8 border border-surface-700" ]
+            [ div [ class "bg-neutral-800 rounded-lg p-8 border border-neutral-700" ]
                 [ div [ class "text-center" ]
                     [ div [ class "text-6xl mb-4" ] [ text "🎵" ]
-                    , div [ class "text-2xl font-semibold text-ink-300 mb-4" ]
+                    , div [ class "text-2xl font-semibold text-neutral-300 mb-4" ]
                         [ text "Grid Coming Soon" ]
-                    , div [ class "text-ink-400" ]
+                    , div [ class "text-neutral-400" ]
                         [ text "Building grid-first architecture with percussion support" ]
                     ]
                 ]
@@ -100,8 +100,8 @@ centerView =
 
 footerView : Html Msg
 footerView =
-    div [ class "bg-surface-800 border-t border-surface-700 px-6 py-3" ]
-        [ div [ class "flex items-center justify-between text-sm text-ink-400" ]
+    div [ class "bg-neutral-800 border-t border-neutral-700 px-6 py-3" ]
+        [ div [ class "flex items-center justify-between text-sm text-neutral-400" ]
             [ div [] [ text "Ready to rock 🎸" ]
             , div [] [ text "Time: 0.0s" ]
             , div [] [ text "V2 - Clean Architecture" ]
