@@ -74,7 +74,7 @@ headerView =
             , div [ class "flex items-center gap-4" ]
                 [ div [ class "text-neutral-300 text-sm" ]
                     [ text "BPM: 120" ]
-                , div [ class "bg-accent-700 hover:bg-fuchsia-800 text-white font-bold py-2 px-6 rounded-lg transition-colors cursor-pointer" ]
+                , div [ class "bg-fuchsia-700 hover:bg-fuchsia-800 text-white font-bold py-2 px-6 rounded-lg transition-colors cursor-pointer" ]
                     [ text "Play" ]
                 ]
             ]
