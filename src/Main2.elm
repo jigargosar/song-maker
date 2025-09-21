@@ -124,19 +124,19 @@ viewGrid =
 viewStepHeader : Int -> Html Msg
 viewStepHeader stepIndex =
     div
-        [ class "bg-neutral-600 border-b border-neutral-500 flex items-center justify-center text-xs font-bold text-neutral-300"
-        ]
+        [ class "bg-neutral-600 flex items-center justify-center text-xs font-bold text-neutral-200" ]
         [ text (String.fromInt (stepIndex + 1)) ]
 
 
 viewPitchRow : Int -> Int -> List (Html Msg)
 viewPitchRow stepCount pitchIndex =
-    [ div
-        [ class "bg-neutral-600 border-r border-neutral-600 flex items-center justify-center text-xs font-bold text-neutral-300"
-        ]
-        [ text ("Pitch " ++ String.fromInt (pitchIndex + 1)) ]
-    ]
-        ++ times (viewPitchCell pitchIndex) stepCount
+    let
+        viewPitchLabel =
+            div
+                [ class "bg-neutral-600 flex items-center justify-center text-xs font-bold text-neutral-300" ]
+                [ text ("Pitch " ++ String.fromInt (pitchIndex + 1)) ]
+    in
+    viewPitchLabel :: times (viewPitchCell pitchIndex) stepCount
 
 
 viewPitchCell : Int -> Int -> Html Msg
