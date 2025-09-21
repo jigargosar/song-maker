@@ -354,7 +354,11 @@ headerView =
             , div [ class "flex items-center gap-4" ]
                 [ div [ class "text-gray-300 text-sm" ]
                     [ text "BPM: 120" ]
-                , div [ class "bg-fuchsia-700 hover:bg-fuchsia-800 text-white font-bold py-2 px-6 rounded-lg transition-colors cursor-pointer" ]
+                , div
+                    [ class accentBgColor
+                    , class accentBgColorHover
+                    , class "text-white font-bold py-2 px-6 rounded-lg transition-colors cursor-pointer"
+                    ]
                     [ text "Play" ]
                 ]
             ]
@@ -424,7 +428,8 @@ viewPitchCell pitchRowIndex grid stepColumnIndex =
 
         noteClass =
             if isActive then
-                getNoteColor pitchRowIndex
+                getCellColor pitchRowIndex
+
             else
                 "bg-gray-800 hover:bg-gray-700"
     in
@@ -469,14 +474,16 @@ viewPercussionCell percussionType percussionGrid stepColumnIndex =
                     Kick ->
                         -- Circle symbol
                         div
-                            [ class "w-6 h-6 bg-fuchsia-600 rounded-full"
+                            [ class "w-6 h-6 rounded-full"
+                            , class accentBgColor
                             ]
                             []
 
                     Snare ->
                         -- Triangle symbol
                         div
-                            [ class "w-6 h-6 bg-fuchsia-600"
+                            [ class "w-6 h-6"
+                            , class accentBgColor
                             , style "clip-path" "polygon(50% 0%, 0% 100%, 100% 100%)"
                             ]
                             []
@@ -575,6 +582,16 @@ setPercussionCellActive position isActive grid =
 -- Style Constants
 
 
+accentBgColor : String
+accentBgColor =
+    "bg-[oklch(55%_0.18_180)]"
+
+
+accentBgColorHover : String
+accentBgColorHover =
+    "hover:bg-[oklch(59%_0.20_180)]"
+
+
 labelClass : String
 labelClass =
     "bg-gray-900 border-r border-gray-600 flex items-center justify-center text-xs font-bold text-white"
@@ -584,17 +601,43 @@ labelClass =
 -- View Helpers
 
 
-getNoteColor : Int -> String
-getNoteColor pitchRowIndex =
+getCellColor : Int -> String
+getCellColor pitchRowIndex =
     case modBy 7 pitchRowIndex of
-        0 -> "bg-[oklch(70%_0.13_0)] hover:bg-[oklch(74%_0.16_0)] transition-colors"     -- C - Red (both C4 and C5)
-        1 -> "bg-[oklch(70%_0.13_35)] hover:bg-[oklch(74%_0.16_35)] transition-colors"   -- D - Orange
-        2 -> "bg-[oklch(70%_0.13_70)] hover:bg-[oklch(74%_0.16_70)] transition-colors"   -- E - Yellow
-        3 -> "bg-[oklch(70%_0.13_120)] hover:bg-[oklch(74%_0.16_120)] transition-colors" -- F - Green
-        4 -> "bg-[oklch(70%_0.13_210)] hover:bg-[oklch(74%_0.16_210)] transition-colors" -- G - Blue
-        5 -> "bg-[oklch(70%_0.13_270)] hover:bg-[oklch(74%_0.16_270)] transition-colors" -- A - Purple
-        6 -> "bg-[oklch(70%_0.13_310)] hover:bg-[oklch(74%_0.16_310)] transition-colors" -- B - Magenta
-        _ -> "bg-[oklch(60%_0.02_0)] hover:bg-[oklch(64%_0.05_0)] transition-colors"     -- Fallback
+        0 ->
+            "bg-[oklch(70%_0.13_0)] hover:bg-[oklch(74%_0.16_0)] transition-colors"
+
+        -- C - Red (both C4 and C5)
+        1 ->
+            "bg-[oklch(70%_0.13_35)] hover:bg-[oklch(74%_0.16_35)] transition-colors"
+
+        -- D - Orange
+        2 ->
+            "bg-[oklch(70%_0.13_70)] hover:bg-[oklch(74%_0.16_70)] transition-colors"
+
+        -- E - Yellow
+        3 ->
+            "bg-[oklch(70%_0.13_120)] hover:bg-[oklch(74%_0.16_120)] transition-colors"
+
+        -- F - Green
+        4 ->
+            "bg-[oklch(70%_0.13_210)] hover:bg-[oklch(74%_0.16_210)] transition-colors"
+
+        -- G - Blue
+        5 ->
+            "bg-[oklch(70%_0.13_270)] hover:bg-[oklch(74%_0.16_270)] transition-colors"
+
+        -- A - Purple
+        6 ->
+            "bg-[oklch(70%_0.13_310)] hover:bg-[oklch(74%_0.16_310)] transition-colors"
+
+        -- B - Magenta
+        _ ->
+            "bg-[oklch(60%_0.02_0)] hover:bg-[oklch(64%_0.05_0)] transition-colors"
+
+
+
+-- Fallback
 
 
 px f =
