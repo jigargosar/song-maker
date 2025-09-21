@@ -73,19 +73,19 @@ pitchRowToMidiNote pitchRowIndex =
 -- Default to C4
 
 
-drumTypeToMidiNote : DrumType -> Int
-drumTypeToMidiNote drumType =
-    case drumType of
+percussionTypeToMidiNote : PercussionType -> Int
+percussionTypeToMidiNote percussionType =
+    case percussionType of
         Kick ->
             36
 
-        -- Standard kick drum MIDI note
+        -- Standard kick percussion MIDI note
         Snare ->
             38
 
 
 
--- Standard snare drum MIDI note
+-- Standard snare percussion MIDI note
 
 
 type alias Flags =
@@ -114,13 +114,13 @@ type alias Grid =
     Set ( Int, Int )
 
 
-type DrumType
+type PercussionType
     = Kick
     | Snare
 
 
 type alias PercussionPosition =
-    { drumType : DrumType, stepColumnIndex : Int }
+    { percussionType : PercussionType, stepColumnIndex : Int }
 
 
 type alias PercussionGrid =
@@ -169,7 +169,7 @@ type Msg
     | ContinueDrawingPercussion PercussionPosition
     | StopDrawingPercussion
     | PlayPitchNote Int
-    | PlayPercussionNote DrumType
+    | PlayPercussionNote PercussionType
 
 
 subscriptions : Model -> Sub msg
@@ -261,7 +261,7 @@ update msg model =
                             if not currentlyActive then
                                 let
                                     midiNote =
-                                        drumTypeToMidiNote position.drumType
+                                        percussionTypeToMidiNote position.percussionType
                                 in
                                 playPercussion { note = midiNote, duration = 0.5, volume = 0.8 }
 
@@ -305,10 +305,10 @@ update msg model =
             in
             ( model, cmd )
 
-        PlayPercussionNote drumType ->
+        PlayPercussionNote percussionType ->
             let
                 midiNote =
-                    drumTypeToMidiNote drumType
+                    percussionTypeToMidiNote percussionType
 
                 cmd =
                     playPercussion { note = midiNote, duration = 0.5, volume = 0.8 }
@@ -425,13 +425,13 @@ viewPitchCell pitchRowIndex grid stepColumnIndex =
 
 viewPercussionRows : Int -> PercussionGrid -> List (Html Msg)
 viewPercussionRows stepCount percussionGrid =
-    [ -- Snare drum label (top row)
+    [ -- Snare percussion label (top row)
       div
         [ class labelClass ]
         [ text "Snare" ]
     ]
         ++ times (viewPercussionCell Snare percussionGrid) stepCount
-        ++ [ -- Kick drum label (bottom row)
+        ++ [ -- Kick percussion label (bottom row)
              div
                 [ class labelClass ]
                 [ text "Kick" ]
@@ -439,18 +439,18 @@ viewPercussionRows stepCount percussionGrid =
         ++ times (viewPercussionCell Kick percussionGrid) stepCount
 
 
-viewPercussionCell : DrumType -> PercussionGrid -> Int -> Html Msg
-viewPercussionCell drumType percussionGrid stepColumnIndex =
+viewPercussionCell : PercussionType -> PercussionGrid -> Int -> Html Msg
+viewPercussionCell percussionType percussionGrid stepColumnIndex =
     let
         position =
-            { drumType = drumType, stepColumnIndex = stepColumnIndex }
+            { percussionType = percussionType, stepColumnIndex = stepColumnIndex }
 
         isActive =
             isPercussionCellActive position percussionGrid
 
         symbol =
             if isActive then
-                case drumType of
+                case percussionType of
                     Kick ->
                         -- Circle symbol
                         div
@@ -505,9 +505,9 @@ times fn i =
 -- Conversion Functions
 
 
-drumTypeToPercussionRowIndex : DrumType -> Int
-drumTypeToPercussionRowIndex drumType =
-    case drumType of
+percussionTypeToPercussionRowIndex : PercussionType -> Int
+percussionTypeToPercussionRowIndex percussionType =
+    case percussionType of
         Snare ->
             0
 
@@ -516,8 +516,8 @@ drumTypeToPercussionRowIndex drumType =
 
 
 percussionPositionToTuple : PercussionPosition -> ( Int, Int )
-percussionPositionToTuple { drumType, stepColumnIndex } =
-    ( drumTypeToPercussionRowIndex drumType, stepColumnIndex )
+percussionPositionToTuple { percussionType, stepColumnIndex } =
+    ( percussionTypeToPercussionRowIndex percussionType, stepColumnIndex )
 
 
 

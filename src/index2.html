@@ -12,7 +12,7 @@
 <!-- Load piano instrument data from CDN -->
 <script src='https://surikov.github.io/webaudiofontdata/sound/0250_SoundBlasterOld_sf2.js'></script>
 
-<!-- Load individual drum sounds from CDN -->
+<!-- Load individual percussion sounds from CDN -->
 <script src='https://surikov.github.io/webaudiofontdata/sound/12836_0_SBLive_sf2.js'></script>
 <script src='https://surikov.github.io/webaudiofontdata/sound/12838_0_SBLive_sf2.js'></script>
 
@@ -25,8 +25,8 @@
     // Capture globals as clean constants
     const WebAudioFontPlayer = window.WebAudioFontPlayer;
     const piano = window._tone_0250_SoundBlasterOld_sf2;
-    const kickDrum = window._drum_36_0_SBLive_sf2;  // MIDI 36 - Bass Drum 1
-    const snareDrum = window._drum_38_0_SBLive_sf2; // MIDI 38 - Snare Drum 1
+    const kickPercussion = window._drum_36_0_SBLive_sf2;  // MIDI 36 - Bass Drum 1
+    const snarePercussion = window._drum_38_0_SBLive_sf2; // MIDI 38 - Snare Drum 1
 
     // Initialize Elm
     const app = Elm.Main2.init({ node: document.getElementById("root") });
@@ -37,8 +37,8 @@
 
     // Use the captured constants
     player.loader.decodeAfterLoading(audioContext, piano);
-    player.loader.decodeAfterLoading(audioContext, kickDrum);
-    player.loader.decodeAfterLoading(audioContext, snareDrum);
+    player.loader.decodeAfterLoading(audioContext, kickPercussion);
+    player.loader.decodeAfterLoading(audioContext, snarePercussion);
 
     // Handle individual note playback
     app.ports.playNote.subscribe((data) => {
@@ -61,13 +61,13 @@
         const { note, duration, volume } = data;
         const when = audioContext.currentTime;
 
-        // Select correct drum based on MIDI note
-        const drumInstrument = note === 36 ? kickDrum : snareDrum;
+        // Select correct percussion based on MIDI note
+        const percussionInstrument = note === 36 ? kickPercussion : snarePercussion;
 
         player.queueWaveTable(
             audioContext,
             audioContext.destination,
-            drumInstrument,
+            percussionInstrument,
             when,
             note,
             duration,
