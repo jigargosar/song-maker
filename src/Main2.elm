@@ -388,26 +388,9 @@ drumTypeToPercussionRowIndex drumType =
             1
 
 
-percussionRowIndexToDrumType : Int -> DrumType
-percussionRowIndexToDrumType index =
-    case index of
-        0 ->
-            Snare
-
-        _ ->
-            Kick
-
-
 percussionPositionToTuple : PercussionPosition -> ( Int, Int )
 percussionPositionToTuple { drumType, stepColumnIndex } =
     ( drumTypeToPercussionRowIndex drumType, stepColumnIndex )
-
-
-tupleToPercussionPosition : ( Int, Int ) -> PercussionPosition
-tupleToPercussionPosition ( percussionRowIndex, stepColumnIndex ) =
-    { drumType = percussionRowIndexToDrumType percussionRowIndex
-    , stepColumnIndex = stepColumnIndex
-    }
 
 
 
