@@ -100,7 +100,9 @@ viewGrid =
             stepColumnsCount + 1
 
         gridTemplateColumns =
-            "repeat(" ++ String.fromInt totalColumns ++ ", minmax(48px, 1fr))"
+            "repeat($totalColumns, minmax($columnMinWidth, 1fr))"
+                |> String.replace "$totalColumns" (String.fromInt totalColumns)
+                |> String.replace "$columnMinWidth" (px 48)
     in
     div
         [ class "grid bg-neutral-800 border border-neutral-700 w-max h-max min-w-full min-h-full"
