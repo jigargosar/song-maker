@@ -5,6 +5,7 @@
   "scripts": {
     "clean": "rm -rf .parcel-cache dist elm-stuff",
     "start": "pnpm run clean && parcel --no-cache src/index.html",
+    "start2": "pnpm run clean && parcel --no-cache src/index2.html",
     "build": "pnpm run clean && parcel build src/index.html"
   },
   "keywords": [],
