@@ -1,10 +1,88 @@
-module Main2 exposing (main)
+port module Main2 exposing (main)
 
 import Browser
 import Html as H exposing (Html, div, text)
 import Html.Attributes as HA exposing (class, style)
 import Html.Events as HE
 import Set exposing (Set)
+
+
+
+-- PORTS
+
+
+port playNote : { note : Int, duration : Float, volume : Float } -> Cmd msg
+
+
+
+-- AUDIO CONSTANTS
+
+
+midiC4 : Int
+midiC4 =
+    60
+
+
+
+-- Hardcoded C Major Scale: C4, D4, E4, F4, G4, A4, B4, C5
+
+
+pitchRowToMidiNote : Int -> Int
+pitchRowToMidiNote pitchRowIndex =
+    case pitchRowIndex of
+        0 ->
+            midiC4
+
+        -- C4 (60)
+        1 ->
+            midiC4 + 2
+
+        -- D4 (62)
+        2 ->
+            midiC4 + 4
+
+        -- E4 (64)
+        3 ->
+            midiC4 + 5
+
+        -- F4 (65)
+        4 ->
+            midiC4 + 7
+
+        -- G4 (67)
+        5 ->
+            midiC4 + 9
+
+        -- A4 (69)
+        6 ->
+            midiC4 + 11
+
+        -- B4 (71)
+        7 ->
+            midiC4 + 12
+
+        -- C5 (72)
+        _ ->
+            midiC4
+
+
+
+-- Default to C4
+
+
+drumTypeToMidiNote : DrumType -> Int
+drumTypeToMidiNote drumType =
+    case drumType of
+        Kick ->
+            36
+
+        -- Standard kick drum MIDI note
+        Snare ->
+            38
+
+
+
+-- Standard snare drum MIDI note
 
 
 type alias Flags =
@@ -87,6 +165,8 @@ type Msg
     | StartDrawingPercussion PercussionPosition
     | ContinueDrawingPercussion PercussionPosition
     | StopDrawingPercussion
+    | PlayPitchNote Int
+    | PlayPercussionNote DrumType
 
 
 subscriptions : Model -> Sub msg
@@ -116,8 +196,20 @@ update msg model =
 
                         newGrid =
                             setCellActive position (not currentlyActive) model.grid
+
+                        -- Play note when drawing (activating)
+                        playCmd =
+                            if not currentlyActive then
+                                let
+                                    midiNote =
+                                        pitchRowToMidiNote position.pitchRowIndex
+                                in
+                                playNote { note = midiNote, duration = 0.5, volume = 0.7 }
+
+                            else
+                                Cmd.none
                     in
-                    ( { model | drawState = newDrawState, grid = newGrid }, Cmd.none )
+                    ( { model | drawState = newDrawState, grid = newGrid }, playCmd )
 
                 _ ->
                     ( model, Cmd.none )
@@ -160,8 +252,20 @@ update msg model =
 
                         newPercussionGrid =
                             setPercussionCellActive position (not currentlyActive) model.percussionGrid
+
+                        -- Play percussion note when drawing (activating)
+                        playCmd =
+                            if not currentlyActive then
+                                let
+                                    midiNote =
+                                        drumTypeToMidiNote position.drumType
+                                in
+                                playNote { note = midiNote, duration = 0.5, volume = 0.8 }
+
+                            else
+                                Cmd.none
                     in
-                    ( { model | drawState = newDrawState, percussionGrid = newPercussionGrid }, Cmd.none )
+                    ( { model | drawState = newDrawState, percussionGrid = newPercussionGrid }, playCmd )
 
                 _ ->
                     ( model, Cmd.none )
@@ -187,6 +291,26 @@ update msg model =
 
         StopDrawingPercussion ->
             ( { model | drawState = NotDrawing }, Cmd.none )
+
+        PlayPitchNote pitchRowIndex ->
+            let
+                midiNote =
+                    pitchRowToMidiNote pitchRowIndex
+
+                cmd =
+                    playNote { note = midiNote, duration = 0.5, volume = 0.7 }
+            in
+            ( model, cmd )
+
+        PlayPercussionNote drumType ->
+            let
+                midiNote =
+                    drumTypeToMidiNote drumType
+
+                cmd =
+                    playNote { note = midiNote, duration = 0.5, volume = 0.8 }
+            in
+            ( model, cmd )
 
 
 

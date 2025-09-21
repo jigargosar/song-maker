@@ -3,19 +3,64 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SongMaker</title>
+    <title>Song Maker V2</title>
     <link rel="stylesheet" href="./styles2.css">
 </head>
 <body>
 <div id="root"></div>
 
+<!-- Load piano instrument data from CDN -->
+<script src='https://surikov.github.io/webaudiofontdata/sound/0250_SoundBlasterOld_sf2.js'></script>
+
+<!-- Load WebAudioFont player from CDN -->
+<script src='https://surikov.github.io/webaudiofont/npm/dist/WebAudioFontPlayer.js'></script>
 
 <script type="module">
-    import {Elm} from "./Main2.elm";
+    import { Elm } from "./Main2.elm";
 
-    Elm.Main2.init({node: document.getElementById("root")});
+    // Capture globals as clean constants
+    const WebAudioFontPlayer = window.WebAudioFontPlayer;
+    const piano = window._tone_0250_SoundBlasterOld_sf2;
 
+    // Initialize Elm
+    const app = Elm.Main2.init({ node: document.getElementById("root") });
 
+    // Initialize WebAudioFont
+    const audioContext = new AudioContext();
+    const player = new WebAudioFontPlayer();
+
+    // Use the captured constants
+    player.loader.decodeAfterLoading(audioContext, piano);
+
+    // Handle individual note playback
+    app.ports.playNote.subscribe((data) => {
+        const { note, duration, volume } = data;
+        const when = audioContext.currentTime;
+
+        player.queueWaveTable(
+            audioContext,
+            audioContext.destination,
+            piano,
+            when,
+            note,
+            duration,
+            volume
+        );
+    });
+
+    // Wake audio context on user interaction
+    // app.ports.wakeAudioContext.subscribe(() => {
+    //     if (audioContext.state === 'suspended') {
+    //         audioContext.resume();
+    //     }
+    // });
+
+    // Wake audio context on first click
+    document.addEventListener('click', () => {
+        if (audioContext.state === 'suspended') {
+            audioContext.resume();
+        }
+    }, { once: true });
 </script>
 </body>
 </html>
