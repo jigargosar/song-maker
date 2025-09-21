@@ -96,13 +96,11 @@ viewGrid =
         pitchRowsCount =
             8
 
-        totalColumns =
-            stepColumnsCount + 1
-
         gridTemplateColumns =
-            "repeat($totalColumns, minmax($columnMinWidth, 1fr))"
-                |> String.replace "$totalColumns" (String.fromInt totalColumns)
-                |> String.replace "$columnMinWidth" (px 48)
+            "minmax($labelColumnMinWidth, auto) repeat($stepColumnsCount, minmax($stepColumnMinWidth, 1fr))"
+                |> String.replace "$labelColumnMinWidth" (px 48)
+                |> String.replace "$stepColumnsCount" (String.fromInt stepColumnsCount)
+                |> String.replace "$stepColumnMinWidth" (px 48)
 
         gridTemplateRows =
             "minmax($headerRowMinHeight, auto) repeat($pitchRowsCount, minmax($rowMinHeight, 1fr)) repeat(2, $percussionRowHeight)"
@@ -116,17 +114,15 @@ viewGrid =
         , style "grid-template-columns" gridTemplateColumns
         , style "grid-template-rows" gridTemplateRows
         ]
-        ([ div [ class "bg-neutral-700" ] [] -- Empty corner cell
-         ]
-            ++ -- Step headers
-               List.map viewStepHeader (List.range 0 (stepColumnsCount - 1))
-            ++ -- Note rows
-               (List.range 0 (pitchRowsCount - 1)
-                    |> List.concatMap (viewNoteRow stepColumnsCount)
-               )
-            ++ -- Percussion rows
-               viewPercussionRows stepColumnsCount
+        ([ {- Empty corner cell -} div [ class "bg-neutral-700" ] [] ]
+            ++ {- Step headers row -} times viewStepHeader stepColumnsCount
+            ++ {- Pitch rows -} (times (viewPitchRow stepColumnsCount) pitchRowsCount |> List.concat)
+            ++ {- Percussion rows -} viewPercussionRows stepColumnsCount
         )
+
+
+times fn i =
+    List.range 0 (i - 1) |> List.map fn
 
 
 viewStepHeader : Int -> Html Msg
@@ -137,18 +133,18 @@ viewStepHeader stepIndex =
         [ text (String.fromInt (stepIndex + 1)) ]
 
 
-viewNoteRow : Int -> Int -> List (Html Msg)
-viewNoteRow stepCount noteIndex =
+viewPitchRow : Int -> Int -> List (Html Msg)
+viewPitchRow stepCount noteIndex =
     [ div
         [ class "bg-neutral-700 border-r border-neutral-600 flex items-center justify-center text-xs font-bold text-neutral-300"
         ]
         [ text ("Note " ++ String.fromInt (noteIndex + 1)) ]
     ]
-        ++ List.map (viewNoteCell noteIndex) (List.range 0 (stepCount - 1))
+        ++ times (viewPitchCell noteIndex) stepCount
 
 
-viewNoteCell : Int -> Int -> Html Msg
-viewNoteCell noteIndex stepIndex =
+viewPitchCell : Int -> Int -> Html Msg
+viewPitchCell noteIndex stepIndex =
     div
         [ class "bg-neutral-800 hover:bg-neutral-700 border-r border-b border-neutral-600 cursor-pointer transition-colors"
         ]
@@ -163,14 +159,14 @@ viewPercussionRows stepCount =
         ]
         [ text "Kick" ]
     ]
-        ++ List.map (viewPercussionCell "kick") (List.range 0 (stepCount - 1))
+        ++ times (viewPercussionCell "kick") stepCount
         ++ [ -- Snare drum label
              div
                 [ class "bg-orange-800 border-r border-neutral-600 flex items-center justify-center text-xs font-bold text-white"
                 ]
                 [ text "Snare" ]
            ]
-        ++ List.map (viewPercussionCell "snare") (List.range 0 (stepCount - 1))
+        ++ times (viewPercussionCell "snare") stepCount
 
 
 viewPercussionCell : String -> Int -> Html Msg
@@ -184,8 +180,7 @@ viewPercussionCell drumType stepIndex =
                 "bg-orange-900 hover:bg-orange-800"
     in
     div
-        [ class (bgClass ++ " border-r border-b border-neutral-600 cursor-pointer transition-colors")
-        ]
+        [ class bgClass, class "border-r border-b border-neutral-600 cursor-pointer transition-colors" ]
         []
 
 
