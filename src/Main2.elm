@@ -298,20 +298,20 @@ viewPitchCell pitchRowIndex grid stepColumnIndex =
 
 viewPercussionRows : Int -> PercussionGrid -> List (Html Msg)
 viewPercussionRows stepCount percussionGrid =
-    [ -- Kick drum label
+    [ -- Snare drum label (top row)
       div
-        [ class "bg-red-800 border-r border-neutral-600 flex items-center justify-center text-xs font-bold text-white"
+        [ class "bg-orange-800 border-r border-neutral-600 flex items-center justify-center text-xs font-bold text-white"
         ]
-        [ text "Kick" ]
+        [ text "Snare" ]
     ]
-        ++ times (viewPercussionCell Kick percussionGrid) stepCount
-        ++ [ -- Snare drum label
-             div
-                [ class "bg-orange-800 border-r border-neutral-600 flex items-center justify-center text-xs font-bold text-white"
-                ]
-                [ text "Snare" ]
-           ]
         ++ times (viewPercussionCell Snare percussionGrid) stepCount
+        ++ [ -- Kick drum label (bottom row)
+             div
+                [ class "bg-red-800 border-r border-neutral-600 flex items-center justify-center text-xs font-bold text-white"
+                ]
+                [ text "Kick" ]
+           ]
+        ++ times (viewPercussionCell Kick percussionGrid) stepCount
 
 
 viewPercussionCell : DrumType -> PercussionGrid -> Int -> Html Msg
@@ -327,17 +327,17 @@ viewPercussionCell drumType percussionGrid stepColumnIndex =
             if isActive then
                 case drumType of
                     Kick ->
-                        -- Triangle symbol
+                        -- Circle symbol
                         div
-                            [ class "w-6 h-6 bg-fuchsia-600"
-                            , style "clip-path" "polygon(50% 0%, 0% 100%, 100% 100%)"
+                            [ class "w-6 h-6 bg-fuchsia-600 rounded-full"
                             ]
                             []
 
                     Snare ->
-                        -- Circle symbol
+                        -- Triangle symbol
                         div
-                            [ class "w-6 h-6 bg-fuchsia-600 rounded-full"
+                            [ class "w-6 h-6 bg-fuchsia-600"
+                            , style "clip-path" "polygon(50% 0%, 0% 100%, 100% 100%)"
                             ]
                             []
 
@@ -383,10 +383,10 @@ times fn i =
 drumTypeToPercussionRowIndex : DrumType -> Int
 drumTypeToPercussionRowIndex drumType =
     case drumType of
-        Kick ->
+        Snare ->
             0
 
-        Snare ->
+        Kick ->
             1
 
 
@@ -394,10 +394,10 @@ percussionRowIndexToDrumType : Int -> DrumType
 percussionRowIndexToDrumType index =
     case index of
         0 ->
-            Kick
+            Snare
 
         _ ->
-            Snare
+            Kick
 
 
 percussionPositionToTuple : PercussionPosition -> ( Int, Int )
