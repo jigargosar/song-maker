@@ -103,11 +103,17 @@ viewGrid =
             "repeat($totalColumns, minmax($columnMinWidth, 1fr))"
                 |> String.replace "$totalColumns" (String.fromInt totalColumns)
                 |> String.replace "$columnMinWidth" (px 48)
+
+        gridTemplateRows =
+            "minmax(32px, auto) repeat($pitchRowsCount, minmax($rowMinHeight, 1fr)) repeat(2, $percussionRowHeight)"
+                |> String.replace "$pitchRowsCount" (String.fromInt pitchRowsCount)
+                |> String.replace "$rowMinHeight" (px 32)
+                |> String.replace "$percussionRowHeight" (px 40)
     in
     div
         [ class "grid bg-neutral-800 border border-neutral-700 w-max h-max min-w-full min-h-full"
         , style "grid-template-columns" gridTemplateColumns
-        , style "grid-template-rows" ("minmax(32px, auto) repeat(" ++ String.fromInt pitchRowsCount ++ ", minmax(32px, 1fr)) 40px 40px")
+        , style "grid-template-rows" gridTemplateRows
         ]
         ([ div [ class "bg-neutral-700" ] [] -- Empty corner cell
          ]
