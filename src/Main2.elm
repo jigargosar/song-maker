@@ -90,27 +90,30 @@ centerView =
 viewGrid : Html Msg
 viewGrid =
     let
-        stepCount =
+        stepColumnsCount =
             16
 
-        noteCount =
+        pitchRowsCount =
             8
+
+        totalColumns =
+            stepColumnsCount + 1
     in
     div
         [ class "grid bg-neutral-800 border border-neutral-700 w-max h-max min-w-full min-h-full"
-        , style "grid-template-columns" ("repeat(" ++ String.fromInt (stepCount + 1) ++ ", minmax(48px, 1fr))")
-        , style "grid-template-rows" ("minmax(32px, auto) repeat(" ++ String.fromInt noteCount ++ ", minmax(32px, 1fr)) 40px 40px")
+        , style "grid-template-columns" ("repeat(" ++ String.fromInt totalColumns ++ ", minmax(48px, 1fr))")
+        , style "grid-template-rows" ("minmax(32px, auto) repeat(" ++ String.fromInt pitchRowsCount ++ ", minmax(32px, 1fr)) 40px 40px")
         ]
         ([ div [ class "bg-neutral-700" ] [] -- Empty corner cell
          ]
             ++ -- Step headers
-               List.map viewStepHeader (List.range 0 (stepCount - 1))
+               List.map viewStepHeader (List.range 0 (stepColumnsCount - 1))
             ++ -- Note rows
-               (List.range 0 (noteCount - 1)
-                    |> List.concatMap (viewNoteRow stepCount)
+               (List.range 0 (pitchRowsCount - 1)
+                    |> List.concatMap (viewNoteRow stepColumnsCount)
                )
             ++ -- Percussion rows
-               viewPercussionRows stepCount
+               viewPercussionRows stepColumnsCount
         )
 
 
