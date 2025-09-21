@@ -90,8 +90,11 @@ centerView =
 viewGrid : Html Msg
 viewGrid =
     let
-        stepCount = 16
-        noteCount = 8
+        stepCount =
+            16
+
+        noteCount =
+            8
     in
     div
         [ class "grid bg-neutral-800 border border-neutral-700"
@@ -165,6 +168,7 @@ viewPercussionCell drumType stepIndex =
         bgClass =
             if drumType == "kick" then
                 "bg-red-900 hover:bg-red-800"
+
             else
                 "bg-orange-900 hover:bg-orange-800"
     in
@@ -183,3 +187,11 @@ footerView =
             , div [] [ text "V2 - Clean Architecture" ]
             ]
         ]
+
+
+
+-- View Helpers
+
+
+px f =
+    String.fromFloat f ++ "px"
