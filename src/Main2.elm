@@ -33,16 +33,32 @@ type alias Grid =
     Set ( Int, Int )
 
 
+type DrumType
+    = Kick
+    | Snare
+
+
+type alias PercussionPosition =
+    { drumType : DrumType, stepColumnIndex : Int }
+
+
+type alias PercussionGrid =
+    Set ( Int, Int )
+
+
 type DrawState
     = NotDrawing
-    | Drawing
-    | Erasing
+    | DrawingPitch
+    | ErasingPitch
+    | DrawingPercussion
+    | ErasingPercussion
 
 
 type alias Model =
     { totalPitchRows : Int
     , totalStepColumns : Int
     , grid : Grid
+    , percussionGrid : PercussionGrid
     , drawState : DrawState
     }
 
@@ -52,6 +68,7 @@ init _ =
     ( { totalPitchRows = 8
       , totalStepColumns = 16
       , grid = Set.empty
+      , percussionGrid = Set.empty
       , drawState = NotDrawing
       }
     , Cmd.none
@@ -67,6 +84,9 @@ type Msg
     | StartDrawing Position
     | ContinueDrawing Position
     | StopDrawing
+    | StartDrawingPercussion PercussionPosition
+    | ContinueDrawingPercussion PercussionPosition
+    | StopDrawingPercussion
 
 
 subscriptions : Model -> Sub msg
@@ -89,10 +109,10 @@ update msg model =
 
                         newDrawState =
                             if currentlyActive then
-                                Erasing
+                                ErasingPitch
 
                             else
-                                Drawing
+                                DrawingPitch
 
                         newGrid =
                             setCellActive position (not currentlyActive) model.grid
@@ -104,24 +124,68 @@ update msg model =
 
         ContinueDrawing position ->
             case model.drawState of
-                Drawing ->
+                DrawingPitch ->
                     let
                         newGrid =
                             setCellActive position True model.grid
                     in
                     ( { model | grid = newGrid }, Cmd.none )
 
-                Erasing ->
+                ErasingPitch ->
                     let
                         newGrid =
                             setCellActive position False model.grid
                     in
                     ( { model | grid = newGrid }, Cmd.none )
 
-                NotDrawing ->
+                _ ->
                     ( model, Cmd.none )
 
         StopDrawing ->
+            ( { model | drawState = NotDrawing }, Cmd.none )
+
+        StartDrawingPercussion position ->
+            case model.drawState of
+                NotDrawing ->
+                    let
+                        currentlyActive =
+                            isPercussionCellActive position model.percussionGrid
+
+                        newDrawState =
+                            if currentlyActive then
+                                ErasingPercussion
+
+                            else
+                                DrawingPercussion
+
+                        newPercussionGrid =
+                            setPercussionCellActive position (not currentlyActive) model.percussionGrid
+                    in
+                    ( { model | drawState = newDrawState, percussionGrid = newPercussionGrid }, Cmd.none )
+
+                _ ->
+                    ( model, Cmd.none )
+
+        ContinueDrawingPercussion position ->
+            case model.drawState of
+                DrawingPercussion ->
+                    let
+                        newPercussionGrid =
+                            setPercussionCellActive position True model.percussionGrid
+                    in
+                    ( { model | percussionGrid = newPercussionGrid }, Cmd.none )
+
+                ErasingPercussion ->
+                    let
+                        newPercussionGrid =
+                            setPercussionCellActive position False model.percussionGrid
+                    in
+                    ( { model | percussionGrid = newPercussionGrid }, Cmd.none )
+
+                _ ->
+                    ( model, Cmd.none )
+
+        StopDrawingPercussion ->
             ( { model | drawState = NotDrawing }, Cmd.none )
 
 
@@ -131,7 +195,7 @@ update msg model =
 
 view : Model -> Html Msg
 view model =
-    div [ class "h-screen bg-neutral-900 text-white flex flex-col" ]
+    div [ class "h-screen bg-neutral-900 text-white flex flex-col select-none" ]
         [ headerView
         , centerView model
         , footerView
@@ -160,8 +224,8 @@ centerView model =
         [ viewGrid model ]
 
 
-viewGrid : { a | totalPitchRows : Int, totalStepColumns : Int, grid : Grid } -> Html Msg
-viewGrid { totalPitchRows, totalStepColumns, grid } =
+viewGrid : { a | totalPitchRows : Int, totalStepColumns : Int, grid : Grid, percussionGrid : PercussionGrid } -> Html Msg
+viewGrid { totalPitchRows, totalStepColumns, grid, percussionGrid } =
     let
         gridTemplateColumns =
             "minmax($labelColumnMinWidth, auto) repeat($stepColumnsCount, minmax($stepColumnMinWidth, 1fr))"
@@ -184,7 +248,7 @@ viewGrid { totalPitchRows, totalStepColumns, grid } =
         ([ {- Empty corner cell -} div [ class "bg-neutral-700" ] [] ]
             ++ {- Step headers row -} times viewStepHeader totalStepColumns
             ++ {- Pitch rows -} (times (viewPitchRow totalStepColumns grid) totalPitchRows |> List.concat)
-            ++ {- Percussion rows -} viewPercussionRows totalStepColumns
+            ++ {- Percussion rows -} viewPercussionRows totalStepColumns percussionGrid
         )
 
 
@@ -232,36 +296,56 @@ viewPitchCell pitchRowIndex grid stepColumnIndex =
         []
 
 
-viewPercussionRows : Int -> List (Html Msg)
-viewPercussionRows stepCount =
+viewPercussionRows : Int -> PercussionGrid -> List (Html Msg)
+viewPercussionRows stepCount percussionGrid =
     [ -- Kick drum label
       div
         [ class "bg-red-800 border-r border-neutral-600 flex items-center justify-center text-xs font-bold text-white"
         ]
         [ text "Kick" ]
     ]
-        ++ times (viewPercussionCell "kick") stepCount
+        ++ times (viewPercussionCell Kick percussionGrid) stepCount
         ++ [ -- Snare drum label
              div
                 [ class "bg-orange-800 border-r border-neutral-600 flex items-center justify-center text-xs font-bold text-white"
                 ]
                 [ text "Snare" ]
            ]
-        ++ times (viewPercussionCell "snare") stepCount
+        ++ times (viewPercussionCell Snare percussionGrid) stepCount
 
 
-viewPercussionCell : String -> Int -> Html Msg
-viewPercussionCell drumType stepColumnIndex =
+viewPercussionCell : DrumType -> PercussionGrid -> Int -> Html Msg
+viewPercussionCell drumType percussionGrid stepColumnIndex =
     let
-        bgClass =
-            if drumType == "kick" then
-                "bg-red-900 hover:bg-red-800"
+        position =
+            { drumType = drumType, stepColumnIndex = stepColumnIndex }
 
-            else
-                "bg-orange-900 hover:bg-orange-800"
+        isActive =
+            isPercussionCellActive position percussionGrid
+
+        bgClass =
+            case drumType of
+                Kick ->
+                    if isActive then
+                        "bg-red-600 hover:bg-red-700"
+
+                    else
+                        "bg-red-900 hover:bg-red-800"
+
+                Snare ->
+                    if isActive then
+                        "bg-orange-600 hover:bg-orange-700"
+
+                    else
+                        "bg-orange-900 hover:bg-orange-800"
     in
     div
-        [ class bgClass, class "border-r border-b border-neutral-600 cursor-pointer transition-colors" ]
+        [ class bgClass
+        , class "border-r border-b border-neutral-600 cursor-pointer transition-colors"
+        , HE.onMouseDown (StartDrawingPercussion position)
+        , HE.onMouseEnter (ContinueDrawingPercussion position)
+        , HE.onMouseUp StopDrawingPercussion
+        ]
         []
 
 
@@ -284,6 +368,43 @@ times fn i =
     List.range 0 (i - 1) |> List.map fn
 
 
+
+-- Conversion Functions
+
+
+drumTypeToPercussionRowIndex : DrumType -> Int
+drumTypeToPercussionRowIndex drumType =
+    case drumType of
+        Kick ->
+            0
+
+        Snare ->
+            1
+
+
+percussionRowIndexToDrumType : Int -> DrumType
+percussionRowIndexToDrumType index =
+    case index of
+        0 ->
+            Kick
+
+        _ ->
+            Snare
+
+
+percussionPositionToTuple : PercussionPosition -> ( Int, Int )
+percussionPositionToTuple { drumType, stepColumnIndex } =
+    ( drumTypeToPercussionRowIndex drumType, stepColumnIndex )
+
+
+tupleToPercussionPosition : ( Int, Int ) -> PercussionPosition
+tupleToPercussionPosition ( percussionRowIndex, stepColumnIndex ) =
+    { drumType = percussionRowIndexToDrumType percussionRowIndex
+    , stepColumnIndex = stepColumnIndex
+    }
+
+
+
 -- Cell State Management
 
 
@@ -299,6 +420,24 @@ setCellActive { pitchRowIndex, stepColumnIndex } isActive grid =
 
     else
         Set.remove ( pitchRowIndex, stepColumnIndex ) grid
+
+
+isPercussionCellActive : PercussionPosition -> PercussionGrid -> Bool
+isPercussionCellActive position grid =
+    Set.member (percussionPositionToTuple position) grid
+
+
+setPercussionCellActive : PercussionPosition -> Bool -> PercussionGrid -> PercussionGrid
+setPercussionCellActive position isActive grid =
+    let
+        tuple =
+            percussionPositionToTuple position
+    in
+    if isActive then
+        Set.insert tuple grid
+
+    else
+        Set.remove tuple grid
 
 
 
