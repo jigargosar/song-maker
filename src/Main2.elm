@@ -195,7 +195,7 @@ update msg model =
 
 view : Model -> Html Msg
 view model =
-    div [ class "h-screen bg-neutral-900 text-white flex flex-col select-none" ]
+    div [ class "h-screen bg-gray-900 text-white flex flex-col select-none" ]
         [ headerView
         , centerView model
         , footerView
@@ -204,12 +204,12 @@ view model =
 
 headerView : Html Msg
 headerView =
-    div [ class "bg-neutral-800 border-b border-neutral-700 px-6 py-4" ]
+    div [ class "bg-gray-800 border-b border-gray-700 px-6 py-4" ]
         [ div [ class "flex items-center justify-between" ]
             [ div [ class "text-2xl font-bold text-white" ]
                 [ text "Song Maker V2" ]
             , div [ class "flex items-center gap-4" ]
-                [ div [ class "text-neutral-300 text-sm" ]
+                [ div [ class "text-gray-300 text-sm" ]
                     [ text "BPM: 120" ]
                 , div [ class "bg-fuchsia-700 hover:bg-fuchsia-800 text-white font-bold py-2 px-6 rounded-lg transition-colors cursor-pointer" ]
                     [ text "Play" ]
@@ -241,11 +241,11 @@ viewGrid { totalPitchRows, totalStepColumns, grid, percussionGrid } =
                 |> String.replace "$percussionRowHeight" (px 48)
     in
     div
-        [ class "grid bg-neutral-800 border border-neutral-700 w-max h-max min-w-full min-h-full"
+        [ class "grid bg-gray-800 border border-gray-700 w-max h-max min-w-full min-h-full"
         , style "grid-template-columns" gridTemplateColumns
         , style "grid-template-rows" gridTemplateRows
         ]
-        ([ {- Empty corner cell -} div [ class labelClass, class "border-b border-neutral-600" ] [] ]
+        ([ {- Empty corner cell -} div [ class labelClass, class "border-b border-gray-600" ] [] ]
             ++ {- Step headers row -} times viewStepHeader totalStepColumns
             ++ {- Pitch rows -} (times (viewPitchRow totalStepColumns grid) totalPitchRows |> List.concat)
             ++ {- Percussion rows -} viewPercussionRows totalStepColumns percussionGrid
@@ -255,7 +255,7 @@ viewGrid { totalPitchRows, totalStepColumns, grid, percussionGrid } =
 viewStepHeader : Int -> Html Msg
 viewStepHeader stepColumnIndex =
     div
-        [ class labelClass, class "border-b border-neutral-600" ]
+        [ class labelClass, class "border-b border-gray-600" ]
         [ text (String.fromInt (stepColumnIndex + 1)) ]
 
 
@@ -284,11 +284,11 @@ viewPitchCell pitchRowIndex grid stepColumnIndex =
                 "bg-fuchsia-600 hover:bg-fuchsia-700"
 
             else
-                "bg-neutral-800 hover:bg-neutral-700"
+                "bg-gray-800 hover:bg-gray-700"
     in
     div
         [ class bgClass
-        , class "border-r border-b border-neutral-600 cursor-pointer transition-colors"
+        , class "border-r border-b border-gray-600 cursor-pointer transition-colors"
         , HE.onMouseDown (StartDrawing position)
         , HE.onMouseEnter (ContinueDrawing position)
         , HE.onMouseUp StopDrawing
@@ -342,12 +342,12 @@ viewPercussionCell drumType percussionGrid stepColumnIndex =
             else
                 -- Small dim dot for inactive
                 div
-                    [ class "w-1.5 h-1.5 bg-neutral-500 rounded-full"
+                    [ class "w-1.5 h-1.5 bg-gray-500 rounded-full"
                     ]
                     []
     in
     div
-        [ class "bg-neutral-800 hover:bg-neutral-700 border-r border-b border-neutral-600 cursor-pointer transition-colors flex items-center justify-center"
+        [ class "bg-gray-800 hover:bg-gray-700 border-r border-b border-gray-600 cursor-pointer transition-colors flex items-center justify-center"
         , HE.onMouseDown (StartDrawingPercussion position)
         , HE.onMouseEnter (ContinueDrawingPercussion position)
         , HE.onMouseUp StopDrawingPercussion
@@ -357,8 +357,8 @@ viewPercussionCell drumType percussionGrid stepColumnIndex =
 
 footerView : Html Msg
 footerView =
-    div [ class "bg-neutral-800 border-t border-neutral-700 px-6 py-3" ]
-        [ div [ class "flex items-center justify-between text-sm text-neutral-400" ]
+    div [ class "bg-gray-800 border-t border-gray-700 px-6 py-3" ]
+        [ div [ class "flex items-center justify-between text-sm text-gray-400" ]
             [ div [] [ text "Ready to rock 🎸" ]
             , div [] [ text "Time: 0.0s" ]
             , div [] [ text "V2 - Clean Architecture" ]
@@ -452,7 +452,7 @@ setPercussionCellActive position isActive grid =
 
 labelClass : String
 labelClass =
-    "bg-neutral-900 border-r border-neutral-600 flex items-center justify-center text-xs font-bold text-white"
+    "bg-gray-900 border-r border-gray-600 flex items-center justify-center text-xs font-bold text-white"
 
 
 
