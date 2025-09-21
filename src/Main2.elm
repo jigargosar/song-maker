@@ -245,7 +245,7 @@ viewGrid { totalPitchRows, totalStepColumns, grid, percussionGrid } =
         , style "grid-template-columns" gridTemplateColumns
         , style "grid-template-rows" gridTemplateRows
         ]
-        ([ {- Empty corner cell -} div [ class "bg-neutral-700" ] [] ]
+        ([ {- Empty corner cell -} div [ class labelClass, class "border-b border-neutral-600" ] [] ]
             ++ {- Step headers row -} times viewStepHeader totalStepColumns
             ++ {- Pitch rows -} (times (viewPitchRow totalStepColumns grid) totalPitchRows |> List.concat)
             ++ {- Percussion rows -} viewPercussionRows totalStepColumns percussionGrid
@@ -255,7 +255,7 @@ viewGrid { totalPitchRows, totalStepColumns, grid, percussionGrid } =
 viewStepHeader : Int -> Html Msg
 viewStepHeader stepColumnIndex =
     div
-        [ class "bg-neutral-600 flex items-center justify-center text-xs font-bold text-neutral-200" ]
+        [ class labelClass, class "border-b border-neutral-600" ]
         [ text (String.fromInt (stepColumnIndex + 1)) ]
 
 
@@ -264,7 +264,7 @@ viewPitchRow stepCount grid pitchRowIndex =
     let
         viewPitchLabel =
             div
-                [ class "bg-neutral-600 flex items-center justify-center text-xs font-bold text-neutral-300" ]
+                [ class labelClass ]
                 [ text ("Pitch " ++ String.fromInt (pitchRowIndex + 1)) ]
     in
     viewPitchLabel :: times (viewPitchCell pitchRowIndex grid) stepCount
@@ -300,15 +300,13 @@ viewPercussionRows : Int -> PercussionGrid -> List (Html Msg)
 viewPercussionRows stepCount percussionGrid =
     [ -- Snare drum label (top row)
       div
-        [ class "bg-orange-800 border-r border-neutral-600 flex items-center justify-center text-xs font-bold text-white"
-        ]
+        [ class labelClass ]
         [ text "Snare" ]
     ]
         ++ times (viewPercussionCell Snare percussionGrid) stepCount
         ++ [ -- Kick drum label (bottom row)
              div
-                [ class "bg-red-800 border-r border-neutral-600 flex items-center justify-center text-xs font-bold text-white"
-                ]
+                [ class labelClass ]
                 [ text "Kick" ]
            ]
         ++ times (viewPercussionCell Kick percussionGrid) stepCount
@@ -446,6 +444,15 @@ setPercussionCellActive position isActive grid =
 
     else
         Set.remove tuple grid
+
+
+
+-- Style Constants
+
+
+labelClass : String
+labelClass =
+    "bg-neutral-900 border-r border-neutral-600 flex items-center justify-center text-xs font-bold text-white"
 
 
 
