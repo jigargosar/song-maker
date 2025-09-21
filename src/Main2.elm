@@ -58,7 +58,7 @@ update msg model =
 
 view : Model -> Html Msg
 view model =
-    div [ class "min-h-screen bg-neutral-900 text-white flex flex-col" ]
+    div [ class "h-screen bg-neutral-900 text-white flex flex-col" ]
         [ headerView
         , centerView
         , footerView
@@ -83,19 +83,95 @@ headerView =
 
 centerView : Html Msg
 centerView =
-    div [ class "flex-1 bg-neutral-900 p-6" ]
-        [ div [ class "max-w-full mx-auto" ]
-            [ div [ class "bg-neutral-800 rounded-lg p-8 border border-neutral-700" ]
-                [ div [ class "text-center" ]
-                    [ div [ class "text-6xl mb-4" ] [ text "🎵" ]
-                    , div [ class "text-2xl font-semibold text-neutral-300 mb-4" ]
-                        [ text "Grid Coming Soon" ]
-                    , div [ class "text-neutral-400" ]
-                        [ text "Building grid-first architecture with percussion support" ]
-                    ]
-                ]
-            ]
+    div [ class "flex-1 overflow-auto" ]
+        [ viewGrid ]
+
+
+viewGrid : Html Msg
+viewGrid =
+    let
+        stepCount = 16
+        noteCount = 8
+    in
+    div
+        [ class "grid bg-neutral-800 border border-neutral-700"
+        , style "grid-template-columns" ("repeat(" ++ String.fromInt (stepCount + 1) ++ ", minmax(48px, 1fr))")
+        , style "grid-template-rows" ("minmax(32px, auto) repeat(" ++ String.fromInt noteCount ++ ", minmax(32px, 1fr)) 40px 40px")
+        , style "width" "max-content"
+        , style "height" "max-content"
+        , style "min-width" "100%"
+        , style "min-height" "100%"
         ]
+        ([ div [ class "bg-neutral-700" ] [] -- Empty corner cell
+         ]
+            ++ -- Step headers
+               List.map viewStepHeader (List.range 0 (stepCount - 1))
+            ++ -- Note rows
+               (List.range 0 (noteCount - 1)
+                    |> List.concatMap (viewNoteRow stepCount)
+               )
+            ++ -- Percussion rows
+               viewPercussionRows stepCount
+        )
+
+
+viewStepHeader : Int -> Html Msg
+viewStepHeader stepIndex =
+    div
+        [ class "bg-neutral-600 border-b border-neutral-500 flex items-center justify-center text-xs font-bold text-neutral-300"
+        ]
+        [ text (String.fromInt (stepIndex + 1)) ]
+
+
+viewNoteRow : Int -> Int -> List (Html Msg)
+viewNoteRow stepCount noteIndex =
+    [ div
+        [ class "bg-neutral-700 border-r border-neutral-600 flex items-center justify-center text-xs font-bold text-neutral-300"
+        ]
+        [ text ("Note " ++ String.fromInt (noteIndex + 1)) ]
+    ]
+        ++ List.map (viewNoteCell noteIndex) (List.range 0 (stepCount - 1))
+
+
+viewNoteCell : Int -> Int -> Html Msg
+viewNoteCell noteIndex stepIndex =
+    div
+        [ class "bg-neutral-800 hover:bg-neutral-700 border-r border-b border-neutral-600 cursor-pointer transition-colors"
+        ]
+        []
+
+
+viewPercussionRows : Int -> List (Html Msg)
+viewPercussionRows stepCount =
+    [ -- Kick drum label
+      div
+        [ class "bg-red-800 border-r border-neutral-600 flex items-center justify-center text-xs font-bold text-white"
+        ]
+        [ text "Kick" ]
+    ]
+        ++ List.map (viewPercussionCell "kick") (List.range 0 (stepCount - 1))
+        ++ [ -- Snare drum label
+             div
+                [ class "bg-orange-800 border-r border-neutral-600 flex items-center justify-center text-xs font-bold text-white"
+                ]
+                [ text "Snare" ]
+           ]
+        ++ List.map (viewPercussionCell "snare") (List.range 0 (stepCount - 1))
+
+
+viewPercussionCell : String -> Int -> Html Msg
+viewPercussionCell drumType stepIndex =
+    let
+        bgClass =
+            if drumType == "kick" then
+                "bg-red-900 hover:bg-red-800"
+            else
+                "bg-orange-900 hover:bg-orange-800"
+    in
+    div
+        [ class (bgClass ++ " border-r border-b border-neutral-600 cursor-pointer transition-colors")
+        ]
+        []
 
 
 footerView : Html Msg
