@@ -3,6 +3,8 @@ module Main2 exposing (main)
 import Browser
 import Html as H exposing (Html, div, text)
 import Html.Attributes as HA exposing (class, style)
+import Html.Events as HE
+import Set exposing (Set)
 
 
 type alias Flags =
@@ -23,13 +25,37 @@ main =
 -- Model
 
 
+type alias Position =
+    { pitchRowIndex : Int, stepColumnIndex : Int }
+
+
+type alias Grid =
+    Set ( Int, Int )
+
+
+type DrawState
+    = NotDrawing
+    | Drawing
+    | Erasing
+
+
 type alias Model =
-    {}
+    { totalPitchRows : Int
+    , totalStepColumns : Int
+    , grid : Grid
+    , drawState : DrawState
+    }
 
 
 init : Flags -> ( Model, Cmd Msg )
 init _ =
-    ( {}, Cmd.none )
+    ( { totalPitchRows = 8
+      , totalStepColumns = 16
+      , grid = Set.empty
+      , drawState = NotDrawing
+      }
+    , Cmd.none
+    )
 
 
 
@@ -38,6 +64,9 @@ init _ =
 
 type Msg
     = NoOp
+    | StartDrawing Position
+    | ContinueDrawing Position
+    | StopDrawing
 
 
 subscriptions : Model -> Sub msg
@@ -51,6 +80,50 @@ update msg model =
         NoOp ->
             ( model, Cmd.none )
 
+        StartDrawing position ->
+            case model.drawState of
+                NotDrawing ->
+                    let
+                        currentlyActive =
+                            isCellActive position model.grid
+
+                        newDrawState =
+                            if currentlyActive then
+                                Erasing
+
+                            else
+                                Drawing
+
+                        newGrid =
+                            setCellActive position (not currentlyActive) model.grid
+                    in
+                    ( { model | drawState = newDrawState, grid = newGrid }, Cmd.none )
+
+                _ ->
+                    ( model, Cmd.none )
+
+        ContinueDrawing position ->
+            case model.drawState of
+                Drawing ->
+                    let
+                        newGrid =
+                            setCellActive position True model.grid
+                    in
+                    ( { model | grid = newGrid }, Cmd.none )
+
+                Erasing ->
+                    let
+                        newGrid =
+                            setCellActive position False model.grid
+                    in
+                    ( { model | grid = newGrid }, Cmd.none )
+
+                NotDrawing ->
+                    ( model, Cmd.none )
+
+        StopDrawing ->
+            ( { model | drawState = NotDrawing }, Cmd.none )
+
 
 
 -- View
@@ -60,7 +133,7 @@ view : Model -> Html Msg
 view model =
     div [ class "h-screen bg-neutral-900 text-white flex flex-col" ]
         [ headerView
-        , centerView
+        , centerView model
         , footerView
         ]
 
@@ -81,21 +154,15 @@ headerView =
         ]
 
 
-centerView : Html Msg
-centerView =
+centerView : Model -> Html Msg
+centerView model =
     div [ class "flex-1 overflow-auto" ]
-        [ viewGrid ]
+        [ viewGrid model ]
 
 
-viewGrid : Html Msg
-viewGrid =
+viewGrid : { a | totalPitchRows : Int, totalStepColumns : Int, grid : Grid } -> Html Msg
+viewGrid { totalPitchRows, totalStepColumns, grid } =
     let
-        totalStepColumns =
-            16
-
-        totalPitchRows =
-            8
-
         gridTemplateColumns =
             "minmax($labelColumnMinWidth, auto) repeat($stepColumnsCount, minmax($stepColumnMinWidth, 1fr))"
                 |> String.replace "$labelColumnMinWidth" (px 48)
@@ -116,33 +183,51 @@ viewGrid =
         ]
         ([ {- Empty corner cell -} div [ class "bg-neutral-700" ] [] ]
             ++ {- Step headers row -} times viewStepHeader totalStepColumns
-            ++ {- Pitch rows -} (times (viewPitchRow totalStepColumns) totalPitchRows |> List.concat)
+            ++ {- Pitch rows -} (times (viewPitchRow totalStepColumns grid) totalPitchRows |> List.concat)
             ++ {- Percussion rows -} viewPercussionRows totalStepColumns
         )
 
 
 viewStepHeader : Int -> Html Msg
-viewStepHeader stepIndex =
+viewStepHeader stepColumnIndex =
     div
         [ class "bg-neutral-600 flex items-center justify-center text-xs font-bold text-neutral-200" ]
-        [ text (String.fromInt (stepIndex + 1)) ]
+        [ text (String.fromInt (stepColumnIndex + 1)) ]
 
 
-viewPitchRow : Int -> Int -> List (Html Msg)
-viewPitchRow stepCount pitchIndex =
+viewPitchRow : Int -> Grid -> Int -> List (Html Msg)
+viewPitchRow stepCount grid pitchRowIndex =
     let
         viewPitchLabel =
             div
                 [ class "bg-neutral-600 flex items-center justify-center text-xs font-bold text-neutral-300" ]
-                [ text ("Pitch " ++ String.fromInt (pitchIndex + 1)) ]
+                [ text ("Pitch " ++ String.fromInt (pitchRowIndex + 1)) ]
     in
-    viewPitchLabel :: times (viewPitchCell pitchIndex) stepCount
+    viewPitchLabel :: times (viewPitchCell pitchRowIndex grid) stepCount
 
 
-viewPitchCell : Int -> Int -> Html Msg
-viewPitchCell pitchIndex stepIndex =
+viewPitchCell : Int -> Grid -> Int -> Html Msg
+viewPitchCell pitchRowIndex grid stepColumnIndex =
+    let
+        position =
+            { pitchRowIndex = pitchRowIndex, stepColumnIndex = stepColumnIndex }
+
+        isActive =
+            isCellActive position grid
+
+        bgClass =
+            if isActive then
+                "bg-fuchsia-600 hover:bg-fuchsia-700"
+
+            else
+                "bg-neutral-800 hover:bg-neutral-700"
+    in
     div
-        [ class "bg-neutral-800 hover:bg-neutral-700 border-r border-b border-neutral-600 cursor-pointer transition-colors"
+        [ class bgClass
+        , class "border-r border-b border-neutral-600 cursor-pointer transition-colors"
+        , HE.onMouseDown (StartDrawing position)
+        , HE.onMouseEnter (ContinueDrawing position)
+        , HE.onMouseUp StopDrawing
         ]
         []
 
@@ -166,7 +251,7 @@ viewPercussionRows stepCount =
 
 
 viewPercussionCell : String -> Int -> Html Msg
-viewPercussionCell drumType stepIndex =
+viewPercussionCell drumType stepColumnIndex =
     let
         bgClass =
             if drumType == "kick" then
@@ -197,6 +282,23 @@ footerView =
 
 times fn i =
     List.range 0 (i - 1) |> List.map fn
+
+
+-- Cell State Management
+
+
+isCellActive : Position -> Grid -> Bool
+isCellActive { pitchRowIndex, stepColumnIndex } grid =
+    Set.member ( pitchRowIndex, stepColumnIndex ) grid
+
+
+setCellActive : Position -> Bool -> Grid -> Grid
+setCellActive { pitchRowIndex, stepColumnIndex } isActive grid =
+    if isActive then
+        Set.insert ( pitchRowIndex, stepColumnIndex ) grid
+
+    else
+        Set.remove ( pitchRowIndex, stepColumnIndex ) grid
 
 
 
