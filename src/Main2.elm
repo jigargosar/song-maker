@@ -323,30 +323,38 @@ viewPercussionCell drumType percussionGrid stepColumnIndex =
         isActive =
             isPercussionCellActive position percussionGrid
 
-        bgClass =
-            case drumType of
-                Kick ->
-                    if isActive then
-                        "bg-red-600 hover:bg-red-700"
+        symbol =
+            if isActive then
+                case drumType of
+                    Kick ->
+                        -- Triangle symbol
+                        div
+                            [ class "w-6 h-6 bg-fuchsia-600"
+                            , style "clip-path" "polygon(50% 0%, 0% 100%, 100% 100%)"
+                            ]
+                            []
 
-                    else
-                        "bg-red-900 hover:bg-red-800"
+                    Snare ->
+                        -- Circle symbol
+                        div
+                            [ class "w-6 h-6 bg-fuchsia-600 rounded-full"
+                            ]
+                            []
 
-                Snare ->
-                    if isActive then
-                        "bg-orange-600 hover:bg-orange-700"
-
-                    else
-                        "bg-orange-900 hover:bg-orange-800"
+            else
+                -- Small dim dot for inactive
+                div
+                    [ class "w-1.5 h-1.5 bg-neutral-500 rounded-full"
+                    ]
+                    []
     in
     div
-        [ class bgClass
-        , class "border-r border-b border-neutral-600 cursor-pointer transition-colors"
+        [ class "bg-neutral-800 hover:bg-neutral-700 border-r border-b border-neutral-600 cursor-pointer transition-colors flex items-center justify-center"
         , HE.onMouseDown (StartDrawingPercussion position)
         , HE.onMouseEnter (ContinueDrawingPercussion position)
         , HE.onMouseUp StopDrawingPercussion
         ]
-        []
+        [ symbol ]
 
 
 footerView : Html Msg
