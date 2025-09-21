@@ -130,17 +130,17 @@ viewStepHeader stepIndex =
 
 
 viewPitchRow : Int -> Int -> List (Html Msg)
-viewPitchRow stepCount noteIndex =
+viewPitchRow stepCount pitchIndex =
     [ div
-        [ class "bg-neutral-700 border-r border-neutral-600 flex items-center justify-center text-xs font-bold text-neutral-300"
+        [ class "bg-neutral-600 border-r border-neutral-600 flex items-center justify-center text-xs font-bold text-neutral-300"
         ]
-        [ text ("Note " ++ String.fromInt (noteIndex + 1)) ]
+        [ text ("Pitch " ++ String.fromInt (pitchIndex + 1)) ]
     ]
-        ++ times (viewPitchCell noteIndex) stepCount
+        ++ times (viewPitchCell pitchIndex) stepCount
 
 
 viewPitchCell : Int -> Int -> Html Msg
-viewPitchCell noteIndex stepIndex =
+viewPitchCell pitchIndex stepIndex =
     div
         [ class "bg-neutral-800 hover:bg-neutral-700 border-r border-b border-neutral-600 cursor-pointer transition-colors"
         ]
