@@ -12,6 +12,10 @@
 <!-- Load piano instrument data from CDN -->
 <script src='https://surikov.github.io/webaudiofontdata/sound/0250_SoundBlasterOld_sf2.js'></script>
 
+<!-- Load individual drum sounds from CDN -->
+<script src='https://surikov.github.io/webaudiofontdata/sound/12836_0_SBLive_sf2.js'></script>
+<script src='https://surikov.github.io/webaudiofontdata/sound/12838_0_SBLive_sf2.js'></script>
+
 <!-- Load WebAudioFont player from CDN -->
 <script src='https://surikov.github.io/webaudiofont/npm/dist/WebAudioFontPlayer.js'></script>
 
@@ -21,6 +25,8 @@
     // Capture globals as clean constants
     const WebAudioFontPlayer = window.WebAudioFontPlayer;
     const piano = window._tone_0250_SoundBlasterOld_sf2;
+    const kickDrum = window._drum_36_0_SBLive_sf2;  // MIDI 36 - Bass Drum 1
+    const snareDrum = window._drum_38_0_SBLive_sf2; // MIDI 38 - Snare Drum 1
 
     // Initialize Elm
     const app = Elm.Main2.init({ node: document.getElementById("root") });
@@ -31,6 +37,8 @@
 
     // Use the captured constants
     player.loader.decodeAfterLoading(audioContext, piano);
+    player.loader.decodeAfterLoading(audioContext, kickDrum);
+    player.loader.decodeAfterLoading(audioContext, snareDrum);
 
     // Handle individual note playback
     app.ports.playNote.subscribe((data) => {
@@ -41,6 +49,25 @@
             audioContext,
             audioContext.destination,
             piano,
+            when,
+            note,
+            duration,
+            volume
+        );
+    });
+
+    // Handle percussion playback
+    app.ports.playPercussion.subscribe((data) => {
+        const { note, duration, volume } = data;
+        const when = audioContext.currentTime;
+
+        // Select correct drum based on MIDI note
+        const drumInstrument = note === 36 ? kickDrum : snareDrum;
+
+        player.queueWaveTable(
+            audioContext,
+            audioContext.destination,
+            drumInstrument,
             when,
             note,
             duration,

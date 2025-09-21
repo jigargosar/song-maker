@@ -14,6 +14,9 @@ import Set exposing (Set)
 port playNote : { note : Int, duration : Float, volume : Float } -> Cmd msg
 
 
+port playPercussion : { note : Int, duration : Float, volume : Float } -> Cmd msg
+
+
 
 -- AUDIO CONSTANTS
 
@@ -260,7 +263,7 @@ update msg model =
                                     midiNote =
                                         drumTypeToMidiNote position.drumType
                                 in
-                                playNote { note = midiNote, duration = 0.5, volume = 0.8 }
+                                playPercussion { note = midiNote, duration = 0.5, volume = 0.8 }
 
                             else
                                 Cmd.none
@@ -308,7 +311,7 @@ update msg model =
                     drumTypeToMidiNote drumType
 
                 cmd =
-                    playNote { note = midiNote, duration = 0.5, volume = 0.8 }
+                    playPercussion { note = midiNote, duration = 0.5, volume = 0.8 }
             in
             ( model, cmd )
 
