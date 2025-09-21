@@ -1,8 +1,8 @@
 port module Main2 exposing (main)
 
 import Browser
-import Html as H exposing (Html, div, text)
-import Html.Attributes as HA exposing (class, style)
+import Html exposing (Html, div, text)
+import Html.Attributes exposing (class, style)
 import Html.Events as HE
 import Set exposing (Set)
 
