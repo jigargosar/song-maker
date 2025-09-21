@@ -105,7 +105,8 @@ viewGrid =
                 |> String.replace "$columnMinWidth" (px 48)
 
         gridTemplateRows =
-            "minmax(32px, auto) repeat($pitchRowsCount, minmax($rowMinHeight, 1fr)) repeat(2, $percussionRowHeight)"
+            "minmax($headerRowMinHeight, auto) repeat($pitchRowsCount, minmax($rowMinHeight, 1fr)) repeat(2, $percussionRowHeight)"
+                |> String.replace "$headerRowMinHeight" (px 32)
                 |> String.replace "$pitchRowsCount" (String.fromInt pitchRowsCount)
                 |> String.replace "$rowMinHeight" (px 32)
                 |> String.replace "$percussionRowHeight" (px 48)
