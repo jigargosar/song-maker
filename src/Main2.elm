@@ -587,13 +587,13 @@ labelClass =
 getNoteColor : Int -> String
 getNoteColor pitchRowIndex =
     case modBy 7 pitchRowIndex of
-        0 -> "bg-[oklch(68%_0.12_0)] hover:bg-[oklch(72%_0.15_0)] transition-colors"     -- C - Red (both C4 and C5)
-        1 -> "bg-[oklch(72%_0.11_35)] hover:bg-[oklch(76%_0.14_35)] transition-colors"   -- D - Orange
-        2 -> "bg-[oklch(78%_0.10_70)] hover:bg-[oklch(82%_0.13_70)] transition-colors"   -- E - Yellow
-        3 -> "bg-[oklch(70%_0.12_120)] hover:bg-[oklch(74%_0.15_120)] transition-colors" -- F - Green
-        4 -> "bg-[oklch(66%_0.11_210)] hover:bg-[oklch(70%_0.14_210)] transition-colors" -- G - Blue
-        5 -> "bg-[oklch(64%_0.12_270)] hover:bg-[oklch(68%_0.15_270)] transition-colors" -- A - Purple
-        6 -> "bg-[oklch(70%_0.11_310)] hover:bg-[oklch(74%_0.14_310)] transition-colors" -- B - Magenta
+        0 -> "bg-[oklch(70%_0.13_0)] hover:bg-[oklch(74%_0.16_0)] transition-colors"     -- C - Red (both C4 and C5)
+        1 -> "bg-[oklch(70%_0.13_35)] hover:bg-[oklch(74%_0.16_35)] transition-colors"   -- D - Orange
+        2 -> "bg-[oklch(70%_0.13_70)] hover:bg-[oklch(74%_0.16_70)] transition-colors"   -- E - Yellow
+        3 -> "bg-[oklch(70%_0.13_120)] hover:bg-[oklch(74%_0.16_120)] transition-colors" -- F - Green
+        4 -> "bg-[oklch(70%_0.13_210)] hover:bg-[oklch(74%_0.16_210)] transition-colors" -- G - Blue
+        5 -> "bg-[oklch(70%_0.13_270)] hover:bg-[oklch(74%_0.16_270)] transition-colors" -- A - Purple
+        6 -> "bg-[oklch(70%_0.13_310)] hover:bg-[oklch(74%_0.16_310)] transition-colors" -- B - Magenta
         _ -> "bg-[oklch(60%_0.02_0)] hover:bg-[oklch(64%_0.05_0)] transition-colors"     -- Fallback
 
 
