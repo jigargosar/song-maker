@@ -24,4 +24,16 @@
     --color-surface-800: var(--color-neutral-800);
     --color-surface-900: var(--color-neutral-900);
     --color-surface-950: var(--color-neutral-950);
+
+    --color-ink-50: var(--color-neutral-50);
+    --color-ink-100: var(--color-neutral-100);
+    --color-ink-200: var(--color-neutral-200);
+    --color-ink-300: var(--color-neutral-300);
+    --color-ink-400: var(--color-neutral-400);
+    --color-ink-500: var(--color-neutral-500);
+    --color-ink-600: var(--color-neutral-600);
+    --color-ink-700: var(--color-neutral-700);
+    --color-ink-800: var(--color-neutral-800);
+    --color-ink-900: var(--color-neutral-900);
+    --color-ink-950: var(--color-neutral-950);
 }
