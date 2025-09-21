@@ -223,8 +223,16 @@ update msg model =
                     let
                         newGrid =
                             setCellActive position True model.grid
+
+                        -- Play note for every cell during drawing
+                        playCmd =
+                            let
+                                midiNote =
+                                    pitchRowToMidiNote position.pitchRowIndex
+                            in
+                            playNote { note = midiNote, duration = 0.5, volume = 0.7 }
                     in
-                    ( { model | grid = newGrid }, Cmd.none )
+                    ( { model | grid = newGrid }, playCmd )
 
                 ErasingPitch ->
                     let
@@ -279,8 +287,16 @@ update msg model =
                     let
                         newPercussionGrid =
                             setPercussionCellActive position True model.percussionGrid
+
+                        -- Play percussion note for every cell during drawing
+                        playCmd =
+                            let
+                                midiNote =
+                                    percussionTypeToMidiNote position.percussionType
+                            in
+                            playPercussion { note = midiNote, duration = 0.5, volume = 0.8 }
                     in
-                    ( { model | percussionGrid = newPercussionGrid }, Cmd.none )
+                    ( { model | percussionGrid = newPercussionGrid }, playCmd )
 
                 ErasingPercussion ->
                     let
