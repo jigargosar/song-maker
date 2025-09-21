@@ -121,10 +121,6 @@ viewGrid =
         )
 
 
-times fn i =
-    List.range 0 (i - 1) |> List.map fn
-
-
 viewStepHeader : Int -> Html Msg
 viewStepHeader stepIndex =
     div
@@ -193,6 +189,14 @@ footerView =
             , div [] [ text "V2 - Clean Architecture" ]
             ]
         ]
+
+
+
+-- Basic Helpers
+
+
+times fn i =
+    List.range 0 (i - 1) |> List.map fn
 
 
 
