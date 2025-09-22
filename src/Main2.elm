@@ -110,7 +110,7 @@ type alias Position =
     { pitchRowIndex : Int, stepColumnIndex : Int }
 
 
-type alias Grid =
+type alias PitchGrid =
     Set ( Int, Int )
 
 
@@ -138,7 +138,7 @@ type DrawState
 type alias Model =
     { totalPitchRows : Int
     , totalStepColumns : Int
-    , grid : Grid
+    , pitchGrid : PitchGrid
     , percussionGrid : PercussionGrid
     , drawState : DrawState
     }
@@ -148,7 +148,7 @@ init : Flags -> ( Model, Cmd Msg )
 init _ =
     ( { totalPitchRows = 8
       , totalStepColumns = 16
-      , grid = Set.empty
+      , pitchGrid = Set.empty
       , percussionGrid = Set.empty
       , drawState = NotDrawing
       }
@@ -188,7 +188,7 @@ update msg model =
                 NotDrawing ->
                     let
                         currentlyActive =
-                            isCellActive position model.grid
+                            isPitchCellActive position model.pitchGrid
 
                         newDrawState =
                             if currentlyActive then
@@ -199,7 +199,7 @@ update msg model =
                     in
                     ( { model
                         | drawState = newDrawState
-                        , grid = setCellActive position (not currentlyActive) model.grid
+                        , pitchGrid = updatePitchCell position (not currentlyActive) model.pitchGrid
                       }
                     , playPitchCmdIf (not currentlyActive) position.pitchRowIndex
                     )
@@ -210,12 +210,12 @@ update msg model =
         ContinueDrawing position ->
             case model.drawState of
                 DrawingPitch ->
-                    ( { model | grid = setCellActive position True model.grid }
+                    ( { model | pitchGrid = updatePitchCell position True model.pitchGrid }
                     , playPitchCmdIf True position.pitchRowIndex
                     )
 
                 ErasingPitch ->
-                    ( { model | grid = setCellActive position False model.grid }, Cmd.none )
+                    ( { model | pitchGrid = updatePitchCell position False model.pitchGrid }, Cmd.none )
 
                 _ ->
                     ( model, Cmd.none )
@@ -239,7 +239,7 @@ update msg model =
                     in
                     ( { model
                         | drawState = newDrawState
-                        , percussionGrid = setPercussionCellActive position (not currentlyActive) model.percussionGrid
+                        , percussionGrid = updatePercussionCell position (not currentlyActive) model.percussionGrid
                       }
                     , playPercussionCmdIf (not currentlyActive) position.percussionType
                     )
@@ -250,12 +250,12 @@ update msg model =
         ContinueDrawingPercussion position ->
             case model.drawState of
                 DrawingPercussion ->
-                    ( { model | percussionGrid = setPercussionCellActive position True model.percussionGrid }
+                    ( { model | percussionGrid = updatePercussionCell position True model.percussionGrid }
                     , playPercussionCmdIf True position.percussionType
                     )
 
                 ErasingPercussion ->
-                    ( { model | percussionGrid = setPercussionCellActive position False model.percussionGrid }, Cmd.none )
+                    ( { model | percussionGrid = updatePercussionCell position False model.percussionGrid }, Cmd.none )
 
                 _ ->
                     ( model, Cmd.none )
@@ -308,8 +308,8 @@ centerView model =
         [ viewGrid model ]
 
 
-viewGrid : { a | totalPitchRows : Int, totalStepColumns : Int, grid : Grid, percussionGrid : PercussionGrid } -> Html Msg
-viewGrid { totalPitchRows, totalStepColumns, grid, percussionGrid } =
+viewGrid : { a | totalPitchRows : Int, totalStepColumns : Int, pitchGrid : PitchGrid, percussionGrid : PercussionGrid } -> Html Msg
+viewGrid { totalPitchRows, totalStepColumns, pitchGrid, percussionGrid } =
     let
         gridTemplateColumns =
             "minmax($labelColumnMinWidth, auto) repeat($stepColumnsCount, minmax($stepColumnMinWidth, 1fr))"
@@ -331,7 +331,7 @@ viewGrid { totalPitchRows, totalStepColumns, grid, percussionGrid } =
         ]
         ([ {- Empty corner cell -} div [ class labelClass, class "border-b border-gray-600" ] [] ]
             ++ {- Step headers row -} times viewStepHeader totalStepColumns
-            ++ {- Pitch rows -} (times (viewPitchRow totalStepColumns grid) totalPitchRows |> List.concat)
+            ++ {- Pitch rows -} (times (viewPitchRow totalStepColumns pitchGrid) totalPitchRows |> List.concat)
             ++ {- Percussion rows -} viewPercussionRows totalStepColumns percussionGrid
         )
 
@@ -343,25 +343,25 @@ viewStepHeader stepColumnIndex =
         [ text (String.fromInt (stepColumnIndex + 1)) ]
 
 
-viewPitchRow : Int -> Grid -> Int -> List (Html Msg)
-viewPitchRow stepCount grid pitchRowIndex =
+viewPitchRow : Int -> PitchGrid -> Int -> List (Html Msg)
+viewPitchRow stepCount pitchGrid pitchRowIndex =
     let
         viewPitchLabel =
             div
                 [ class labelClass ]
                 [ text ("Pitch " ++ String.fromInt (pitchRowIndex + 1)) ]
     in
-    viewPitchLabel :: times (viewPitchCell pitchRowIndex grid) stepCount
+    viewPitchLabel :: times (viewPitchCell pitchRowIndex pitchGrid) stepCount
 
 
-viewPitchCell : Int -> Grid -> Int -> Html Msg
-viewPitchCell pitchRowIndex grid stepColumnIndex =
+viewPitchCell : Int -> PitchGrid -> Int -> Html Msg
+viewPitchCell pitchRowIndex pitchGrid stepColumnIndex =
     let
         position =
             { pitchRowIndex = pitchRowIndex, stepColumnIndex = stepColumnIndex }
 
         isActive =
-            isCellActive position grid
+            isPitchCellActive position pitchGrid
 
         noteClass =
             if isActive then
@@ -505,18 +505,18 @@ playPercussionCmdIf shouldPlay percussionType =
 -- Cell State Management
 
 
-isCellActive : Position -> Grid -> Bool
-isCellActive { pitchRowIndex, stepColumnIndex } grid =
-    Set.member ( pitchRowIndex, stepColumnIndex ) grid
+isPitchCellActive : Position -> PitchGrid -> Bool
+isPitchCellActive { pitchRowIndex, stepColumnIndex } pitchGrid =
+    Set.member ( pitchRowIndex, stepColumnIndex ) pitchGrid
 
 
-setCellActive : Position -> Bool -> Grid -> Grid
-setCellActive { pitchRowIndex, stepColumnIndex } isActive grid =
+updatePitchCell : Position -> Bool -> PitchGrid -> PitchGrid
+updatePitchCell { pitchRowIndex, stepColumnIndex } isActive pitchGrid =
     if isActive then
-        Set.insert ( pitchRowIndex, stepColumnIndex ) grid
+        Set.insert ( pitchRowIndex, stepColumnIndex ) pitchGrid
 
     else
-        Set.remove ( pitchRowIndex, stepColumnIndex ) grid
+        Set.remove ( pitchRowIndex, stepColumnIndex ) pitchGrid
 
 
 isPercussionCellActive : PercussionPosition -> PercussionGrid -> Bool
@@ -524,8 +524,8 @@ isPercussionCellActive position grid =
     Set.member (percussionPositionToTuple position) grid
 
 
-setPercussionCellActive : PercussionPosition -> Bool -> PercussionGrid -> PercussionGrid
-setPercussionCellActive position isActive grid =
+updatePercussionCell : PercussionPosition -> Bool -> PercussionGrid -> PercussionGrid
+updatePercussionCell position isActive grid =
     let
         tuple =
             percussionPositionToTuple position
