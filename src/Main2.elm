@@ -308,6 +308,10 @@ centerView model =
         [ viewGrid model ]
 
 
+stringTemplate str ls =
+    List.foldr (\( a, b ) -> String.replace a b) str ls
+
+
 viewGrid : { a | totalPitchRows : Int, totalStepColumns : Int, pitchGrid : PitchGrid, percussionGrid : PercussionGrid } -> Html Msg
 viewGrid { totalPitchRows, totalStepColumns, pitchGrid, percussionGrid } =
     let
@@ -332,7 +336,8 @@ viewGrid { totalPitchRows, totalStepColumns, pitchGrid, percussionGrid } =
         ([ {- Empty corner cell -} div [ class labelClass, class "border-b border-gray-600" ] [] ]
             ++ {- Step headers row -} times viewStepHeader totalStepColumns
             ++ {- Pitch rows -} (times (viewPitchRow totalStepColumns pitchGrid) totalPitchRows |> List.concat)
-            ++ {- Percussion rows -} viewPercussionRows totalStepColumns percussionGrid
+            ++ {- Percussion Snare row -} viewPercussionRow Snare totalStepColumns percussionGrid
+            ++ {- Percussion Kick row -} viewPercussionRow Kick totalStepColumns percussionGrid
         )
 
 
@@ -365,7 +370,7 @@ viewPitchCell pitchRowIndex pitchGrid stepColumnIndex =
 
         noteClass =
             if isActive then
-                getCellColor pitchRowIndex
+                pitchCellColor pitchRowIndex
 
             else
                 "bg-gray-800 hover:bg-gray-700"
@@ -380,20 +385,19 @@ viewPitchCell pitchRowIndex pitchGrid stepColumnIndex =
         []
 
 
-viewPercussionRows : Int -> PercussionGrid -> List (Html Msg)
-viewPercussionRows stepCount percussionGrid =
-    [ -- Snare percussion label (top row)
-      div
-        [ class labelClass ]
-        [ text "Snare" ]
-    ]
-        ++ times (viewPercussionCell Snare percussionGrid) stepCount
-        ++ [ -- Kick percussion label (bottom row)
-             div
-                [ class labelClass ]
-                [ text "Kick" ]
-           ]
-        ++ times (viewPercussionCell Kick percussionGrid) stepCount
+viewPercussionRow : PercussionType -> Int -> PercussionGrid -> List (Html Msg)
+viewPercussionRow percussionType totalStepColumns percussionGrid =
+    let
+        percussionTypeName =
+            case percussionType of
+                Snare ->
+                    "Snare"
+
+                Kick ->
+                    "Kick"
+    in
+    div [ class labelClass ] [ text percussionTypeName ]
+        :: times (viewPercussionCell percussionType percussionGrid) totalStepColumns
 
 
 viewPercussionCell : PercussionType -> PercussionGrid -> Int -> Html Msg
@@ -406,31 +410,7 @@ viewPercussionCell percussionType percussionGrid stepColumnIndex =
             isPercussionCellActive position percussionGrid
 
         symbol =
-            if isActive then
-                case percussionType of
-                    Kick ->
-                        -- Circle symbol
-                        div
-                            [ class "w-6 h-6 rounded-full"
-                            , class accentBgColor
-                            ]
-                            []
-
-                    Snare ->
-                        -- Triangle symbol
-                        div
-                            [ class "w-6 h-6"
-                            , class accentBgColor
-                            , style "clip-path" "polygon(50% 0%, 0% 100%, 100% 100%)"
-                            ]
-                            []
-
-            else
-                -- Small dim dot for inactive
-                div
-                    [ class "w-1.5 h-1.5 bg-gray-500 rounded-full"
-                    ]
-                    []
+            viewPercussionSymbol isActive percussionType
     in
     div
         [ class "bg-gray-800 hover:bg-gray-700 border-r border-b border-gray-600 cursor-pointer transition-colors flex items-center justify-center"
@@ -565,8 +545,25 @@ labelClass =
 -- View Helpers
 
 
-getCellColor : Int -> String
-getCellColor pitchRowIndex =
+viewPercussionSymbol : Bool -> PercussionType -> Html Msg
+viewPercussionSymbol isActive percussionType =
+    if isActive then
+        case percussionType of
+            Kick ->
+                -- Circle symbol
+                div [ class "w-6 h-6 rounded-full", class accentBgColor ] []
+
+            Snare ->
+                -- Triangle symbol
+                div [ class "w-6 h-6", class accentBgColor, style "clip-path" "polygon(50% 0%, 0% 100%, 100% 100%)" ] []
+
+    else
+        -- Small dim dot for inactive
+        div [ class "w-1.5 h-1.5 bg-gray-500 rounded-full" ] []
+
+
+pitchCellColor : Int -> String
+pitchCellColor pitchRowIndex =
     case modBy 7 pitchRowIndex of
         0 ->
             "bg-[oklch(70%_0.13_0)] hover:bg-[oklch(74%_0.16_0)] transition-colors"
