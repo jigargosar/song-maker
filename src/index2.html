@@ -84,13 +84,6 @@
         }
     });
 
-    // Wake audio context on user interaction
-    // app.ports.wakeAudioContext.subscribe(() => {
-    //     if (audioContext.state === 'suspended') {
-    //         audioContext.resume();
-    //     }
-    // });
-
     // Wake audio context on first click
     document.addEventListener('click', () => {
         if (audioContext.state === 'suspended') {
