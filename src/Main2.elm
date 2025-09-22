@@ -355,8 +355,7 @@ headerView =
                 [ div [ class "text-gray-300 text-sm" ]
                     [ text "BPM: 120" ]
                 , div
-                    [ class accentBgColor
-                    , class accentBgColorHover
+                    [ class accentBgColorWithHover
                     , class "text-white font-bold py-2 px-6 rounded-lg transition-colors cursor-pointer"
                     ]
                     [ text "Play" ]
@@ -590,6 +589,11 @@ accentBgColor =
 accentBgColorHover : String
 accentBgColorHover =
     "hover:bg-[oklch(59%_0.20_180)]"
+
+
+accentBgColorWithHover : String
+accentBgColorWithHover =
+    accentBgColor ++ " " ++ accentBgColorHover
 
 
 labelClass : String
