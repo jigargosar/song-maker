@@ -11,7 +11,7 @@ import Set exposing (Set)
 -- PORTS
 
 
-port playNote : { note : Int, duration : Float, volume : Float } -> Cmd msg
+port playPitch : { note : Int, duration : Float, volume : Float } -> Cmd msg
 
 
 port playPercussion : { note : Int, duration : Float, volume : Float } -> Cmd msg
@@ -196,23 +196,13 @@ update msg model =
 
                             else
                                 DrawingPitch
-
-                        newGrid =
-                            setCellActive position (not currentlyActive) model.grid
-
-                        -- Play note when drawing (activating)
-                        playCmd =
-                            if not currentlyActive then
-                                let
-                                    midiNote =
-                                        pitchRowToMidiNote position.pitchRowIndex
-                                in
-                                playNote { note = midiNote, duration = 0.5, volume = 0.7 }
-
-                            else
-                                Cmd.none
                     in
-                    ( { model | drawState = newDrawState, grid = newGrid }, playCmd )
+                    ( { model
+                        | drawState = newDrawState
+                        , grid = setCellActive position (not currentlyActive) model.grid
+                      }
+                    , playPitchCmdIf (not currentlyActive) position.pitchRowIndex
+                    )
 
                 _ ->
                     ( model, Cmd.none )
@@ -220,26 +210,12 @@ update msg model =
         ContinueDrawing position ->
             case model.drawState of
                 DrawingPitch ->
-                    let
-                        newGrid =
-                            setCellActive position True model.grid
-
-                        -- Play note for every cell during drawing
-                        playCmd =
-                            let
-                                midiNote =
-                                    pitchRowToMidiNote position.pitchRowIndex
-                            in
-                            playNote { note = midiNote, duration = 0.5, volume = 0.7 }
-                    in
-                    ( { model | grid = newGrid }, playCmd )
+                    ( { model | grid = setCellActive position True model.grid }
+                    , playPitchCmdIf True position.pitchRowIndex
+                    )
 
                 ErasingPitch ->
-                    let
-                        newGrid =
-                            setCellActive position False model.grid
-                    in
-                    ( { model | grid = newGrid }, Cmd.none )
+                    ( { model | grid = setCellActive position False model.grid }, Cmd.none )
 
                 _ ->
                     ( model, Cmd.none )
@@ -260,23 +236,13 @@ update msg model =
 
                             else
                                 DrawingPercussion
-
-                        newPercussionGrid =
-                            setPercussionCellActive position (not currentlyActive) model.percussionGrid
-
-                        -- Play percussion note when drawing (activating)
-                        playCmd =
-                            if not currentlyActive then
-                                let
-                                    midiNote =
-                                        percussionTypeToMidiNote position.percussionType
-                                in
-                                playPercussion { note = midiNote, duration = 0.5, volume = 0.8 }
-
-                            else
-                                Cmd.none
                     in
-                    ( { model | drawState = newDrawState, percussionGrid = newPercussionGrid }, playCmd )
+                    ( { model
+                        | drawState = newDrawState
+                        , percussionGrid = setPercussionCellActive position (not currentlyActive) model.percussionGrid
+                      }
+                    , playPercussionCmdIf (not currentlyActive) position.percussionType
+                    )
 
                 _ ->
                     ( model, Cmd.none )
@@ -284,26 +250,12 @@ update msg model =
         ContinueDrawingPercussion position ->
             case model.drawState of
                 DrawingPercussion ->
-                    let
-                        newPercussionGrid =
-                            setPercussionCellActive position True model.percussionGrid
-
-                        -- Play percussion note for every cell during drawing
-                        playCmd =
-                            let
-                                midiNote =
-                                    percussionTypeToMidiNote position.percussionType
-                            in
-                            playPercussion { note = midiNote, duration = 0.5, volume = 0.8 }
-                    in
-                    ( { model | percussionGrid = newPercussionGrid }, playCmd )
+                    ( { model | percussionGrid = setPercussionCellActive position True model.percussionGrid }
+                    , playPercussionCmdIf True position.percussionType
+                    )
 
                 ErasingPercussion ->
-                    let
-                        newPercussionGrid =
-                            setPercussionCellActive position False model.percussionGrid
-                    in
-                    ( { model | percussionGrid = newPercussionGrid }, Cmd.none )
+                    ( { model | percussionGrid = setPercussionCellActive position False model.percussionGrid }, Cmd.none )
 
                 _ ->
                     ( model, Cmd.none )
@@ -312,24 +264,10 @@ update msg model =
             ( { model | drawState = NotDrawing }, Cmd.none )
 
         PlayPitchNote pitchRowIndex ->
-            let
-                midiNote =
-                    pitchRowToMidiNote pitchRowIndex
-
-                cmd =
-                    playNote { note = midiNote, duration = 0.5, volume = 0.7 }
-            in
-            ( model, cmd )
+            ( model, playPitchCmdIf True pitchRowIndex )
 
         PlayPercussionNote percussionType ->
-            let
-                midiNote =
-                    percussionTypeToMidiNote percussionType
-
-                cmd =
-                    playPercussion { note = midiNote, duration = 0.5, volume = 0.8 }
-            in
-            ( model, cmd )
+            ( model, playPercussionCmdIf True percussionType )
 
 
 
@@ -526,8 +464,8 @@ times fn i =
 -- Conversion Functions
 
 
-percussionTypeToPercussionRowIndex : PercussionType -> Int
-percussionTypeToPercussionRowIndex percussionType =
+toPercussionRowIndex : PercussionType -> Int
+toPercussionRowIndex percussionType =
     case percussionType of
         Snare ->
             0
@@ -538,7 +476,29 @@ percussionTypeToPercussionRowIndex percussionType =
 
 percussionPositionToTuple : PercussionPosition -> ( Int, Int )
 percussionPositionToTuple { percussionType, stepColumnIndex } =
-    ( percussionTypeToPercussionRowIndex percussionType, stepColumnIndex )
+    ( toPercussionRowIndex percussionType, stepColumnIndex )
+
+
+
+-- Helper Functions
+
+
+playPitchCmdIf : Bool -> Int -> Cmd Msg
+playPitchCmdIf shouldPlay pitchRowIndex =
+    if shouldPlay then
+        playPitch { note = pitchRowToMidiNote pitchRowIndex, duration = 0.5, volume = 0.7 }
+
+    else
+        Cmd.none
+
+
+playPercussionCmdIf : Bool -> PercussionType -> Cmd Msg
+playPercussionCmdIf shouldPlay percussionType =
+    if shouldPlay then
+        playPercussion { note = percussionTypeToMidiNote percussionType, duration = 0.5, volume = 0.8 }
+
+    else
+        Cmd.none
 
 
 

@@ -46,7 +46,7 @@
     });
 
     // Handle individual note playback
-    app.ports.playNote.subscribe((data) => {
+    app.ports.playPitch.subscribe((data) => {
         const { note, duration, volume } = data;
         const when = audioContext.currentTime;
 
