@@ -62,7 +62,7 @@
     });
 
     // Handle percussion playback
-    app.ports.playPercussion.subscribe((data) => {
+    app.ports.playPerc.subscribe((data) => {
         const { note, duration, volume } = data;
         const when = audioContext.currentTime;
 

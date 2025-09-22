@@ -14,7 +14,7 @@ import Set exposing (Set)
 port playPitch : { note : Int, duration : Float, volume : Float } -> Cmd msg
 
 
-port playPercussion : { note : Int, duration : Float, volume : Float } -> Cmd msg
+port playPerc : { note : Int, duration : Float, volume : Float } -> Cmd msg
 
 
 port timeSync : (Float -> msg) -> Sub msg
@@ -33,9 +33,9 @@ midiC4 =
 -- Hardcoded C Major Scale: C4, D4, E4, F4, G4, A4, B4, C5
 
 
-pitchRowToMidiNote : Int -> Int
-pitchRowToMidiNote pitchRowIndex =
-    case pitchRowIndex of
+pitchIdxToMidi : Int -> Int
+pitchIdxToMidi idx =
+    case idx of
         0 ->
             midiC4
 
@@ -76,19 +76,19 @@ pitchRowToMidiNote pitchRowIndex =
 -- Default to C4
 
 
-percussionTypeToMidiNote : PercussionType -> Int
-percussionTypeToMidiNote percussionType =
-    case percussionType of
+percTypeToMidi : PercType -> Int
+percTypeToMidi percType =
+    case percType of
         Kick ->
             36
 
-        -- Standard kick percussion MIDI note
+        -- Standard kick perc MIDI note
         Snare ->
             38
 
 
 
--- Standard snare percussion MIDI note
+-- Standard snare perc MIDI note
 
 
 type alias Flags =
@@ -109,24 +109,24 @@ main =
 -- Model
 
 
-type alias Position =
-    { pitchRowIndex : Int, stepColumnIndex : Int }
+type alias PitchPos =
+    { pitchIdx : Int, stepIdx : Int }
 
 
 type alias PitchGrid =
     Set ( Int, Int )
 
 
-type PercussionType
+type PercType
     = Kick
     | Snare
 
 
-type alias PercussionPosition =
-    { percussionType : PercussionType, stepColumnIndex : Int }
+type alias PercPos =
+    { percType : PercType, stepIdx : Int }
 
 
-type alias PercussionGrid =
+type alias PercGrid =
     Set ( Int, Int )
 
 
@@ -140,15 +140,15 @@ type DrawState
     = NotDrawing
     | DrawingPitch
     | ErasingPitch
-    | DrawingPercussion
-    | ErasingPercussion
+    | DrawingPerc
+    | ErasingPerc
 
 
 type alias Model =
-    { totalPitchRows : Int
-    , totalStepColumns : Int
+    { totalPitches : Int
+    , totalSteps : Int
     , pitchGrid : PitchGrid
-    , percussionGrid : PercussionGrid
+    , percGrid : PercGrid
     , drawState : DrawState
     , playState : PlayState
     , audioContextTime : Float
@@ -158,10 +158,10 @@ type alias Model =
 
 init : Flags -> ( Model, Cmd Msg )
 init _ =
-    ( { totalPitchRows = 8
-      , totalStepColumns = 16
+    ( { totalPitches = 8
+      , totalSteps = 16
       , pitchGrid = Set.empty
-      , percussionGrid = Set.empty
+      , percGrid = Set.empty
       , drawState = NotDrawing
       , playState = Stopped
       , audioContextTime = 0.0
@@ -177,14 +177,13 @@ init _ =
 
 type Msg
     = NoOp
-    | StartDrawing Position
-    | ContinueDrawing Position
+    | StartDrawingPitch PitchPos
+    | ContinueDrawingPitch PitchPos
     | StopDrawing
-    | StartDrawingPercussion PercussionPosition
-    | ContinueDrawingPercussion PercussionPosition
-    | StopDrawingPercussion
+    | StartDrawingPerc PercPos
+    | ContinueDrawingPerc PercPos
     | PlayPitchNote Int
-    | PlayPercussionNote PercussionType
+    | PlayPercNote PercType
     | Play
     | Stop
     | TimeSync Float
@@ -201,7 +200,7 @@ update msg model =
         NoOp ->
             ( model, Cmd.none )
 
-        StartDrawing position ->
+        StartDrawingPitch position ->
             case model.drawState of
                 NotDrawing ->
                     let
@@ -219,17 +218,17 @@ update msg model =
                         | drawState = newDrawState
                         , pitchGrid = updatePitchCell position (not currentlyActive) model.pitchGrid
                       }
-                    , playPitchCmdIf (not currentlyActive) position.pitchRowIndex
+                    , playPitchCmdIf (not currentlyActive) position.pitchIdx
                     )
 
                 _ ->
                     ( model, Cmd.none )
 
-        ContinueDrawing position ->
+        ContinueDrawingPitch position ->
             case model.drawState of
                 DrawingPitch ->
                     ( { model | pitchGrid = updatePitchCell position True model.pitchGrid }
-                    , playPitchCmdIf True position.pitchRowIndex
+                    , playPitchCmdIf True position.pitchIdx
                     )
 
                 ErasingPitch ->
@@ -241,51 +240,48 @@ update msg model =
         StopDrawing ->
             ( { model | drawState = NotDrawing }, Cmd.none )
 
-        StartDrawingPercussion position ->
+        StartDrawingPerc position ->
             case model.drawState of
                 NotDrawing ->
                     let
                         currentlyActive =
-                            isPercussionCellActive position model.percussionGrid
+                            isPercCellActive position model.percGrid
 
                         newDrawState =
                             if currentlyActive then
-                                ErasingPercussion
+                                ErasingPerc
 
                             else
-                                DrawingPercussion
+                                DrawingPerc
                     in
                     ( { model
                         | drawState = newDrawState
-                        , percussionGrid = updatePercussionCell position (not currentlyActive) model.percussionGrid
+                        , percGrid = updatePercCell position (not currentlyActive) model.percGrid
                       }
-                    , playPercussionCmdIf (not currentlyActive) position.percussionType
+                    , playPercCmdIf (not currentlyActive) position.percType
                     )
 
                 _ ->
                     ( model, Cmd.none )
 
-        ContinueDrawingPercussion position ->
+        ContinueDrawingPerc position ->
             case model.drawState of
-                DrawingPercussion ->
-                    ( { model | percussionGrid = updatePercussionCell position True model.percussionGrid }
-                    , playPercussionCmdIf True position.percussionType
+                DrawingPerc ->
+                    ( { model | percGrid = updatePercCell position True model.percGrid }
+                    , playPercCmdIf True position.percType
                     )
 
-                ErasingPercussion ->
-                    ( { model | percussionGrid = updatePercussionCell position False model.percussionGrid }, Cmd.none )
+                ErasingPerc ->
+                    ( { model | percGrid = updatePercCell position False model.percGrid }, Cmd.none )
 
                 _ ->
                     ( model, Cmd.none )
 
-        StopDrawingPercussion ->
-            ( { model | drawState = NotDrawing }, Cmd.none )
+        PlayPitchNote pitchIdx ->
+            ( model, playPitchCmdIf True pitchIdx )
 
-        PlayPitchNote pitchRowIndex ->
-            ( model, playPitchCmdIf True pitchRowIndex )
-
-        PlayPercussionNote percussionType ->
-            ( model, playPercussionCmdIf True percussionType )
+        PlayPercNote percType ->
+            ( model, playPercCmdIf True percType )
 
         Play ->
             case model.playState of
@@ -353,67 +349,67 @@ format templateString replacements =
     List.foldr (\( a, b ) -> String.replace a b) templateString replacements
 
 
-viewGrid : { a | totalPitchRows : Int, totalStepColumns : Int, pitchGrid : PitchGrid, percussionGrid : PercussionGrid } -> Html Msg
-viewGrid { totalPitchRows, totalStepColumns, pitchGrid, percussionGrid } =
+viewGrid : { a | totalPitches : Int, totalSteps : Int, pitchGrid : PitchGrid, percGrid : PercGrid } -> Html Msg
+viewGrid { totalPitches, totalSteps, pitchGrid, percGrid } =
     let
-        gridTemplateColumns =
-            format "minmax($pitchLabelColumnMinWidth, auto) repeat($totalStepColumns, minmax($stepColumnMinWidth, 1fr))"
-                [ ( "$pitchLabelColumnMinWidth", px 48 )
-                , ( "$totalStepColumns", String.fromInt totalStepColumns )
-                , ( "$stepColumnMinWidth", px 48 )
+        gridTemplateCols =
+            format "minmax($pitchLabelColMinWidth, auto) repeat($totalSteps, minmax($stepColMinWidth, 1fr))"
+                [ ( "$pitchLabelColMinWidth", px 48 )
+                , ( "$totalSteps", String.fromInt totalSteps )
+                , ( "$stepColMinWidth", px 48 )
                 ]
 
         gridTemplateRows =
-            format "minmax($stepLabelRowMinHeight, auto) repeat($totalPitchRows, minmax($pitchRowMinHeight, 1fr)) repeat(2, $percussionRowHeight)"
+            format "minmax($stepLabelRowMinHeight, auto) repeat($totalPitches, minmax($pitchRowMinHeight, 1fr)) repeat(2, $percRowHeight)"
                 [ ( "$stepLabelRowMinHeight", px 32 )
-                , ( "$totalPitchRows", String.fromInt totalPitchRows )
+                , ( "$totalPitches", String.fromInt totalPitches )
                 , ( "$pitchRowMinHeight", px 32 )
-                , ( "$percussionRowHeight", px 48 )
+                , ( "$percRowHeight", px 48 )
                 ]
     in
     div
         [ class "grid bg-gray-800 border border-gray-700 w-max h-max min-w-full min-h-full"
-        , style "grid-template-columns" gridTemplateColumns
+        , style "grid-template-cols" gridTemplateCols
         , style "grid-template-rows" gridTemplateRows
         ]
         ([ {- Empty corner cell -} div [ class labelClass, class "border-b border-gray-600" ] [] ]
-            ++ {- Step headers row -} times viewStepHeader totalStepColumns
-            ++ {- Pitch rows -} (times (viewPitchRow totalStepColumns pitchGrid) totalPitchRows |> List.concat)
-            ++ {- Percussion Snare row -} viewPercussionRow Snare totalStepColumns percussionGrid
-            ++ {- Percussion Kick row -} viewPercussionRow Kick totalStepColumns percussionGrid
+            ++ {- Step headers row -} times viewStepHeader totalSteps
+            ++ {- Pitch rows -} (times (viewPitchRow totalSteps pitchGrid) totalPitches |> List.concat)
+            ++ {- Perc Snare row -} viewPercRow Snare totalSteps percGrid
+            ++ {- Perc Kick row -} viewPercRow Kick totalSteps percGrid
         )
 
 
 viewStepHeader : Int -> Html Msg
-viewStepHeader stepColumnIndex =
+viewStepHeader stepIdx =
     div
         [ class labelClass, class "border-b border-gray-600" ]
-        [ text (String.fromInt (stepColumnIndex + 1)) ]
+        [ text (String.fromInt (stepIdx + 1)) ]
 
 
 viewPitchRow : Int -> PitchGrid -> Int -> List (Html Msg)
-viewPitchRow stepCount pitchGrid pitchRowIndex =
+viewPitchRow stepCount pitchGrid pitchIdx =
     let
         viewPitchLabel =
             div
                 [ class labelClass ]
-                [ text ("Pitch " ++ String.fromInt (pitchRowIndex + 1)) ]
+                [ text ("Pitch " ++ String.fromInt (pitchIdx + 1)) ]
     in
-    viewPitchLabel :: times (viewPitchCell pitchRowIndex pitchGrid) stepCount
+    viewPitchLabel :: times (viewPitchCell pitchIdx pitchGrid) stepCount
 
 
 viewPitchCell : Int -> PitchGrid -> Int -> Html Msg
-viewPitchCell pitchRowIndex pitchGrid stepColumnIndex =
+viewPitchCell pitchIdx pitchGrid stepIdx =
     let
         position =
-            { pitchRowIndex = pitchRowIndex, stepColumnIndex = stepColumnIndex }
+            { pitchIdx = pitchIdx, stepIdx = stepIdx }
 
         isActive =
             isPitchCellActive position pitchGrid
 
         noteClass =
             if isActive then
-                pitchCellColor pitchRowIndex
+                pitchCellColor pitchIdx
 
             else
                 "bg-gray-800 hover:bg-gray-700"
@@ -421,45 +417,45 @@ viewPitchCell pitchRowIndex pitchGrid stepColumnIndex =
     div
         [ class noteClass
         , class "border-r border-b border-gray-600 cursor-pointer"
-        , HE.onMouseDown (StartDrawing position)
-        , HE.onMouseEnter (ContinueDrawing position)
+        , HE.onMouseDown (StartDrawingPitch position)
+        , HE.onMouseEnter (ContinueDrawingPitch position)
         , HE.onMouseUp StopDrawing
         ]
         []
 
 
-viewPercussionRow : PercussionType -> Int -> PercussionGrid -> List (Html Msg)
-viewPercussionRow percussionType totalStepColumns percussionGrid =
+viewPercRow : PercType -> Int -> PercGrid -> List (Html Msg)
+viewPercRow percType totalSteps percGrid =
     let
-        percussionTypeName =
-            case percussionType of
+        percTypeName =
+            case percType of
                 Snare ->
                     "Snare"
 
                 Kick ->
                     "Kick"
     in
-    div [ class labelClass ] [ text percussionTypeName ]
-        :: times (viewPercussionCell percussionType percussionGrid) totalStepColumns
+    div [ class labelClass ] [ text percTypeName ]
+        :: times (viewPercCell percType percGrid) totalSteps
 
 
-viewPercussionCell : PercussionType -> PercussionGrid -> Int -> Html Msg
-viewPercussionCell percussionType percussionGrid stepColumnIndex =
+viewPercCell : PercType -> PercGrid -> Int -> Html Msg
+viewPercCell percType percGrid stepIdx =
     let
         position =
-            { percussionType = percussionType, stepColumnIndex = stepColumnIndex }
+            { percType = percType, stepIdx = stepIdx }
 
         isActive =
-            isPercussionCellActive position percussionGrid
+            isPercCellActive position percGrid
 
         symbol =
-            viewPercussionSymbol isActive percussionType
+            viewPercSymbol isActive percType
     in
     div
         [ class "bg-gray-800 hover:bg-gray-700 border-r border-b border-gray-600 cursor-pointer transition-colors flex items-center justify-center"
-        , HE.onMouseDown (StartDrawingPercussion position)
-        , HE.onMouseEnter (ContinueDrawingPercussion position)
-        , HE.onMouseUp StopDrawingPercussion
+        , HE.onMouseDown (StartDrawingPerc position)
+        , HE.onMouseEnter (ContinueDrawingPerc position)
+        , HE.onMouseUp StopDrawing
         ]
         [ symbol ]
 
@@ -487,9 +483,9 @@ times fn i =
 -- Conversion Functions
 
 
-toPercussionRowIndex : PercussionType -> Int
-toPercussionRowIndex percussionType =
-    case percussionType of
+toPercRowIdx : PercType -> Int
+toPercRowIdx percType =
+    case percType of
         Snare ->
             0
 
@@ -497,9 +493,9 @@ toPercussionRowIndex percussionType =
             1
 
 
-percussionPositionToTuple : PercussionPosition -> ( Int, Int )
-percussionPositionToTuple { percussionType, stepColumnIndex } =
-    ( toPercussionRowIndex percussionType, stepColumnIndex )
+percPositionToTuple : PercPos -> ( Int, Int )
+percPositionToTuple { percType, stepIdx } =
+    ( toPercRowIdx percType, stepIdx )
 
 
 
@@ -518,7 +514,7 @@ getCurrentPlayingStep model =
             Just 0
 
         Playing { nextStep } ->
-            Just (modBy model.totalStepColumns (nextStep - 1))
+            Just (modBy model.totalSteps (nextStep - 1))
 
         Stopped ->
             Nothing
@@ -529,21 +525,21 @@ type alias NoteToPlay =
 
 
 getActiveNotesForStep : Int -> Model -> List NoteToPlay
-getActiveNotesForStep stepIndex model =
+getActiveNotesForStep stepIdx model =
     let
         duration =
             noteDuration model
 
         pitchNotes =
             times
-                (\pitchRowIndex ->
+                (\pitchIdx ->
                     let
                         position =
-                            { pitchRowIndex = pitchRowIndex, stepColumnIndex = stepIndex }
+                            { pitchIdx = pitchIdx, stepIdx = stepIdx }
                     in
                     if isPitchCellActive position model.pitchGrid then
                         Just
-                            { note = pitchRowToMidiNote pitchRowIndex
+                            { note = pitchIdxToMidi pitchIdx
                             , duration = duration
                             , volume = 0.7
                             }
@@ -551,20 +547,20 @@ getActiveNotesForStep stepIndex model =
                     else
                         Nothing
                 )
-                model.totalPitchRows
+                model.totalPitches
                 |> List.filterMap identity
 
-        percussionNotes =
+        percNotes =
             [ Kick, Snare ]
                 |> List.filterMap
-                    (\percussionType ->
+                    (\percType ->
                         let
                             position =
-                                { percussionType = percussionType, stepColumnIndex = stepIndex }
+                                { percType = percType, stepIdx = stepIdx }
                         in
-                        if isPercussionCellActive position model.percussionGrid then
+                        if isPercCellActive position model.percGrid then
                             Just
-                                { note = percussionTypeToMidiNote percussionType
+                                { note = percTypeToMidi percType
                                 , duration = duration
                                 , volume = 0.8
                                 }
@@ -573,25 +569,26 @@ getActiveNotesForStep stepIndex model =
                             Nothing
                     )
     in
-    pitchNotes ++ percussionNotes
+    pitchNotes ++ percNotes
+
 
 
 -- Audio Helper Functions
 
 
 playPitchCmdIf : Bool -> Int -> Cmd Msg
-playPitchCmdIf shouldPlay pitchRowIndex =
+playPitchCmdIf shouldPlay pitchIdx =
     if shouldPlay then
-        playPitch { note = pitchRowToMidiNote pitchRowIndex, duration = 0.5, volume = 0.7 }
+        playPitch { note = pitchIdxToMidi pitchIdx, duration = 0.5, volume = 0.7 }
 
     else
         Cmd.none
 
 
-playPercussionCmdIf : Bool -> PercussionType -> Cmd Msg
-playPercussionCmdIf shouldPlay percussionType =
+playPercCmdIf : Bool -> PercType -> Cmd Msg
+playPercCmdIf shouldPlay percType =
     if shouldPlay then
-        playPercussion { note = percussionTypeToMidiNote percussionType, duration = 0.5, volume = 0.8 }
+        playPerc { note = percTypeToMidi percType, duration = 0.5, volume = 0.8 }
 
     else
         Cmd.none
@@ -601,30 +598,30 @@ playPercussionCmdIf shouldPlay percussionType =
 -- Cell State Management
 
 
-isPitchCellActive : Position -> PitchGrid -> Bool
-isPitchCellActive { pitchRowIndex, stepColumnIndex } pitchGrid =
-    Set.member ( pitchRowIndex, stepColumnIndex ) pitchGrid
+isPitchCellActive : PitchPos -> PitchGrid -> Bool
+isPitchCellActive { pitchIdx, stepIdx } pitchGrid =
+    Set.member ( pitchIdx, stepIdx ) pitchGrid
 
 
-updatePitchCell : Position -> Bool -> PitchGrid -> PitchGrid
-updatePitchCell { pitchRowIndex, stepColumnIndex } isActive pitchGrid =
+updatePitchCell : PitchPos -> Bool -> PitchGrid -> PitchGrid
+updatePitchCell { pitchIdx, stepIdx } isActive pitchGrid =
     if isActive then
-        Set.insert ( pitchRowIndex, stepColumnIndex ) pitchGrid
+        Set.insert ( pitchIdx, stepIdx ) pitchGrid
 
     else
-        Set.remove ( pitchRowIndex, stepColumnIndex ) pitchGrid
+        Set.remove ( pitchIdx, stepIdx ) pitchGrid
 
 
-isPercussionCellActive : PercussionPosition -> PercussionGrid -> Bool
-isPercussionCellActive position grid =
-    Set.member (percussionPositionToTuple position) grid
+isPercCellActive : PercPos -> PercGrid -> Bool
+isPercCellActive position grid =
+    Set.member (percPositionToTuple position) grid
 
 
-updatePercussionCell : PercussionPosition -> Bool -> PercussionGrid -> PercussionGrid
-updatePercussionCell position isActive grid =
+updatePercCell : PercPos -> Bool -> PercGrid -> PercGrid
+updatePercCell position isActive grid =
     let
         tuple =
-            percussionPositionToTuple position
+            percPositionToTuple position
     in
     if isActive then
         Set.insert tuple grid
@@ -661,10 +658,10 @@ labelClass =
 -- View Helpers
 
 
-viewPercussionSymbol : Bool -> PercussionType -> Html Msg
-viewPercussionSymbol isActive percussionType =
+viewPercSymbol : Bool -> PercType -> Html Msg
+viewPercSymbol isActive percType =
     if isActive then
-        case percussionType of
+        case percType of
             Kick ->
                 -- Circle symbol
                 div [ class "w-6 h-6 rounded-full", class accentBgColor ] []
@@ -679,8 +676,8 @@ viewPercussionSymbol isActive percussionType =
 
 
 pitchCellColor : Int -> String
-pitchCellColor pitchRowIndex =
-    case modBy 7 pitchRowIndex of
+pitchCellColor pitchIdx =
+    case modBy 7 pitchIdx of
         0 ->
             "bg-[oklch(70%_0.13_0)] hover:bg-[oklch(74%_0.16_0)] transition-colors"
 
@@ -721,62 +718,63 @@ px f =
     String.fromFloat f ++ "px"
 
 
+
 {-
-SEQUENCER IMPLEMENTATION PLAN
-============================
+   SEQUENCER IMPLEMENTATION PLAN
+   ============================
 
-Based on V1 architecture analysis, the sequencer needs these components:
+   Based on V1 architecture analysis, the sequencer needs these components:
 
-1. DATA TYPES & MODEL UPDATES:
-   - Add PlayState type: Stopped | PlayingStarted { startTime : Float } | Playing { startTime : Float, nextStep : Int }
-   - Add model fields: playState : PlayState, audioContextTime : Float, bpm : Int (default 120)
-   - The nextStep represents the step TO BE SCHEDULED (not already scheduled)
+   1. DATA TYPES & MODEL UPDATES:
+      - Add PlayState type: Stopped | PlayingStarted { startTime : Float } | Playing { startTime : Float, nextStep : Int }
+      - Add model fields: playState : PlayState, audioContextTime : Float, bpm : Int (default 120)
+      - The nextStep represents the step TO BE SCHEDULED (not already scheduled)
 
-2. PORTS & MESSAGING:
-   - Add timeSync port: timeSync : (Float -> msg) -> Sub msg
-   - Add messages: Play | Stop | TimeSync Float
-   - JavaScript will send audioContext.currentTime via timeSync using requestAnimationFrame
+   2. PORTS & MESSAGING:
+      - Add timeSync port: timeSync : (Float -> msg) -> Sub msg
+      - Add messages: Play | Stop | TimeSync Float
+      - JavaScript will send audioContext.currentTime via timeSync using requestAnimationFrame
 
-3. TIMING CALCULATIONS:
-   - totalSteps: totalStepColumns (16 in our case)
-   - noteDuration: (60.0 / bpm) / 4.0 (assuming 16th notes at 120 BPM = 0.125 seconds)
-   - stepTime: startTime + (nextStep * noteDuration)
+   3. TIMING CALCULATIONS:
+      - totalSteps: totalSteps (16 in our case)
+      - noteDuration: (60.0 / bpm) / 4.0 (assuming 16th notes at 120 BPM = 0.125 seconds)
+      - stepTime: startTime + (nextStep * noteDuration)
 
-4. STATE TRANSITIONS:
-   - Stopped → PlayingStarted: On Play button press, record startTime = audioContextTime
-   - PlayingStarted → Playing: When first step gets scheduled (nextStep = 1)
-   - Playing → Stopped: On Stop button press
-   - Playing loops: Use modBy totalSteps for grid position
+   4. STATE TRANSITIONS:
+      - Stopped → PlayingStarted: On Play button press, record startTime = audioContextTime
+      - PlayingStarted → Playing: When first step gets scheduled (nextStep = 1)
+      - Playing → Stopped: On Stop button press
+      - Playing loops: Use modBy totalSteps for grid position
 
-5. SCHEDULING LOGIC (TimeSync handler):
-   - Calculate elapsedTime = audioContextTime - startTime
-   - Calculate absoluteStep = floor(elapsedTime / noteDuration)
-   - If absoluteStep >= nextStep, schedule notes for current step
-   - Get active notes using getActiveNotesForStep(modBy totalSteps nextStep)
-   - Play chord using existing playPitch/playPercussion ports
-   - Increment nextStep after scheduling
+   5. SCHEDULING LOGIC (TimeSync handler):
+      - Calculate elapsedTime = audioContextTime - startTime
+      - Calculate absoluteStep = floor(elapsedTime / noteDuration)
+      - If absoluteStep >= nextStep, schedule notes for current step
+      - Get active notes using getActiveNotesForStep(modBy totalSteps nextStep)
+      - Play chord using existing playPitch/playPerc ports
+      - Increment nextStep after scheduling
 
-6. VISUAL FEEDBACK:
-   - getCurrentPlayingStep: PlayingStarted → Just 0, Playing → Just (modBy totalSteps (nextStep - 1))
-   - Highlight current step in grid view
-   - Update Play button to show Stop when playing
+   6. VISUAL FEEDBACK:
+      - getCurrentPlayingStep: PlayingStarted → Just 0, Playing → Just (modBy totalSteps (nextStep - 1))
+      - Highlight current step in grid view
+      - Update Play button to show Stop when playing
 
-TODO LIST:
-1. Add PlayState type (Stopped, PlayingStarted, Playing)
-2. Add sequencer fields to Model (playState, audioContextTime, bpm)
-3. Add sequencer messages (Play, Stop, TimeSync)
-4. Add timeSync port for audio context time updates
-6. Implement Play message handler (Stopped → PlayingStarted)
-7. Implement Stop message handler (Playing/PlayingStarted → Stopped)
-8. Implement TimeSync message handler with scheduling logic
-9. Add totalSteps helper function for step count calculation
-10. Add noteDuration helper function for BPM timing
-11. Add getCurrentPlayingStep function for step highlighting
-12. Add getActiveNotesForStep function for chord collection
-13. Update Play button in headerView to be functional
-14. Add timeSync subscription to subscriptions function
-15. Update JavaScript to implement timeSync port with requestAnimationFrame
-16. Test basic play/stop functionality
-17. Test step progression and looping behavior
-18. Test audio scheduling accuracy and timing
+   TODO LIST:
+   1. Add PlayState type (Stopped, PlayingStarted, Playing)
+   2. Add sequencer fields to Model (playState, audioContextTime, bpm)
+   3. Add sequencer messages (Play, Stop, TimeSync)
+   4. Add timeSync port for audio context time updates
+   6. Implement Play message handler (Stopped → PlayingStarted)
+   7. Implement Stop message handler (Playing/PlayingStarted → Stopped)
+   8. Implement TimeSync message handler with scheduling logic
+   9. Add totalSteps helper function for step count calculation
+   10. Add noteDuration helper function for BPM timing
+   11. Add getCurrentPlayingStep function for step highlighting
+   12. Add getActiveNotesForStep function for chord collection
+   13. Update Play button in headerView to be functional
+   14. Add timeSync subscription to subscriptions function
+   15. Update JavaScript to implement timeSync port with requestAnimationFrame
+   16. Test basic play/stop functionality
+   17. Test step progression and looping behavior
+   18. Test audio scheduling accuracy and timing
 -}
