@@ -316,18 +316,19 @@ viewGrid : { a | totalPitchRows : Int, totalStepColumns : Int, pitchGrid : Pitch
 viewGrid { totalPitchRows, totalStepColumns, pitchGrid, percussionGrid } =
     let
         gridTemplateColumns =
-            stringTemplate "minmax($pitchColumnMinWidth, auto) repeat($totalStepColumns, minmax($stepColumnMinWidth, 1fr))"
-                [ ( "$pitchColumnMinWidth", px 48 )
+            stringTemplate "minmax($pitchLabelColumnMinWidth, auto) repeat($totalStepColumns, minmax($stepColumnMinWidth, 1fr))"
+                [ ( "$pitchLabelColumnMinWidth", px 48 )
                 , ( "$totalStepColumns", String.fromInt totalStepColumns )
                 , ( "$stepColumnMinWidth", px 48 )
                 ]
 
         gridTemplateRows =
-            "minmax($headerRowMinHeight, auto) repeat($pitchRowsCount, minmax($rowMinHeight, 1fr)) repeat(2, $percussionRowHeight)"
-                |> String.replace "$headerRowMinHeight" (px 32)
-                |> String.replace "$pitchRowsCount" (String.fromInt totalPitchRows)
-                |> String.replace "$rowMinHeight" (px 32)
-                |> String.replace "$percussionRowHeight" (px 48)
+            stringTemplate "minmax($stepLabelRowMinHeight, auto) repeat($totalPitchRows, minmax($pitchRowMinHeight, 1fr)) repeat(2, $percussionRowHeight)"
+                [ ( "$stepLabelRowMinHeight", px 32 )
+                , ( "$totalPitchRows", String.fromInt totalPitchRows )
+                , ( "$pitchRowMinHeight", px 32 )
+                , ( "$percussionRowHeight", px 48 )
+                ]
     in
     div
         [ class "grid bg-gray-800 border border-gray-700 w-max h-max min-w-full min-h-full"
