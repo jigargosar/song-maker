@@ -316,10 +316,11 @@ viewGrid : { a | totalPitchRows : Int, totalStepColumns : Int, pitchGrid : Pitch
 viewGrid { totalPitchRows, totalStepColumns, pitchGrid, percussionGrid } =
     let
         gridTemplateColumns =
-            "minmax($labelColumnMinWidth, auto) repeat($stepColumnsCount, minmax($stepColumnMinWidth, 1fr))"
-                |> String.replace "$labelColumnMinWidth" (px 48)
-                |> String.replace "$stepColumnsCount" (String.fromInt totalStepColumns)
-                |> String.replace "$stepColumnMinWidth" (px 48)
+            stringTemplate "minmax($pitchColumnMinWidth, auto) repeat($totalStepColumns, minmax($stepColumnMinWidth, 1fr))"
+                [ ( "$pitchColumnMinWidth", px 48 )
+                , ( "$totalStepColumns", String.fromInt totalStepColumns )
+                , ( "$stepColumnMinWidth", px 48 )
+                ]
 
         gridTemplateRows =
             "minmax($headerRowMinHeight, auto) repeat($pitchRowsCount, minmax($rowMinHeight, 1fr)) repeat(2, $percussionRowHeight)"
