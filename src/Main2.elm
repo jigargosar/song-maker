@@ -17,6 +17,9 @@ port playPitch : { note : Int, duration : Float, volume : Float } -> Cmd msg
 port playPercussion : { note : Int, duration : Float, volume : Float } -> Cmd msg
 
 
+port timeSync : (Float -> msg) -> Sub msg
+
+
 
 -- AUDIO CONSTANTS
 
@@ -127,6 +130,12 @@ type alias PercussionGrid =
     Set ( Int, Int )
 
 
+type PlayState
+    = Stopped
+    | PlayingStarted { startTime : Float }
+    | Playing { startTime : Float, nextStep : Int }
+
+
 type DrawState
     = NotDrawing
     | DrawingPitch
@@ -141,6 +150,9 @@ type alias Model =
     , pitchGrid : PitchGrid
     , percussionGrid : PercussionGrid
     , drawState : DrawState
+    , playState : PlayState
+    , audioContextTime : Float
+    , bpm : Int
     }
 
 
@@ -151,6 +163,9 @@ init _ =
       , pitchGrid = Set.empty
       , percussionGrid = Set.empty
       , drawState = NotDrawing
+      , playState = Stopped
+      , audioContextTime = 0.0
+      , bpm = 120
       }
     , Cmd.none
     )
@@ -170,6 +185,9 @@ type Msg
     | StopDrawingPercussion
     | PlayPitchNote Int
     | PlayPercussionNote PercussionType
+    | Play
+    | Stop
+    | TimeSync Float
 
 
 subscriptions : Model -> Sub msg
@@ -268,6 +286,28 @@ update msg model =
 
         PlayPercussionNote percussionType ->
             ( model, playPercussionCmdIf True percussionType )
+
+        Play ->
+            case model.playState of
+                Stopped ->
+                    ( { model | playState = PlayingStarted { startTime = model.audioContextTime } }, Cmd.none )
+
+                _ ->
+                    ( model, Cmd.none )
+
+        Stop ->
+            case model.playState of
+                PlayingStarted _ ->
+                    ( { model | playState = Stopped }, Cmd.none )
+
+                Playing _ ->
+                    ( { model | playState = Stopped }, Cmd.none )
+
+                Stopped ->
+                    ( model, Cmd.none )
+
+        TimeSync audioContextTime ->
+            ( { model | audioContextTime = audioContextTime }, Cmd.none )
 
 
 
@@ -463,7 +503,80 @@ percussionPositionToTuple { percussionType, stepColumnIndex } =
 
 
 
--- Helper Functions
+-- Sequencer Functions
+
+
+noteDuration : Model -> Float
+noteDuration model =
+    (60.0 / toFloat model.bpm) / 4.0
+
+
+getCurrentPlayingStep : Model -> Maybe Int
+getCurrentPlayingStep model =
+    case model.playState of
+        PlayingStarted _ ->
+            Just 0
+
+        Playing { nextStep } ->
+            Just (modBy model.totalStepColumns (nextStep - 1))
+
+        Stopped ->
+            Nothing
+
+
+type alias NoteToPlay =
+    { note : Int, duration : Float, volume : Float }
+
+
+getActiveNotesForStep : Int -> Model -> List NoteToPlay
+getActiveNotesForStep stepIndex model =
+    let
+        duration =
+            noteDuration model
+
+        pitchNotes =
+            times
+                (\pitchRowIndex ->
+                    let
+                        position =
+                            { pitchRowIndex = pitchRowIndex, stepColumnIndex = stepIndex }
+                    in
+                    if isPitchCellActive position model.pitchGrid then
+                        Just
+                            { note = pitchRowToMidiNote pitchRowIndex
+                            , duration = duration
+                            , volume = 0.7
+                            }
+
+                    else
+                        Nothing
+                )
+                model.totalPitchRows
+                |> List.filterMap identity
+
+        percussionNotes =
+            [ Kick, Snare ]
+                |> List.filterMap
+                    (\percussionType ->
+                        let
+                            position =
+                                { percussionType = percussionType, stepColumnIndex = stepIndex }
+                        in
+                        if isPercussionCellActive position model.percussionGrid then
+                            Just
+                                { note = percussionTypeToMidiNote percussionType
+                                , duration = duration
+                                , volume = 0.8
+                                }
+
+                        else
+                            Nothing
+                    )
+    in
+    pitchNotes ++ percussionNotes
+
+
+-- Audio Helper Functions
 
 
 playPitchCmdIf : Bool -> Int -> Cmd Msg
