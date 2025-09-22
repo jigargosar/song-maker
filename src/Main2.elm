@@ -308,22 +308,23 @@ centerView model =
         [ viewGrid model ]
 
 
-stringTemplate str ls =
-    List.foldr (\( a, b ) -> String.replace a b) str ls
+format : String -> List ( String, String ) -> String
+format templateString replacements =
+    List.foldr (\( a, b ) -> String.replace a b) templateString replacements
 
 
 viewGrid : { a | totalPitchRows : Int, totalStepColumns : Int, pitchGrid : PitchGrid, percussionGrid : PercussionGrid } -> Html Msg
 viewGrid { totalPitchRows, totalStepColumns, pitchGrid, percussionGrid } =
     let
         gridTemplateColumns =
-            stringTemplate "minmax($pitchLabelColumnMinWidth, auto) repeat($totalStepColumns, minmax($stepColumnMinWidth, 1fr))"
+            format "minmax($pitchLabelColumnMinWidth, auto) repeat($totalStepColumns, minmax($stepColumnMinWidth, 1fr))"
                 [ ( "$pitchLabelColumnMinWidth", px 48 )
                 , ( "$totalStepColumns", String.fromInt totalStepColumns )
                 , ( "$stepColumnMinWidth", px 48 )
                 ]
 
         gridTemplateRows =
-            stringTemplate "minmax($stepLabelRowMinHeight, auto) repeat($totalPitchRows, minmax($pitchRowMinHeight, 1fr)) repeat(2, $percussionRowHeight)"
+            format "minmax($stepLabelRowMinHeight, auto) repeat($totalPitchRows, minmax($pitchRowMinHeight, 1fr)) repeat(2, $percussionRowHeight)"
                 [ ( "$stepLabelRowMinHeight", px 32 )
                 , ( "$totalPitchRows", String.fromInt totalPitchRows )
                 , ( "$pitchRowMinHeight", px 32 )
