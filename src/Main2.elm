@@ -529,7 +529,8 @@ update msg model =
 
         ChangeOctaveStart newStart ->
             let
-                newModel = { model | octaveRange = { start = newStart, count = model.octaveRange.count } }
+                clampedStart = max 1 newStart
+                newModel = { model | octaveRange = { start = clampedStart, count = model.octaveRange.count } }
                 newPitchGrid = resizePitchGrid model newModel model.pitchGrid
             in
             ( { newModel | pitchGrid = newPitchGrid }
@@ -538,7 +539,8 @@ update msg model =
 
         ChangeOctaveCount newCount ->
             let
-                newModel = { model | octaveRange = { start = model.octaveRange.start, count = newCount } }
+                clampedCount = max 1 newCount
+                newModel = { model | octaveRange = { start = model.octaveRange.start, count = clampedCount } }
                 newPitchGrid = resizePitchGrid model newModel model.pitchGrid
             in
             ( { newModel | pitchGrid = newPitchGrid }
@@ -546,7 +548,7 @@ update msg model =
             )
 
         ChangeBPM newBPM ->
-            ( { model | bpm = newBPM }
+            ( { model | bpm = max 1 newBPM }
             , Cmd.none
             )
 
