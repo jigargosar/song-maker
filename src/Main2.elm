@@ -712,6 +712,7 @@ playPitchCmdIf shouldPlay pitchIdx =
             , duration = 0.5
             , volume = 0.7
             }
+
     else
         Cmd.none
 
@@ -725,6 +726,7 @@ playPercCmdIf shouldPlay percType =
             , duration = 0.5
             , volume = 0.8
             }
+
     else
         Cmd.none
 
@@ -870,65 +872,3 @@ pitchCellColor pitchIdx =
 
 px f =
     String.fromFloat f ++ "px"
-
-
-
-{-
-   SEQUENCER IMPLEMENTATION PLAN
-   ============================
-
-   Based on V1 architecture analysis, the sequencer needs these components:
-
-   1. DATA TYPES & MODEL UPDATES:
-      - Add PlayState type: Stopped | PlayingStarted { startTime : Float } | Playing { startTime : Float, nextStep : Int }
-      - Add model fields: playState : PlayState, audioContextTime : Float, bpm : Int (default 120)
-      - The nextStep represents the step TO BE SCHEDULED (not already scheduled)
-
-   2. PORTS & MESSAGING:
-      - Add timeSync port: timeSync : (Float -> msg) -> Sub msg
-      - Add messages: Play | Stop | TimeSync Float
-      - JavaScript will send audioContext.currentTime via timeSync using requestAnimationFrame
-
-   3. TIMING CALCULATIONS:
-      - totalSteps: totalSteps (16 in our case)
-      - noteDuration: (60.0 / bpm) / 4.0 (assuming 16th notes at 120 BPM = 0.125 seconds)
-      - stepTime: startTime + (nextStep * noteDuration)
-
-   4. STATE TRANSITIONS:
-      - Stopped → PlayingStarted: On Play button press, record startTime = audioContextTime
-      - PlayingStarted → Playing: When first step gets scheduled (nextStep = 1)
-      - Playing → Stopped: On Stop button press
-      - Playing loops: Use modBy totalSteps for grid position
-
-   5. SCHEDULING LOGIC (TimeSync handler):
-      - Calculate elapsedTime = audioContextTime - startTime
-      - Calculate absoluteStep = floor(elapsedTime / noteDuration)
-      - If absoluteStep >= nextStep, schedule notes for current step
-      - Get active notes using getActiveNotesForStep(modBy totalSteps nextStep)
-      - Play chord using existing playPitch/playPerc ports
-      - Increment nextStep after scheduling
-
-   6. VISUAL FEEDBACK:
-      - getCurrentPlayingStep: PlayingStarted → Just 0, Playing → Just (modBy totalSteps (nextStep - 1))
-      - Highlight current step in grid view
-      - Update Play button to show Stop when playing
-
-   TODO LIST:
-   1. Add PlayState type (Stopped, PlayingStarted, Playing)
-   2. Add sequencer fields to Model (playState, audioContextTime, bpm)
-   3. Add sequencer messages (Play, Stop, TimeSync)
-   4. Add timeSync port for audio context time updates
-   6. Implement Play message handler (Stopped → PlayingStarted)
-   7. Implement Stop message handler (Playing/PlayingStarted → Stopped)
-   8. Implement TimeSync message handler with scheduling logic
-   9. Add totalSteps helper function for step count calculation
-   10. Add noteDuration helper function for BPM timing
-   11. Add getCurrentPlayingStep function for step highlighting
-   12. Add getActiveNotesForStep function for chord collection
-   13. Update Play button in headerView to be functional
-   14. Add timeSync subscription to subscriptions function
-   15. Update JavaScript to implement timeSync port with requestAnimationFrame
-   16. Test basic play/stop functionality
-   17. Test step progression and looping behavior
-   18. Test audio scheduling accuracy and timing
--}
