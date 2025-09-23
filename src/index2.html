@@ -84,6 +84,13 @@
         }
     });
 
+    // Send timeSync updates using setInterval (works in background)
+    setInterval(() => {
+        if (app.ports.timeSync) {
+            app.ports.timeSync.send(audioContext.currentTime);
+        }
+    }, 16); // ~60fps
+
     // Wake audio context on first click
     document.addEventListener('click', () => {
         if (audioContext.state === 'suspended') {

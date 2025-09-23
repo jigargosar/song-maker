@@ -165,7 +165,7 @@ init _ =
       , drawState = NotDrawing
       , playState = Stopped
       , audioContextTime = 0.0
-      , bpm = 120
+      , bpm = 80
       }
     , Cmd.none
     )
@@ -189,9 +189,9 @@ type Msg
     | TimeSync Float
 
 
-subscriptions : Model -> Sub msg
+subscriptions : Model -> Sub Msg
 subscriptions _ =
-    Sub.none
+    timeSync TimeSync
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -303,7 +303,77 @@ update msg model =
                     ( model, Cmd.none )
 
         TimeSync audioContextTime ->
-            ( { model | audioContextTime = audioContextTime }, Cmd.none )
+            let
+                updatedModel =
+                    { model | audioContextTime = audioContextTime }
+            in
+            case model.playState of
+                PlayingStarted { startTime } ->
+                    let
+                        stepToSchedule =
+                            0
+
+                        activeNotes =
+                            getActiveNotesForStep stepToSchedule updatedModel
+
+                        playCommands =
+                            List.map
+                                (\note ->
+                                    if note.note >= 35 && note.note <= 39 then
+                                        playPerc note
+
+                                    else
+                                        playPitch note
+                                )
+                                activeNotes
+                                |> Cmd.batch
+
+                        newPlayState =
+                            Playing { startTime = startTime, nextStep = 1 }
+                    in
+                    ( { updatedModel | playState = newPlayState }, playCommands )
+
+                Playing { startTime, nextStep } ->
+                    let
+                        elapsedTime =
+                            audioContextTime - startTime
+
+                        duration =
+                            noteDuration model
+
+                        currentStep =
+                            floor (elapsedTime / duration)
+                    in
+                    if currentStep >= nextStep then
+                        let
+                            stepToSchedule =
+                                modBy model.totalSteps nextStep
+
+                            activeNotes =
+                                getActiveNotesForStep stepToSchedule updatedModel
+
+                            playCommands =
+                                List.map
+                                    (\note ->
+                                        if note.note >= 35 && note.note <= 39 then
+                                            playPerc note
+
+                                        else
+                                            playPitch note
+                                    )
+                                    activeNotes
+                                    |> Cmd.batch
+
+                            newPlayState =
+                                Playing { startTime = startTime, nextStep = nextStep + 1 }
+                        in
+                        ( { updatedModel | playState = newPlayState }, playCommands )
+
+                    else
+                        ( updatedModel, Cmd.none )
+
+                Stopped ->
+                    ( updatedModel, Cmd.none )
 
 
 
@@ -313,26 +383,22 @@ update msg model =
 view : Model -> Html Msg
 view model =
     div [ class "h-screen bg-gray-900 text-white flex flex-col select-none" ]
-        [ headerView
+        [ headerView model
         , centerView model
         , footerView
         ]
 
 
-headerView : Html Msg
-headerView =
+headerView : Model -> Html Msg
+headerView model =
     div [ class "bg-gray-800 border-b border-gray-700 px-6 py-4" ]
         [ div [ class "flex items-center justify-between" ]
             [ div [ class "text-2xl font-bold text-white" ]
                 [ text "Song Maker V2" ]
             , div [ class "flex items-center gap-4" ]
                 [ div [ class "text-gray-300 text-sm" ]
-                    [ text "BPM: 120" ]
-                , div
-                    [ class accentBgColorWithHover
-                    , class "text-white font-bold py-2 px-6 rounded-lg transition-colors cursor-pointer"
-                    ]
-                    [ text "Play" ]
+                    [ text "BPM: 80" ]
+                , viewPlayStopButton model.playState
                 ]
             ]
         ]
@@ -349,57 +415,76 @@ format templateString replacements =
     List.foldr (\( a, b ) -> String.replace a b) templateString replacements
 
 
-viewGrid : { a | totalPitches : Int, totalSteps : Int, pitchGrid : PitchGrid, percGrid : PercGrid } -> Html Msg
-viewGrid { totalPitches, totalSteps, pitchGrid, percGrid } =
+viewGrid : Model -> Html Msg
+viewGrid model =
     let
+        currentStep =
+            getCurrentPlayingStep model
+
         gridTemplateCols =
             format "minmax($pitchLabelColMinWidth, auto) repeat($totalSteps, minmax($stepColMinWidth, 1fr))"
                 [ ( "$pitchLabelColMinWidth", px 48 )
-                , ( "$totalSteps", String.fromInt totalSteps )
+                , ( "$totalSteps", String.fromInt model.totalSteps )
                 , ( "$stepColMinWidth", px 48 )
                 ]
 
         gridTemplateRows =
             format "minmax($stepLabelRowMinHeight, auto) repeat($totalPitches, minmax($pitchRowMinHeight, 1fr)) repeat(2, $percRowHeight)"
                 [ ( "$stepLabelRowMinHeight", px 32 )
-                , ( "$totalPitches", String.fromInt totalPitches )
+                , ( "$totalPitches", String.fromInt model.totalPitches )
                 , ( "$pitchRowMinHeight", px 32 )
                 , ( "$percRowHeight", px 48 )
                 ]
     in
     div
         [ class "grid bg-gray-800 border border-gray-700 w-max h-max min-w-full min-h-full"
-        , style "grid-template-cols" gridTemplateCols
+        , style "grid-template-columns" gridTemplateCols
         , style "grid-template-rows" gridTemplateRows
         ]
         ([ {- Empty corner cell -} div [ class labelClass, class "border-b border-gray-600" ] [] ]
-            ++ {- Step headers row -} times viewStepHeader totalSteps
-            ++ {- Pitch rows -} (times (viewPitchRow totalSteps pitchGrid) totalPitches |> List.concat)
-            ++ {- Perc Snare row -} viewPercRow Snare totalSteps percGrid
-            ++ {- Perc Kick row -} viewPercRow Kick totalSteps percGrid
+            ++ {- Step headers row -} times (\stepIdx -> viewStepHeader currentStep stepIdx) model.totalSteps
+            ++ {- Pitch rows -} (times (\pitchIdx -> viewPitchRow model.totalSteps model.pitchGrid currentStep pitchIdx) model.totalPitches |> List.concat)
+            ++ {- Perc Snare row -} viewPercRow Snare model.totalSteps model.percGrid currentStep
+            ++ {- Perc Kick row -} viewPercRow Kick model.totalSteps model.percGrid currentStep
         )
 
 
-viewStepHeader : Int -> Html Msg
-viewStepHeader stepIdx =
+viewStepHeader : Maybe Int -> Int -> Html Msg
+viewStepHeader currentStep stepIdx =
+    let
+        isCurrentStep =
+            case currentStep of
+                Just current ->
+                    current == stepIdx
+
+                Nothing ->
+                    False
+
+        headerClass =
+            if isCurrentStep then
+                labelClass ++ " " ++ accentBgColor
+
+            else
+                labelClass
+    in
     div
-        [ class labelClass, class "border-b border-gray-600" ]
+        [ class headerClass, class "border-b border-gray-600" ]
         [ text (String.fromInt (stepIdx + 1)) ]
 
 
-viewPitchRow : Int -> PitchGrid -> Int -> List (Html Msg)
-viewPitchRow stepCount pitchGrid pitchIdx =
+viewPitchRow : Int -> PitchGrid -> Maybe Int -> Int -> List (Html Msg)
+viewPitchRow stepCount pitchGrid currentStep pitchIdx =
     let
         viewPitchLabel =
             div
                 [ class labelClass ]
                 [ text ("Pitch " ++ String.fromInt (pitchIdx + 1)) ]
     in
-    viewPitchLabel :: times (viewPitchCell pitchIdx pitchGrid) stepCount
+    viewPitchLabel :: times (\stepIdx -> viewPitchCell pitchIdx pitchGrid currentStep stepIdx) stepCount
 
 
-viewPitchCell : Int -> PitchGrid -> Int -> Html Msg
-viewPitchCell pitchIdx pitchGrid stepIdx =
+viewPitchCell : Int -> PitchGrid -> Maybe Int -> Int -> Html Msg
+viewPitchCell pitchIdx pitchGrid currentStep stepIdx =
     let
         position =
             { pitchIdx = pitchIdx, stepIdx = stepIdx }
@@ -407,9 +492,26 @@ viewPitchCell pitchIdx pitchGrid stepIdx =
         isActive =
             isPitchCellActive position pitchGrid
 
+        isCurrentStep =
+            case currentStep of
+                Just current ->
+                    current == stepIdx
+
+                Nothing ->
+                    False
+
         noteClass =
             if isActive then
                 pitchCellColor pitchIdx
+                    ++ (if isCurrentStep then
+                            " ring-2 ring-white"
+
+                        else
+                            ""
+                       )
+
+            else if isCurrentStep then
+                "bg-gray-700 hover:bg-gray-600 ring-2 ring-white"
 
             else
                 "bg-gray-800 hover:bg-gray-700"
@@ -424,8 +526,8 @@ viewPitchCell pitchIdx pitchGrid stepIdx =
         []
 
 
-viewPercRow : PercType -> Int -> PercGrid -> List (Html Msg)
-viewPercRow percType totalSteps percGrid =
+viewPercRow : PercType -> Int -> PercGrid -> Maybe Int -> List (Html Msg)
+viewPercRow percType totalSteps percGrid currentStep =
     let
         percTypeName =
             case percType of
@@ -436,11 +538,11 @@ viewPercRow percType totalSteps percGrid =
                     "Kick"
     in
     div [ class labelClass ] [ text percTypeName ]
-        :: times (viewPercCell percType percGrid) totalSteps
+        :: times (\stepIdx -> viewPercCell percType percGrid currentStep stepIdx) totalSteps
 
 
-viewPercCell : PercType -> PercGrid -> Int -> Html Msg
-viewPercCell percType percGrid stepIdx =
+viewPercCell : PercType -> PercGrid -> Maybe Int -> Int -> Html Msg
+viewPercCell percType percGrid currentStep stepIdx =
     let
         position =
             { percType = percType, stepIdx = stepIdx }
@@ -448,11 +550,26 @@ viewPercCell percType percGrid stepIdx =
         isActive =
             isPercCellActive position percGrid
 
+        isCurrentStep =
+            case currentStep of
+                Just current ->
+                    current == stepIdx
+
+                Nothing ->
+                    False
+
         symbol =
             viewPercSymbol isActive percType
+
+        cellClass =
+            if isCurrentStep then
+                "bg-gray-700 hover:bg-gray-600 border-r border-b border-gray-600 cursor-pointer transition-colors flex items-center justify-center ring-2 ring-white"
+
+            else
+                "bg-gray-800 hover:bg-gray-700 border-r border-b border-gray-600 cursor-pointer transition-colors flex items-center justify-center"
     in
     div
-        [ class "bg-gray-800 hover:bg-gray-700 border-r border-b border-gray-600 cursor-pointer transition-colors flex items-center justify-center"
+        [ class cellClass
         , HE.onMouseDown (StartDrawingPerc position)
         , HE.onMouseEnter (ContinueDrawingPerc position)
         , HE.onMouseUp StopDrawing
@@ -656,6 +773,25 @@ labelClass =
 
 
 -- View Helpers
+
+
+viewPlayStopButton : PlayState -> Html Msg
+viewPlayStopButton playState =
+    let
+        ( buttonText, buttonMsg ) =
+            case playState of
+                Stopped ->
+                    ( "Play", Play )
+
+                _ ->
+                    ( "Stop", Stop )
+    in
+    div
+        [ class accentBgColorWithHover
+        , class "text-white font-bold py-2 px-6 rounded-lg transition-colors cursor-pointer"
+        , HE.onClick buttonMsg
+        ]
+        [ text buttonText ]
 
 
 viewPercSymbol : Bool -> PercType -> Html Msg
