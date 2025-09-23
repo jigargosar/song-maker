@@ -11,10 +11,7 @@ import Set exposing (Set)
 -- PORTS
 
 
-port playPitch : { note : Int, duration : Float, volume : Float } -> Cmd msg
-
-
-port playPerc : { note : Int, duration : Float, volume : Float } -> Cmd msg
+port playNote : { instrument : String, midi : Int, duration : Float, volume : Float } -> Cmd msg
 
 
 port timeSync : (Float -> msg) -> Sub msg
@@ -76,6 +73,29 @@ pitchIdxToMidi idx =
 -- Default to C4
 
 
+instrumentName : Instrument -> String
+instrumentName instrument =
+    case instrument of
+        IPiano ->
+            "_tone_0250_SoundBlasterOld_sf2"
+
+        IKick ->
+            "_drum_36_0_SBLive_sf2"
+
+        ISnare ->
+            "_drum_38_0_SBLive_sf2"
+
+
+percTypeToInstrument : PercType -> Instrument
+percTypeToInstrument percType =
+    case percType of
+        Kick ->
+            IKick
+
+        Snare ->
+            ISnare
+
+
 percTypeToMidi : PercType -> Int
 percTypeToMidi percType =
     case percType of
@@ -115,6 +135,12 @@ type alias PitchPos =
 
 type alias PitchGrid =
     Set ( Int, Int )
+
+
+type Instrument
+    = IPiano
+    | IKick
+    | ISnare
 
 
 type PercType
@@ -317,16 +343,7 @@ update msg model =
                             getActiveNotesForStep stepToSchedule updatedModel
 
                         playCommands =
-                            List.map
-                                (\note ->
-                                    if note.note >= 35 && note.note <= 39 then
-                                        playPerc note
-
-                                    else
-                                        playPitch note
-                                )
-                                activeNotes
-                                |> Cmd.batch
+                            List.map playNote activeNotes |> Cmd.batch
 
                         newPlayState =
                             Playing { startTime = startTime, nextStep = 1 }
@@ -353,16 +370,7 @@ update msg model =
                                 getActiveNotesForStep stepToSchedule updatedModel
 
                             playCommands =
-                                List.map
-                                    (\note ->
-                                        if note.note >= 35 && note.note <= 39 then
-                                            playPerc note
-
-                                        else
-                                            playPitch note
-                                    )
-                                    activeNotes
-                                    |> Cmd.batch
+                                List.map playNote activeNotes |> Cmd.batch
 
                             newPlayState =
                                 Playing { startTime = startTime, nextStep = nextStep + 1 }
@@ -638,7 +646,7 @@ getCurrentPlayingStep model =
 
 
 type alias NoteToPlay =
-    { note : Int, duration : Float, volume : Float }
+    { instrument : String, midi : Int, duration : Float, volume : Float }
 
 
 getActiveNotesForStep : Int -> Model -> List NoteToPlay
@@ -656,7 +664,8 @@ getActiveNotesForStep stepIdx model =
                     in
                     if isPitchCellActive position model.pitchGrid then
                         Just
-                            { note = pitchIdxToMidi pitchIdx
+                            { instrument = instrumentName IPiano
+                            , midi = pitchIdxToMidi pitchIdx
                             , duration = duration
                             , volume = 0.7
                             }
@@ -677,7 +686,8 @@ getActiveNotesForStep stepIdx model =
                         in
                         if isPercCellActive position model.percGrid then
                             Just
-                                { note = percTypeToMidi percType
+                                { instrument = instrumentName (percTypeToInstrument percType)
+                                , midi = percTypeToMidi percType
                                 , duration = duration
                                 , volume = 0.8
                                 }
@@ -696,8 +706,12 @@ getActiveNotesForStep stepIdx model =
 playPitchCmdIf : Bool -> Int -> Cmd Msg
 playPitchCmdIf shouldPlay pitchIdx =
     if shouldPlay then
-        playPitch { note = pitchIdxToMidi pitchIdx, duration = 0.5, volume = 0.7 }
-
+        playNote
+            { instrument = instrumentName IPiano
+            , midi = pitchIdxToMidi pitchIdx
+            , duration = 0.5
+            , volume = 0.7
+            }
     else
         Cmd.none
 
@@ -705,8 +719,12 @@ playPitchCmdIf shouldPlay pitchIdx =
 playPercCmdIf : Bool -> PercType -> Cmd Msg
 playPercCmdIf shouldPlay percType =
     if shouldPlay then
-        playPerc { note = percTypeToMidi percType, duration = 0.5, volume = 0.8 }
-
+        playNote
+            { instrument = instrumentName (percTypeToInstrument percType)
+            , midi = percTypeToMidi percType
+            , duration = 0.5
+            , volume = 0.8
+            }
     else
         Cmd.none
 

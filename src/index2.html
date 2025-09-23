@@ -45,42 +45,26 @@
         player.loader.decodeAfterLoading(audioContext, instrument);
     });
 
-    // Handle individual note playback
-    app.ports.playPitch.subscribe((data) => {
-        const { note, duration, volume } = data;
+    // Handle unified note playback
+    app.ports.playNote.subscribe((data) => {
+        const { instrument, midi, duration, volume } = data;
         const when = audioContext.currentTime;
 
-        player.queueWaveTable(
-            audioContext,
-            audioContext.destination,
-            piano,
-            when,
-            note,
-            duration,
-            volume
-        );
-    });
+        // Look up instrument by name from window object
+        const instrumentSample = window[instrument];
 
-    // Handle percussion playback
-    app.ports.playPerc.subscribe((data) => {
-        const { note, duration, volume } = data;
-        const when = audioContext.currentTime;
-
-        // Select percussion instrument based on MIDI note
-        const percussionInstrument = percussionKit[note];
-
-        if (percussionInstrument) {
+        if (instrumentSample) {
             player.queueWaveTable(
                 audioContext,
                 audioContext.destination,
-                percussionInstrument,
+                instrumentSample,
                 when,
-                note,
+                midi,
                 duration,
                 volume
             );
         } else {
-            console.warn(`No percussion instrument found for MIDI note ${note}`);
+            console.warn(`Instrument not found: ${instrument}`);
         }
     });
 
