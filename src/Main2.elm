@@ -1,8 +1,8 @@
 port module Main2 exposing (main)
 
 import Browser
-import Html exposing (Html, div, text)
-import Html.Attributes exposing (class, style)
+import Html as H exposing (Html, div, text)
+import Html.Attributes as HA exposing (class, style)
 import Html.Events as HE
 import Set exposing (Set)
 
@@ -312,7 +312,7 @@ init _ =
       , drawState = NotDrawing
       , playState = Stopped
       , audioContextTime = 0.0
-      , bpm = 80
+      , bpm = 120
       }
     , Cmd.none
     )
@@ -334,6 +334,11 @@ type Msg
     | Play
     | Stop
     | TimeSync Float
+    | ChangeScaleType ScaleType
+    | ChangeRootNote RootNote
+    | ChangeOctaveStart Int
+    | ChangeOctaveCount Int
+    | ChangeBPM Int
 
 
 subscriptions : Model -> Sub Msg
@@ -504,6 +509,43 @@ update msg model =
                 Stopped ->
                     ( updatedModel, Cmd.none )
 
+        ChangeScaleType newScaleType ->
+            ( { model
+                | scaleType = newScaleType
+                , pitchGrid = Set.empty
+              }
+            , Cmd.none
+            )
+
+        ChangeRootNote newRootNote ->
+            ( { model
+                | rootNote = newRootNote
+                , pitchGrid = Set.empty
+              }
+            , Cmd.none
+            )
+
+        ChangeOctaveStart newStart ->
+            ( { model
+                | octaveRange = { start = newStart, count = model.octaveRange.count }
+                , pitchGrid = Set.empty
+              }
+            , Cmd.none
+            )
+
+        ChangeOctaveCount newCount ->
+            ( { model
+                | octaveRange = { start = model.octaveRange.start, count = newCount }
+                , pitchGrid = Set.empty
+              }
+            , Cmd.none
+            )
+
+        ChangeBPM newBPM ->
+            ( { model | bpm = newBPM }
+            , Cmd.none
+            )
+
 
 
 -- View
@@ -524,9 +566,9 @@ headerView model =
         [ div [ class "flex items-center justify-between" ]
             [ div [ class "text-2xl font-bold text-white" ]
                 [ text "Song Maker V2" ]
-            , div [ class "flex items-center gap-4" ]
-                [ div [ class "text-gray-300 text-sm" ]
-                    [ text "BPM: 80" ]
+            , div [ class "flex items-center gap-6" ]
+                [ viewScaleControls model
+                , viewControlGroup "BPM" (viewBPMInput model.bpm)
                 , viewPlayStopButton model.playState
                 ]
             ]
@@ -750,7 +792,7 @@ percPositionToTuple { percType, stepIdx } =
 
 noteDuration : Model -> Float
 noteDuration model =
-    (60.0 / toFloat model.bpm) / 4.0
+    60.0 / toFloat model.bpm
 
 
 getCurrentPlayingStep : Model -> Maybe Int
@@ -993,3 +1035,134 @@ pitchCellColor pitchIdx =
 
 px f =
     String.fromFloat f ++ "px"
+
+
+viewScaleControls : Model -> Html Msg
+viewScaleControls model =
+    div [ class "flex items-center gap-4" ]
+        [ viewControlGroup "Scale" (viewScaleTypeSelector model.scaleType)
+        , viewControlGroup "Root" (viewRootNoteSelector model.rootNote)
+        , viewControlGroup "Start" (viewOctaveStartInput model.octaveRange.start)
+        , viewControlGroup "Count" (viewOctaveCountInput model.octaveRange.count)
+        ]
+
+
+viewControlGroup : String -> Html Msg -> Html Msg
+viewControlGroup labelText control =
+    div [ class "flex flex-col items-center gap-1" ]
+        [ H.label [ class "text-xs text-gray-400 font-medium" ]
+            [ text labelText ]
+        , control
+        ]
+
+
+viewScaleTypeSelector : ScaleType -> Html Msg
+viewScaleTypeSelector currentScale =
+    H.select
+        [ class "bg-gray-700 text-white text-sm border border-gray-600 rounded px-2 py-1 cursor-pointer hover:bg-gray-600 transition-colors"
+        , HE.onInput (parseScaleType >> Maybe.withDefault Major >> ChangeScaleType)
+        ]
+        [ H.option [ HA.value "Major", HA.selected (currentScale == Major) ] [ text "Major" ]
+        , H.option [ HA.value "Pentatonic", HA.selected (currentScale == Pentatonic) ] [ text "Pentatonic" ]
+        , H.option [ HA.value "Chromatic", HA.selected (currentScale == Chromatic) ] [ text "Chromatic" ]
+        ]
+
+
+viewRootNoteSelector : RootNote -> Html Msg
+viewRootNoteSelector currentRoot =
+    H.select
+        [ class "bg-gray-700 text-white text-sm border border-gray-600 rounded px-2 py-1 cursor-pointer hover:bg-gray-600 transition-colors"
+        , HE.onInput (parseRootNote >> Maybe.withDefault C >> ChangeRootNote)
+        ]
+        (List.map (viewRootNoteOption currentRoot) allRootNotes)
+
+
+viewRootNoteOption : RootNote -> RootNote -> Html Msg
+viewRootNoteOption currentRoot rootNote =
+    H.option
+        [ HA.value (rootNoteToString rootNote)
+        , HA.selected (currentRoot == rootNote)
+        ]
+        [ text (rootNoteToString rootNote) ]
+
+
+viewOctaveStartInput : Int -> Html Msg
+viewOctaveStartInput currentStart =
+    H.input
+        [ HA.type_ "number"
+        , class "bg-gray-700 text-white text-sm border border-gray-600 rounded px-2 py-1 w-16 text-center hover:bg-gray-600 transition-colors"
+        , HA.value (String.fromInt currentStart)
+        , HE.onInput (String.toInt >> Maybe.withDefault 4 >> ChangeOctaveStart)
+        ]
+        []
+
+
+viewOctaveCountInput : Int -> Html Msg
+viewOctaveCountInput currentCount =
+    H.input
+        [ HA.type_ "number"
+        , class "bg-gray-700 text-white text-sm border border-gray-600 rounded px-2 py-1 w-16 text-center hover:bg-gray-600 transition-colors"
+        , HA.value (String.fromInt currentCount)
+        , HE.onInput (String.toInt >> Maybe.withDefault 2 >> ChangeOctaveCount)
+        ]
+        []
+
+
+viewBPMInput : Int -> Html Msg
+viewBPMInput currentBPM =
+    H.input
+        [ HA.type_ "number"
+        , class "bg-gray-700 text-white text-sm border border-gray-600 rounded px-2 py-1 w-16 text-center hover:bg-gray-600 transition-colors"
+        , HA.value (String.fromInt currentBPM)
+        , HE.onInput (String.toInt >> Maybe.withDefault 120 >> ChangeBPM)
+        ]
+        []
+
+
+allRootNotes : List RootNote
+allRootNotes =
+    [ C, CSharp, D, DSharp, E, F, FSharp, G, GSharp, A, ASharp, B ]
+
+
+rootNoteToString : RootNote -> String
+rootNoteToString rootNote =
+    case rootNote of
+        C -> "C"
+        CSharp -> "C#"
+        D -> "D"
+        DSharp -> "D#"
+        E -> "E"
+        F -> "F"
+        FSharp -> "F#"
+        G -> "G"
+        GSharp -> "G#"
+        A -> "A"
+        ASharp -> "A#"
+        B -> "B"
+
+
+parseScaleType : String -> Maybe ScaleType
+parseScaleType str =
+    case str of
+        "Major" -> Just Major
+        "Pentatonic" -> Just Pentatonic
+        "Chromatic" -> Just Chromatic
+        _ -> Nothing
+
+
+parseRootNote : String -> Maybe RootNote
+parseRootNote str =
+    case str of
+        "C" -> Just C
+        "C#" -> Just CSharp
+        "D" -> Just D
+        "D#" -> Just DSharp
+        "E" -> Just E
+        "F" -> Just F
+        "F#" -> Just FSharp
+        "G" -> Just G
+        "G#" -> Just GSharp
+        "A" -> Just A
+        "A#" -> Just ASharp
+        "B" -> Just B
+        _ -> Nothing
