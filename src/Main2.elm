@@ -27,50 +27,167 @@ midiC4 =
 
 
 
--- Hardcoded C Major Scale: C4, D4, E4, F4, G4, A4, B4, C5
+-- SCALE SYSTEM
 
 
-pitchIdxToMidi : Int -> Int
-pitchIdxToMidi idx =
-    case idx of
-        0 ->
-            midiC4
-
-        -- C4 (60)
-        1 ->
-            midiC4 + 2
-
-        -- D4 (62)
-        2 ->
-            midiC4 + 4
-
-        -- E4 (64)
-        3 ->
-            midiC4 + 5
-
-        -- F4 (65)
-        4 ->
-            midiC4 + 7
-
-        -- G4 (67)
-        5 ->
-            midiC4 + 9
-
-        -- A4 (69)
-        6 ->
-            midiC4 + 11
-
-        -- B4 (71)
-        7 ->
-            midiC4 + 12
-
-        -- C5 (72)
-        _ ->
-            midiC4
+type ScaleType
+    = Major
+    | Pentatonic
+    | Chromatic
 
 
+type RootNote
+    = C
+    | CSharp
+    | D
+    | DSharp
+    | E
+    | F
+    | FSharp
+    | G
+    | GSharp
+    | A
+    | ASharp
+    | B
 
--- Default to C4
+
+getScalePattern : ScaleType -> List Int
+getScalePattern scaleType =
+    case scaleType of
+        Major ->
+            [ 0, 2, 4, 5, 7, 9, 11 ]
+
+        Pentatonic ->
+            [ 0, 2, 4, 7, 9 ]
+
+        Chromatic ->
+            [ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11 ]
+
+
+getRootNoteOffset : RootNote -> Int
+getRootNoteOffset rootNote =
+    case rootNote of
+        C ->
+            0
+
+        CSharp ->
+            1
+
+        D ->
+            2
+
+        DSharp ->
+            3
+
+        E ->
+            4
+
+        F ->
+            5
+
+        FSharp ->
+            6
+
+        G ->
+            7
+
+        GSharp ->
+            8
+
+        A ->
+            9
+
+        ASharp ->
+            10
+
+        B ->
+            11
+
+
+chromaticNoteNames : List String
+chromaticNoteNames =
+    [ "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B" ]
+
+
+notesPerOctave : ScaleType -> Int
+notesPerOctave scaleType =
+    List.length (getScalePattern scaleType)
+
+
+getTotalPitches : Model -> Int
+getTotalPitches model =
+    notesPerOctave model.scaleType * model.octaveRange.count
+
+
+pitchIdxToMidi : Int -> Model -> Int
+pitchIdxToMidi pitchIdx model =
+    let
+        scalePattern =
+            getScalePattern model.scaleType
+
+        rootOffset =
+            getRootNoteOffset model.rootNote
+
+        notesInScale =
+            notesPerOctave model.scaleType
+
+        octaveIdx =
+            pitchIdx // notesInScale
+
+        noteIdx =
+            modBy notesInScale pitchIdx
+
+        octave =
+            model.octaveRange.start + octaveIdx
+
+        semitone =
+            Maybe.withDefault 0 (List.drop noteIdx scalePattern |> List.head)
+
+        baseC0 =
+            12
+    in
+    if octaveIdx < model.octaveRange.count then
+        baseC0 + (octave * 12) + rootOffset + semitone
+
+    else
+        midiC4
+
+
+pitchIdxToNoteName : Int -> Model -> String
+pitchIdxToNoteName pitchIdx model =
+    let
+        scalePattern =
+            getScalePattern model.scaleType
+
+        rootOffset =
+            getRootNoteOffset model.rootNote
+
+        notesInScale =
+            notesPerOctave model.scaleType
+
+        octaveIdx =
+            pitchIdx // notesInScale
+
+        noteIdx =
+            modBy notesInScale pitchIdx
+
+        octave =
+            model.octaveRange.start + octaveIdx
+
+        semitone =
+            Maybe.withDefault 0 (List.drop noteIdx scalePattern |> List.head)
+
+        chromaticIndex =
+            modBy 12 (rootOffset + semitone)
+
+        noteName =
+            Maybe.withDefault "?" (List.drop chromaticIndex chromaticNoteNames |> List.head)
+    in
+    if octaveIdx < model.octaveRange.count then
+        noteName ++ String.fromInt octave
+
+    else
+        "C4"
 
 
 instrumentName : Instrument -> String
@@ -171,7 +288,9 @@ type DrawState
 
 
 type alias Model =
-    { totalPitches : Int
+    { scaleType : ScaleType
+    , rootNote : RootNote
+    , octaveRange : { start : Int, count : Int }
     , totalSteps : Int
     , pitchGrid : PitchGrid
     , percGrid : PercGrid
@@ -184,7 +303,9 @@ type alias Model =
 
 init : Flags -> ( Model, Cmd Msg )
 init _ =
-    ( { totalPitches = 8
+    ( { scaleType = Major
+      , rootNote = C
+      , octaveRange = { start = 4, count = 2 }
       , totalSteps = 16
       , pitchGrid = Set.empty
       , percGrid = Set.empty
@@ -244,7 +365,7 @@ update msg model =
                         | drawState = newDrawState
                         , pitchGrid = updatePitchCell position (not currentlyActive) model.pitchGrid
                       }
-                    , playPitchCmdIf (not currentlyActive) position.pitchIdx
+                    , playPitchCmdIf (not currentlyActive) position.pitchIdx model
                     )
 
                 _ ->
@@ -254,7 +375,7 @@ update msg model =
             case model.drawState of
                 DrawingPitch ->
                     ( { model | pitchGrid = updatePitchCell position True model.pitchGrid }
-                    , playPitchCmdIf True position.pitchIdx
+                    , playPitchCmdIf True position.pitchIdx model
                     )
 
                 ErasingPitch ->
@@ -304,7 +425,7 @@ update msg model =
                     ( model, Cmd.none )
 
         PlayPitchNote pitchIdx ->
-            ( model, playPitchCmdIf True pitchIdx )
+            ( model, playPitchCmdIf True pitchIdx model )
 
         PlayPercNote percType ->
             ( model, playPercCmdIf True percType )
@@ -439,7 +560,7 @@ viewGrid model =
         gridTemplateRows =
             format "minmax($stepLabelRowMinHeight, auto) repeat($totalPitches, minmax($pitchRowMinHeight, 1fr)) repeat(2, $percRowHeight)"
                 [ ( "$stepLabelRowMinHeight", px 32 )
-                , ( "$totalPitches", String.fromInt model.totalPitches )
+                , ( "$totalPitches", String.fromInt (getTotalPitches model) )
                 , ( "$pitchRowMinHeight", px 32 )
                 , ( "$percRowHeight", px 48 )
                 ]
@@ -451,7 +572,7 @@ viewGrid model =
         ]
         ([ {- Empty corner cell -} div [ class labelClass, class "border-b border-gray-600" ] [] ]
             ++ {- Step headers row -} times (\stepIdx -> viewStepHeader currentStep stepIdx) model.totalSteps
-            ++ {- Pitch rows -} (times (\pitchIdx -> viewPitchRow model.totalSteps model.pitchGrid currentStep pitchIdx) model.totalPitches |> List.concat)
+            ++ {- Pitch rows -} (times (\pitchIdx -> viewPitchRow model model.totalSteps model.pitchGrid currentStep pitchIdx) (getTotalPitches model) |> List.concat)
             ++ {- Perc Snare row -} viewPercRow Snare model.totalSteps model.percGrid currentStep
             ++ {- Perc Kick row -} viewPercRow Kick model.totalSteps model.percGrid currentStep
         )
@@ -480,13 +601,13 @@ viewStepHeader currentStep stepIdx =
         [ text (String.fromInt (stepIdx + 1)) ]
 
 
-viewPitchRow : Int -> PitchGrid -> Maybe Int -> Int -> List (Html Msg)
-viewPitchRow stepCount pitchGrid currentStep pitchIdx =
+viewPitchRow : Model -> Int -> PitchGrid -> Maybe Int -> Int -> List (Html Msg)
+viewPitchRow model stepCount pitchGrid currentStep pitchIdx =
     let
         viewPitchLabel =
             div
                 [ class labelClass ]
-                [ text ("Pitch " ++ String.fromInt (pitchIdx + 1)) ]
+                [ text (pitchIdxToNoteName pitchIdx model) ]
     in
     viewPitchLabel :: times (\stepIdx -> viewPitchCell pitchIdx pitchGrid currentStep stepIdx) stepCount
 
@@ -665,7 +786,7 @@ getActiveNotesForStep stepIdx model =
                     if isPitchCellActive position model.pitchGrid then
                         Just
                             { instrument = instrumentName IPiano
-                            , midi = pitchIdxToMidi pitchIdx
+                            , midi = pitchIdxToMidi pitchIdx model
                             , duration = duration
                             , volume = 0.7
                             }
@@ -673,7 +794,7 @@ getActiveNotesForStep stepIdx model =
                     else
                         Nothing
                 )
-                model.totalPitches
+                (getTotalPitches model)
                 |> List.filterMap identity
 
         percNotes =
@@ -703,12 +824,12 @@ getActiveNotesForStep stepIdx model =
 -- Audio Helper Functions
 
 
-playPitchCmdIf : Bool -> Int -> Cmd Msg
-playPitchCmdIf shouldPlay pitchIdx =
+playPitchCmdIf : Bool -> Int -> Model -> Cmd Msg
+playPitchCmdIf shouldPlay pitchIdx model =
     if shouldPlay then
         playNote
             { instrument = instrumentName IPiano
-            , midi = pitchIdxToMidi pitchIdx
+            , midi = pitchIdxToMidi pitchIdx model
             , duration = 0.5
             , volume = 0.7
             }
