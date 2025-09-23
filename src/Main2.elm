@@ -510,34 +510,38 @@ update msg model =
                     ( updatedModel, Cmd.none )
 
         ChangeScaleType newScaleType ->
-            ( { model
-                | scaleType = newScaleType
-                , pitchGrid = Set.empty
-              }
+            let
+                newModel = { model | scaleType = newScaleType }
+                newPitchGrid = resizePitchGrid model newModel model.pitchGrid
+            in
+            ( { newModel | pitchGrid = newPitchGrid }
             , Cmd.none
             )
 
         ChangeRootNote newRootNote ->
-            ( { model
-                | rootNote = newRootNote
-                , pitchGrid = Set.empty
-              }
+            let
+                newModel = { model | rootNote = newRootNote }
+                newPitchGrid = resizePitchGrid model newModel model.pitchGrid
+            in
+            ( { newModel | pitchGrid = newPitchGrid }
             , Cmd.none
             )
 
         ChangeOctaveStart newStart ->
-            ( { model
-                | octaveRange = { start = newStart, count = model.octaveRange.count }
-                , pitchGrid = Set.empty
-              }
+            let
+                newModel = { model | octaveRange = { start = newStart, count = model.octaveRange.count } }
+                newPitchGrid = resizePitchGrid model newModel model.pitchGrid
+            in
+            ( { newModel | pitchGrid = newPitchGrid }
             , Cmd.none
             )
 
         ChangeOctaveCount newCount ->
-            ( { model
-                | octaveRange = { start = model.octaveRange.start, count = newCount }
-                , pitchGrid = Set.empty
-              }
+            let
+                newModel = { model | octaveRange = { start = model.octaveRange.start, count = newCount } }
+                newPitchGrid = resizePitchGrid model newModel model.pitchGrid
+            in
+            ( { newModel | pitchGrid = newPitchGrid }
             , Cmd.none
             )
 
@@ -893,6 +897,37 @@ playPercCmdIf shouldPlay percType =
     else
         Cmd.none
 
+
+
+-- Grid Resize Functions
+
+
+resizePitchGrid : Model -> Model -> PitchGrid -> PitchGrid
+resizePitchGrid oldModel newModel existingGrid =
+    existingGrid
+        |> Set.toList
+        |> List.filterMap (\( pitchIdx, stepIdx ) ->
+            let
+                midiPitch = pitchIdxToMidi pitchIdx oldModel
+                newPitchIdx = midiToPitchIdx midiPitch newModel
+            in
+            if newPitchIdx >= 0 && newPitchIdx < getTotalPitches newModel && stepIdx < newModel.totalSteps then
+                Just ( newPitchIdx, stepIdx )
+            else
+                Nothing
+        )
+        |> Set.fromList
+
+
+midiToPitchIdx : Int -> Model -> Int
+midiToPitchIdx targetMidi model =
+    let
+        totalPitches = getTotalPitches model
+    in
+    List.range 0 (totalPitches - 1)
+        |> List.filter (\pitchIdx -> pitchIdxToMidi pitchIdx model == targetMidi)
+        |> List.head
+        |> Maybe.withDefault -1
 
 
 -- Cell State Management
