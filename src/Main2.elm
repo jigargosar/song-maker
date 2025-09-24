@@ -287,6 +287,15 @@ type DrawState
     | ErasingPerc
 
 
+type alias SongConfig =
+    { pitchGrid : PitchGrid
+    , percGrid : PercGrid
+    , totalSteps : Int
+    , bpm : Int
+    , octaveRange : { start : Int, count : Int }
+    }
+
+
 type alias Model =
     { scaleType : ScaleType
     , rootNote : RootNote
@@ -303,27 +312,21 @@ type alias Model =
 
 init : Flags -> ( Model, Cmd Msg )
 init _ =
-    let
-        initialModel =
-            { scaleType = Major
-            , rootNote = C
-            , octaveRange = { start = 3, count = 3 }
-            , totalSteps = 32
-            , pitchGrid = Set.empty
-            , percGrid = Set.empty
-            , drawState = NotDrawing
-            , playState = Stopped
-            , audioContextTime = 0.0
-            , bpm = 120
-            }
-    in
-    let
-        initialSong = createInitialMelody initialModel
-    in
-    ( { initialModel
-        | pitchGrid = initialSong.pitchGrid
-        , percGrid = initialSong.percGrid
-      }
+    (  {scaleType = Major
+                    , rootNote = C
+                    , octaveRange = { start = 3, count = 3 }
+                    , totalSteps = 32
+                    , pitchGrid = Set.empty
+                    , percGrid = Set.empty
+                    , drawState = NotDrawing
+                    , playState = Stopped
+                    , audioContextTime = 0.0
+                    , bpm = 120
+                    }
+
+                    |> applySong twinkleSong
+
+
     , Cmd.none
     )
 
@@ -953,8 +956,8 @@ noteNameToPitchIdx noteName model =
         |> Maybe.withDefault -1
 
 
-createInitialMelody : Model -> { pitchGrid : PitchGrid, percGrid : PercGrid }
-createInitialMelody model =
+twinkleSong : SongConfig
+twinkleSong =
     let
         -- Full Twinkle Twinkle Little Star with rich chords and harmony
         melody =
@@ -1010,10 +1013,13 @@ createInitialMelody model =
             ]
     in
     let
+        -- Helper model for note conversion
+        helperModel = { scaleType = Major, rootNote = C, octaveRange = { start = 3, count = 3 }, totalSteps = 32, pitchGrid = Set.empty, percGrid = Set.empty, drawState = NotDrawing, playState = Stopped, audioContextTime = 0.0, bpm = 180 }
+
         pitchNotes = melody
             |> List.concatMap (\(noteName, steps) ->
                 let
-                    pitchIdx = noteNameToPitchIdx noteName model
+                    pitchIdx = noteNameToPitchIdx noteName helperModel
                 in
                 if pitchIdx >= 0 then
                     List.map (\stepIdx -> (pitchIdx, stepIdx)) steps
@@ -1031,7 +1037,22 @@ createInitialMelody model =
     in
     { pitchGrid = Set.fromList pitchNotes
     , percGrid = Set.fromList percussionNotes
+    , totalSteps = 32
+    , bpm = 180
+    , octaveRange = { start = 3, count = 3 }
     }
+
+
+applySong : SongConfig -> Model -> Model
+applySong songConfig model =
+    { model
+        | pitchGrid = songConfig.pitchGrid
+        , percGrid = songConfig.percGrid
+        , totalSteps = songConfig.totalSteps
+        , bpm = songConfig.bpm
+        , octaveRange = songConfig.octaveRange
+    }
+
 
 
 -- Cell State Management
