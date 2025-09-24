@@ -613,11 +613,11 @@ centerView model =
         [ class "flex-1 overflow-auto"
 
         --, class "scrollbar-thin"
-        , class "scrollbar"
-        , class "scrollbar-thumb-gray-500 scrollbar-track-gray-900"
-        , class "scrollbar-corner-gray-500"
-        , class "scrollbar-thumb-rounded-full"
-        , class "scrollbar-track-rounded-full"
+        --, class "scrollbar"
+        --, class "scrollbar-thumb-gray-500 scrollbar-track-gray-900"
+        --, class "scrollbar-corner-gray-500"
+        --, class "scrollbar-thumb-rounded-full"
+        --, class "scrollbar-track-rounded-full"
         ]
         [ viewGrid model ]
 
