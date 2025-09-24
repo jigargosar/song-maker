@@ -194,38 +194,28 @@ pitchIdxToNoteName pitchIdx model =
         "C4"
 
 
-instrumentName : Instrument -> String
-instrumentName instrument =
+pitchInstrumentName : PitchInstrument -> String
+pitchInstrumentName instrument =
     case instrument of
-        IPiano ->
+        Piano ->
             "_tone_0250_SoundBlasterOld_sf2"
 
-        IKick ->
-            "_drum_36_0_SBLive_sf2"
-
-        ISnare ->
-            "_drum_38_0_SBLive_sf2"
+        Marimba ->
+            "_tone_0110_SBLive_sf2"
 
 
-percTypeToInstrument : PercType -> Instrument
-percTypeToInstrument percType =
-    case percType of
-        Kick ->
-            IKick
+drumKitConfig : DrumKit -> { kickInstrument : String, kickMidi : Int, snareInstrument : String, snareMidi : Int }
+drumKitConfig kit =
+    case kit of
+        StandardKit ->
+            { kickInstrument = "_drum_36_0_SBLive_sf2", kickMidi = 36
+            , snareInstrument = "_drum_38_0_SBLive_sf2", snareMidi = 38
+            }
 
-        Snare ->
-            ISnare
-
-
-percTypeToMidi : PercType -> Int
-percTypeToMidi percType =
-    case percType of
-        Kick ->
-            36
-
-        -- Standard kick perc MIDI note
-        Snare ->
-            38
+        RockKit ->
+            { kickInstrument = "_drum_36_0_SBLive_sf2", kickMidi = 36
+            , snareInstrument = "_drum_38_0_SBLive_sf2", snareMidi = 38
+            }
 
 
 
@@ -258,10 +248,14 @@ type alias PitchGrid =
     Set ( Int, Int )
 
 
-type Instrument
-    = IPiano
-    | IKick
-    | ISnare
+type PitchInstrument
+    = Piano
+    | Marimba
+
+
+type DrumKit
+    = StandardKit
+    | RockKit
 
 
 type PercType
@@ -311,6 +305,8 @@ type alias Model =
     , playState : PlayState
     , audioContextTime : Float
     , bpm : Int
+    , currentPitchInstrument : PitchInstrument
+    , currentDrumKit : DrumKit
     }
 
 
@@ -326,6 +322,8 @@ init _ =
       , playState = Stopped
       , audioContextTime = 0.0
       , bpm = 120
+      , currentPitchInstrument = Piano
+      , currentDrumKit = StandardKit
       }
         |> applySong twinkleSong
     , Cmd.none
@@ -353,6 +351,8 @@ type Msg
     | ChangeOctaveStart Int
     | ChangeOctaveCount Int
     | ChangeBPM Int
+    | ChangePitchInstrument PitchInstrument
+    | ChangeDrumKit DrumKit
 
 
 subscriptions : Model -> Sub Msg
@@ -424,7 +424,7 @@ update msg model =
                         | drawState = newDrawState
                         , percGrid = updatePercCell position (not currentlyActive) model.percGrid
                       }
-                    , playPercCmdIf (not currentlyActive) position.percType
+                    , playPercCmdIf (not currentlyActive) position.percType model
                     )
 
                 _ ->
@@ -434,7 +434,7 @@ update msg model =
             case model.drawState of
                 DrawingPerc ->
                     ( { model | percGrid = updatePercCell position True model.percGrid }
-                    , playPercCmdIf True position.percType
+                    , playPercCmdIf True position.percType model
                     )
 
                 ErasingPerc ->
@@ -447,7 +447,7 @@ update msg model =
             ( model, playPitchCmdIf True pitchIdx model )
 
         PlayPercNote percType ->
-            ( model, playPercCmdIf True percType )
+            ( model, playPercCmdIf True percType model )
 
         Play ->
             case model.playState of
@@ -582,6 +582,16 @@ update msg model =
             , Cmd.none
             )
 
+        ChangePitchInstrument newInstrument ->
+            ( { model | currentPitchInstrument = newInstrument }
+            , Cmd.none
+            )
+
+        ChangeDrumKit newDrumKit ->
+            ( { model | currentDrumKit = newDrumKit }
+            , Cmd.none
+            )
+
 
 
 -- View
@@ -604,6 +614,7 @@ headerView model =
                 [ text "Song Maker V2" ]
             , div [ class "flex items-center gap-6" ]
                 [ viewScaleControls model
+                , viewInstrumentControls model
                 , viewControlGroup "BPM" (viewBPMInput model.bpm)
                 , viewPlayStopButton model.playState
                 ]
@@ -872,7 +883,7 @@ getActiveNotesForStep stepIdx model =
                     in
                     if isPitchCellActive position model.pitchGrid then
                         Just
-                            { instrument = instrumentName IPiano
+                            { instrument = pitchInstrumentName model.currentPitchInstrument
                             , midi = pitchIdxToMidi pitchIdx model
                             , duration = duration
                             , volume = 0.7
@@ -884,6 +895,9 @@ getActiveNotesForStep stepIdx model =
                 (getTotalPitches model)
                 |> List.filterMap identity
 
+        drumConfig =
+            drumKitConfig model.currentDrumKit
+
         percNotes =
             [ Kick, Snare ]
                 |> List.filterMap
@@ -891,11 +905,16 @@ getActiveNotesForStep stepIdx model =
                         let
                             position =
                                 { percType = percType, stepIdx = stepIdx }
+
+                            (instrumentName, midiNote) =
+                                case percType of
+                                    Kick -> (drumConfig.kickInstrument, drumConfig.kickMidi)
+                                    Snare -> (drumConfig.snareInstrument, drumConfig.snareMidi)
                         in
                         if isPercCellActive position model.percGrid then
                             Just
-                                { instrument = instrumentName (percTypeToInstrument percType)
-                                , midi = percTypeToMidi percType
+                                { instrument = instrumentName
+                                , midi = midiNote
                                 , duration = duration
                                 , volume = 0.8
                                 }
@@ -915,7 +934,7 @@ playPitchCmdIf : Bool -> Int -> Model -> Cmd Msg
 playPitchCmdIf shouldPlay pitchIdx model =
     if shouldPlay then
         playNote
-            { instrument = instrumentName IPiano
+            { instrument = pitchInstrumentName model.currentPitchInstrument
             , midi = pitchIdxToMidi pitchIdx model
             , duration = 0.5
             , volume = 0.7
@@ -925,12 +944,21 @@ playPitchCmdIf shouldPlay pitchIdx model =
         Cmd.none
 
 
-playPercCmdIf : Bool -> PercType -> Cmd Msg
-playPercCmdIf shouldPlay percType =
+playPercCmdIf : Bool -> PercType -> Model -> Cmd Msg
+playPercCmdIf shouldPlay percType model =
     if shouldPlay then
+        let
+            drumConfig =
+                drumKitConfig model.currentDrumKit
+
+            (instrumentName, midiNote) =
+                case percType of
+                    Kick -> (drumConfig.kickInstrument, drumConfig.kickMidi)
+                    Snare -> (drumConfig.snareInstrument, drumConfig.snareMidi)
+        in
         playNote
-            { instrument = instrumentName (percTypeToInstrument percType)
-            , midi = percTypeToMidi percType
+            { instrument = instrumentName
+            , midi = midiNote
             , duration = 0.5
             , volume = 0.8
             }
@@ -1252,6 +1280,14 @@ viewScaleControls model =
         ]
 
 
+viewInstrumentControls : Model -> Html Msg
+viewInstrumentControls model =
+    div [ class "flex items-center gap-4" ]
+        [ viewControlGroup "Pitch" (viewPitchInstrumentSelector model.currentPitchInstrument)
+        , viewControlGroup "Drums" (viewDrumKitSelector model.currentDrumKit)
+        ]
+
+
 viewControlGroup : String -> Html Msg -> Html Msg
 viewControlGroup labelText control =
     div [ class "flex flex-col items-center gap-1" ]
@@ -1426,3 +1462,95 @@ parseRootNote str =
 
         _ ->
             Nothing
+
+
+viewPitchInstrumentSelector : PitchInstrument -> Html Msg
+viewPitchInstrumentSelector currentInstrument =
+    H.select
+        [ class "bg-gray-700 text-white text-sm border border-gray-600 rounded px-2 py-1 cursor-pointer hover:bg-gray-600 transition-colors"
+        , HE.onInput (parsePitchInstrument >> ChangePitchInstrument)
+        ]
+        (List.map (viewPitchInstrumentOption currentInstrument) allPitchInstruments)
+
+
+viewDrumKitSelector : DrumKit -> Html Msg
+viewDrumKitSelector currentDrumKit =
+    H.select
+        [ class "bg-gray-700 text-white text-sm border border-gray-600 rounded px-2 py-1 cursor-pointer hover:bg-gray-600 transition-colors"
+        , HE.onInput (parseDrumKit >> ChangeDrumKit)
+        ]
+        (List.map (viewDrumKitOption currentDrumKit) allDrumKits)
+
+
+viewPitchInstrumentOption : PitchInstrument -> PitchInstrument -> Html Msg
+viewPitchInstrumentOption currentInstrument instrument =
+    H.option
+        [ HA.value (pitchInstrumentToString instrument)
+        , HA.selected (currentInstrument == instrument)
+        ]
+        [ text (pitchInstrumentToString instrument) ]
+
+
+viewDrumKitOption : DrumKit -> DrumKit -> Html Msg
+viewDrumKitOption currentDrumKit drumKit =
+    H.option
+        [ HA.value (drumKitToString drumKit)
+        , HA.selected (currentDrumKit == drumKit)
+        ]
+        [ text (drumKitToString drumKit) ]
+
+
+allPitchInstruments : List PitchInstrument
+allPitchInstruments =
+    [ Piano, Marimba ]
+
+
+allDrumKits : List DrumKit
+allDrumKits =
+    [ StandardKit, RockKit ]
+
+
+pitchInstrumentToString : PitchInstrument -> String
+pitchInstrumentToString instrument =
+    case instrument of
+        Piano ->
+            "Piano"
+
+        Marimba ->
+            "Marimba"
+
+
+drumKitToString : DrumKit -> String
+drumKitToString drumKit =
+    case drumKit of
+        StandardKit ->
+            "Standard"
+
+        RockKit ->
+            "Rock"
+
+
+parsePitchInstrument : String -> PitchInstrument
+parsePitchInstrument str =
+    case str of
+        "Piano" ->
+            Piano
+
+        "Marimba" ->
+            Marimba
+
+        _ ->
+            Piano
+
+
+parseDrumKit : String -> DrumKit
+parseDrumKit str =
+    case str of
+        "Standard" ->
+            StandardKit
+
+        "Rock" ->
+            RockKit
+
+        _ ->
+            StandardKit
