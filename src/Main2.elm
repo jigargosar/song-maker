@@ -26,6 +26,14 @@ port timeSync : (Float -> msg) -> Sub msg
 
 
 -- AUDIO CONSTANTS
+
+
+midiC4 : Int
+midiC4 =
+    60
+
+
+
 -- SCALE SYSTEM
 -- REMOVED: getTotalPitches, pitchIdxToMidi, pitchIdxToNoteName
 
@@ -757,6 +765,18 @@ midiToPitchIdx targetMidi model =
     in
     List.range 0 (totalPitches - 1)
         |> List.filter (\pitchIdx -> Scale.pitchIdxToMidi pitchIdx model.scaleType model.rootNote model.octaveRange == targetMidi)
+        |> List.head
+        |> Maybe.withDefault -1
+
+
+noteNameToPitchIdx : String -> Model -> Int
+noteNameToPitchIdx noteName model =
+    let
+        totalPitches =
+            Scale.getTotalPitches model.scaleType model.octaveRange
+    in
+    List.range 0 (totalPitches - 1)
+        |> List.filter (\pitchIdx -> Scale.pitchIdxToNoteName pitchIdx model.scaleType model.rootNote model.octaveRange == noteName)
         |> List.head
         |> Maybe.withDefault -1
 

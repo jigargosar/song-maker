@@ -7,6 +7,8 @@ module Grid exposing
     , convertPercussionToGrid
     , isPercCellActive
     , isPitchCellActive
+    , percPositionToTuple
+    , toPercRowIdx
     , updatePercCell
     , updatePitchCell
     )
@@ -56,6 +58,21 @@ updatePitchCell { pitchIdx, stepIdx } isActive pitchGrid =
 
 
 -- PERCUSSION GRID HELPERS
+
+
+toPercRowIdx : PercType -> Int
+toPercRowIdx percType =
+    case percType of
+        Instrument.Snare ->
+            0
+
+        Instrument.Kick ->
+            1
+
+
+percPositionToTuple : PercPos -> ( Int, Int )
+percPositionToTuple { percType, stepIdx } =
+    ( toPercRowIdx percType, stepIdx )
 
 
 isPercCellActive : PercPos -> PercGrid -> Bool
@@ -116,18 +133,3 @@ convertPercussionToGrid stepPercussion =
             )
         |> List.concat
         |> Set.fromList
-
-
-toPercRowIdx : PercType -> Int
-toPercRowIdx percType =
-    case percType of
-        Instrument.Snare ->
-            0
-
-        Instrument.Kick ->
-            1
-
-
-percPositionToTuple : PercPos -> ( Int, Int )
-percPositionToTuple { percType, stepIdx } =
-    ( toPercRowIdx percType, stepIdx )
