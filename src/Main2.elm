@@ -645,15 +645,15 @@ viewGrid model =
         , style "grid-template-rows" gridTemplateRows
         ]
         ([ {- Empty corner cell -} div [ class labelBgColorAndClass, class "border-b border-gray-600" ] [] ]
-            ++ {- Step headers row -} times (\stepIdx -> viewStepHeader currentStep stepIdx) model.totalSteps
+            ++ {- Step Labels row -} times (\stepIdx -> viewStepLabel currentStep stepIdx) model.totalSteps
             ++ {- Pitch rows -} (times (\pitchIdx -> viewPitchRow model model.totalSteps model.pitchGrid currentStep pitchIdx) (getTotalPitches model) |> List.concat)
             ++ {- Perc Snare row -} viewPercRow Snare model.totalSteps model.percGrid currentStep
             ++ {- Perc Kick row -} viewPercRow Kick model.totalSteps model.percGrid currentStep
         )
 
 
-viewStepHeader : Maybe Int -> Int -> Html Msg
-viewStepHeader currentStep stepIdx =
+viewStepLabel : Maybe Int -> Int -> Html Msg
+viewStepLabel currentStep stepIdx =
     let
         isCurrentStep =
             case currentStep of
@@ -663,7 +663,7 @@ viewStepHeader currentStep stepIdx =
                 Nothing ->
                     False
 
-        headerBgClass =
+        bgClass =
             if isCurrentStep then
                 accentBgColor
 
@@ -671,7 +671,7 @@ viewStepHeader currentStep stepIdx =
                 labelBgColor
     in
     div
-        [ class labelClass, class headerBgClass, class "border-b border-gray-600" ]
+        [ class labelClass, class bgClass, class "border-b border-gray-600" ]
         [ text (String.fromInt (stepIdx + 1)) ]
 
 
