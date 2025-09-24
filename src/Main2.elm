@@ -288,7 +288,7 @@ type DrawState
 
 
 type alias SongConfig =
-    { melody : List (List String)       -- Each step can have multiple notes
+    { melody : List (List String) -- Each step can have multiple notes
     , percussion : List (List PercType) -- Each step can have multiple drums
     , totalSteps : Int
     , bpm : Int
@@ -312,21 +312,18 @@ type alias Model =
 
 init : Flags -> ( Model, Cmd Msg )
 init _ =
-    (  {scaleType = Major
-                    , rootNote = C
-                    , octaveRange = { start = 3, count = 3 }
-                    , totalSteps = 32
-                    , pitchGrid = Set.empty
-                    , percGrid = Set.empty
-                    , drawState = NotDrawing
-                    , playState = Stopped
-                    , audioContextTime = 0.0
-                    , bpm = 120
-                    }
-
-                    |> applySong twinkleSong
-
-
+    ( { scaleType = Major
+      , rootNote = C
+      , octaveRange = { start = 3, count = 3 }
+      , totalSteps = 32
+      , pitchGrid = Set.empty
+      , percGrid = Set.empty
+      , drawState = NotDrawing
+      , playState = Stopped
+      , audioContextTime = 0.0
+      , bpm = 120
+      }
+        |> applySong twinkleSong
     , Cmd.none
     )
 
@@ -524,8 +521,11 @@ update msg model =
 
         ChangeScaleType newScaleType ->
             let
-                newModel = { model | scaleType = newScaleType }
-                newPitchGrid = resizePitchGrid model newModel model.pitchGrid
+                newModel =
+                    { model | scaleType = newScaleType }
+
+                newPitchGrid =
+                    resizePitchGrid model newModel model.pitchGrid
             in
             ( { newModel | pitchGrid = newPitchGrid }
             , Cmd.none
@@ -533,8 +533,11 @@ update msg model =
 
         ChangeRootNote newRootNote ->
             let
-                newModel = { model | rootNote = newRootNote }
-                newPitchGrid = resizePitchGrid model newModel model.pitchGrid
+                newModel =
+                    { model | rootNote = newRootNote }
+
+                newPitchGrid =
+                    resizePitchGrid model newModel model.pitchGrid
             in
             ( { newModel | pitchGrid = newPitchGrid }
             , Cmd.none
@@ -542,9 +545,14 @@ update msg model =
 
         ChangeOctaveStart newStart ->
             let
-                clampedStart = max 1 newStart
-                newModel = { model | octaveRange = { start = clampedStart, count = model.octaveRange.count } }
-                newPitchGrid = resizePitchGrid model newModel model.pitchGrid
+                clampedStart =
+                    max 1 newStart
+
+                newModel =
+                    { model | octaveRange = { start = clampedStart, count = model.octaveRange.count } }
+
+                newPitchGrid =
+                    resizePitchGrid model newModel model.pitchGrid
             in
             ( { newModel | pitchGrid = newPitchGrid }
             , Cmd.none
@@ -552,9 +560,14 @@ update msg model =
 
         ChangeOctaveCount newCount ->
             let
-                clampedCount = max 1 newCount
-                newModel = { model | octaveRange = { start = model.octaveRange.start, count = clampedCount } }
-                newPitchGrid = resizePitchGrid model newModel model.pitchGrid
+                clampedCount =
+                    max 1 newCount
+
+                newModel =
+                    { model | octaveRange = { start = model.octaveRange.start, count = clampedCount } }
+
+                newPitchGrid =
+                    resizePitchGrid model newModel model.pitchGrid
             in
             ( { newModel | pitchGrid = newPitchGrid }
             , Cmd.none
@@ -726,8 +739,16 @@ viewPercRow percType totalSteps percGrid currentStep =
 
                 Kick ->
                     "Kick"
+
+        stickyClass =
+            case percType of
+                Snare ->
+                    "sticky bottom-12 h-12 z-10"
+
+                Kick ->
+                    "sticky bottom-0 h-12 z-10"
     in
-    div [ class labelClass ] [ text percTypeName ]
+    div [ class labelClass, class stickyClass ] [ text percTypeName ]
         :: times (\stepIdx -> viewPercCell percType percGrid currentStep stepIdx) totalSteps
 
 
@@ -751,12 +772,20 @@ viewPercCell percType percGrid currentStep stepIdx =
         symbol =
             viewPercSymbol isActive percType
 
+        stickyClass =
+            case percType of
+                Snare ->
+                    "sticky bottom-12 h-12 z-10"
+
+                Kick ->
+                    "sticky bottom-0 h-12 z-10"
+
         cellClass =
             if isCurrentStep then
-                "bg-gray-700 hover:bg-gray-600 border-r border-b border-gray-600 cursor-pointer transition-colors flex items-center justify-center ring-2 ring-white"
+                "bg-gray-700 hover:bg-gray-600 border-r border-b border-gray-600 cursor-pointer transition-colors flex items-center justify-center ring-2 ring-white " ++ stickyClass
 
             else
-                "bg-gray-800 hover:bg-gray-700 border-r border-b border-gray-600 cursor-pointer transition-colors flex items-center justify-center"
+                "bg-gray-800 hover:bg-gray-700 border-r border-b border-gray-600 cursor-pointer transition-colors flex items-center justify-center " ++ stickyClass
     in
     div
         [ class cellClass
@@ -921,23 +950,29 @@ resizePitchGrid : Model -> Model -> PitchGrid -> PitchGrid
 resizePitchGrid oldModel newModel existingGrid =
     existingGrid
         |> Set.toList
-        |> List.filterMap (\( pitchIdx, stepIdx ) ->
-            let
-                midiPitch = pitchIdxToMidi pitchIdx oldModel
-                newPitchIdx = midiToPitchIdx midiPitch newModel
-            in
-            if newPitchIdx >= 0 && newPitchIdx < getTotalPitches newModel && stepIdx < newModel.totalSteps then
-                Just ( newPitchIdx, stepIdx )
-            else
-                Nothing
-        )
+        |> List.filterMap
+            (\( pitchIdx, stepIdx ) ->
+                let
+                    midiPitch =
+                        pitchIdxToMidi pitchIdx oldModel
+
+                    newPitchIdx =
+                        midiToPitchIdx midiPitch newModel
+                in
+                if newPitchIdx >= 0 && newPitchIdx < getTotalPitches newModel && stepIdx < newModel.totalSteps then
+                    Just ( newPitchIdx, stepIdx )
+
+                else
+                    Nothing
+            )
         |> Set.fromList
 
 
 midiToPitchIdx : Int -> Model -> Int
 midiToPitchIdx targetMidi model =
     let
-        totalPitches = getTotalPitches model
+        totalPitches =
+            getTotalPitches model
     in
     List.range 0 (totalPitches - 1)
         |> List.filter (\pitchIdx -> pitchIdxToMidi pitchIdx model == targetMidi)
@@ -948,7 +983,8 @@ midiToPitchIdx targetMidi model =
 noteNameToPitchIdx : String -> Model -> Int
 noteNameToPitchIdx noteName model =
     let
-        totalPitches = getTotalPitches model
+        totalPitches =
+            getTotalPitches model
     in
     List.range 0 (totalPitches - 1)
         |> List.filter (\pitchIdx -> pitchIdxToNoteName pitchIdx model == noteName)
@@ -960,39 +996,38 @@ twinkleSong : SongConfig
 twinkleSong =
     { melody =
         -- "Twinkle twinkle little star"
-        [ ["C4", "C3", "E4"], ["C4"], ["G4", "G3", "B4"], ["G4"] ]
-        -- "how I wonder what"
-        ++ [ ["A4", "F3", "C5"], ["A4"], ["G4", "G3"], [] ]
-        -- "what you are so"
-        ++ [ ["F4", "F3", "A4"], ["F4"], ["E4", "C3", "G4"], ["E4"] ]
-        -- "far above the world"
-        ++ [ ["D4", "G3", "B4"], ["D4"], ["C4", "C3", "E4"], [] ]
-        -- "Up above the world"
-        ++ [ ["G4", "G3", "B4"], ["G4"], ["F4", "F3", "A4"], ["F4"] ]
-        -- "so high like a"
-        ++ [ ["E4", "C3", "G4"], ["E4"], ["D4", "G3", "B4"], ["D4"] ]
-        -- "diamond in the"
-        ++ [ ["G4", "C3", "E4"], ["F4"], ["E4", "C3", "G4"], ["D4"] ]
-        -- "sky (end)"
-        ++ [ ["C4", "C3", "E4"], [], [], [] ]
-
+        [ [ "C4", "C3", "E4" ], [ "C4" ], [ "G4", "G3", "B4" ], [ "G4" ] ]
+            -- "how I wonder what"
+            ++ [ [ "A4", "F3", "C5" ], [ "A4" ], [ "G4", "G3" ], [] ]
+            -- "what you are so"
+            ++ [ [ "F4", "F3", "A4" ], [ "F4" ], [ "E4", "C3", "G4" ], [ "E4" ] ]
+            -- "far above the world"
+            ++ [ [ "D4", "G3", "B4" ], [ "D4" ], [ "C4", "C3", "E4" ], [] ]
+            -- "Up above the world"
+            ++ [ [ "G4", "G3", "B4" ], [ "G4" ], [ "F4", "F3", "A4" ], [ "F4" ] ]
+            -- "so high like a"
+            ++ [ [ "E4", "C3", "G4" ], [ "E4" ], [ "D4", "G3", "B4" ], [ "D4" ] ]
+            -- "diamond in the"
+            ++ [ [ "G4", "C3", "E4" ], [ "F4" ], [ "E4", "C3", "G4" ], [ "D4" ] ]
+            -- "sky (end)"
+            ++ [ [ "C4", "C3", "E4" ], [], [], [] ]
     , percussion =
         -- "Twinkle twinkle little star"
-        [ [Kick], [], [Snare], [] ]
-        -- "how I wonder what"
-        ++ [ [Kick], [], [Snare], [] ]
-        -- "what you are so"
-        ++ [ [Kick], [], [Snare], [] ]
-        -- "far above the world"
-        ++ [ [Kick], [], [Snare], [] ]
-        -- "Up above the world"
-        ++ [ [Kick], [], [Snare], [] ]
-        -- "so high like a"
-        ++ [ [Kick], [], [Snare], [] ]
-        -- "diamond in the"
-        ++ [ [Kick], [], [Snare], [] ]
-        -- "sky (end)"
-        ++ [ [Kick], [], [Snare], [] ]
+        [ [ Kick ], [], [ Snare ], [] ]
+            -- "how I wonder what"
+            ++ [ [ Kick ], [], [ Snare ], [] ]
+            -- "what you are so"
+            ++ [ [ Kick ], [], [ Snare ], [] ]
+            -- "far above the world"
+            ++ [ [ Kick ], [], [ Snare ], [] ]
+            -- "Up above the world"
+            ++ [ [ Kick ], [], [ Snare ], [] ]
+            -- "so high like a"
+            ++ [ [ Kick ], [], [ Snare ], [] ]
+            -- "diamond in the"
+            ++ [ [ Kick ], [], [ Snare ], [] ]
+            -- "sky (end)"
+            ++ [ [ Kick ], [], [ Snare ], [] ]
     , totalSteps = 32
     , bpm = 180
     , octaveRange = { start = 3, count = 3 }
@@ -1002,8 +1037,11 @@ twinkleSong =
 applySong : SongConfig -> Model -> Model
 applySong songConfig model =
     let
-        pitchGrid = convertMelodyToGrid songConfig.melody model
-        percGrid = convertPercussionToGrid songConfig.percussion
+        pitchGrid =
+            convertMelodyToGrid songConfig.melody model
+
+        percGrid =
+            convertPercussionToGrid songConfig.percussion
     in
     { model
         | pitchGrid = pitchGrid
@@ -1017,17 +1055,22 @@ applySong songConfig model =
 convertMelodyToGrid : List (List String) -> Model -> PitchGrid
 convertMelodyToGrid stepMelodies model =
     stepMelodies
-        |> List.indexedMap (\stepIdx noteNames ->
-            List.filterMap (\noteName ->
-                let
-                    pitchIdx = noteNameToPitchIdx noteName model
-                in
-                if pitchIdx >= 0 then
-                    Just (pitchIdx, stepIdx)
-                else
-                    Nothing
-            ) noteNames
-        )
+        |> List.indexedMap
+            (\stepIdx noteNames ->
+                List.filterMap
+                    (\noteName ->
+                        let
+                            pitchIdx =
+                                noteNameToPitchIdx noteName model
+                        in
+                        if pitchIdx >= 0 then
+                            Just ( pitchIdx, stepIdx )
+
+                        else
+                            Nothing
+                    )
+                    noteNames
+            )
         |> List.concat
         |> Set.fromList
 
@@ -1035,11 +1078,14 @@ convertMelodyToGrid stepMelodies model =
 convertPercussionToGrid : List (List PercType) -> PercGrid
 convertPercussionToGrid stepPercussion =
     stepPercussion
-        |> List.indexedMap (\stepIdx percTypes ->
-            List.map (\percType ->
-                (toPercRowIdx percType, stepIdx)
-            ) percTypes
-        )
+        |> List.indexedMap
+            (\stepIdx percTypes ->
+                List.map
+                    (\percType ->
+                        ( toPercRowIdx percType, stepIdx )
+                    )
+                    percTypes
+            )
         |> List.concat
         |> Set.fromList
 
@@ -1277,42 +1323,97 @@ allRootNotes =
 rootNoteToString : RootNote -> String
 rootNoteToString rootNote =
     case rootNote of
-        C -> "C"
-        CSharp -> "C#"
-        D -> "D"
-        DSharp -> "D#"
-        E -> "E"
-        F -> "F"
-        FSharp -> "F#"
-        G -> "G"
-        GSharp -> "G#"
-        A -> "A"
-        ASharp -> "A#"
-        B -> "B"
+        C ->
+            "C"
+
+        CSharp ->
+            "C#"
+
+        D ->
+            "D"
+
+        DSharp ->
+            "D#"
+
+        E ->
+            "E"
+
+        F ->
+            "F"
+
+        FSharp ->
+            "F#"
+
+        G ->
+            "G"
+
+        GSharp ->
+            "G#"
+
+        A ->
+            "A"
+
+        ASharp ->
+            "A#"
+
+        B ->
+            "B"
 
 
 parseScaleType : String -> Maybe ScaleType
 parseScaleType str =
     case str of
-        "Major" -> Just Major
-        "Pentatonic" -> Just Pentatonic
-        "Chromatic" -> Just Chromatic
-        _ -> Nothing
+        "Major" ->
+            Just Major
+
+        "Pentatonic" ->
+            Just Pentatonic
+
+        "Chromatic" ->
+            Just Chromatic
+
+        _ ->
+            Nothing
 
 
 parseRootNote : String -> Maybe RootNote
 parseRootNote str =
     case str of
-        "C" -> Just C
-        "C#" -> Just CSharp
-        "D" -> Just D
-        "D#" -> Just DSharp
-        "E" -> Just E
-        "F" -> Just F
-        "F#" -> Just FSharp
-        "G" -> Just G
-        "G#" -> Just GSharp
-        "A" -> Just A
-        "A#" -> Just ASharp
-        "B" -> Just B
-        _ -> Nothing
+        "C" ->
+            Just C
+
+        "C#" ->
+            Just CSharp
+
+        "D" ->
+            Just D
+
+        "D#" ->
+            Just DSharp
+
+        "E" ->
+            Just E
+
+        "F" ->
+            Just F
+
+        "F#" ->
+            Just FSharp
+
+        "G" ->
+            Just G
+
+        "G#" ->
+            Just GSharp
+
+        "A" ->
+            Just A
+
+        "A#" ->
+            Just ASharp
+
+        "B" ->
+            Just B
+
+        _ ->
+            Nothing
