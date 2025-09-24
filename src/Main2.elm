@@ -698,15 +698,9 @@ viewPitchCell pitchIdx pitchGrid currentStep stepIdx =
         noteClass =
             if isActive then
                 pitchCellColor pitchIdx
-                    ++ (if isCurrentStep then
-                            " ring-2 ring-white"
-
-                        else
-                            ""
-                       )
 
             else if isCurrentStep then
-                "bg-gray-700 hover:bg-gray-600 ring-2 ring-white"
+                "bg-gray-700 hover:bg-gray-600"
 
             else
                 "bg-gray-800 hover:bg-gray-700"
@@ -767,11 +761,10 @@ viewPercCell percType percGrid currentStep stepIdx =
                 Kick ->
                     "sticky bottom-0 h-12 z-10"
 
-        -- TODO: check and remove class concatenation issue
         cellClass =
             if isCurrentStep then
                 -- TODO: do we need rings here?
-                "bg-gray-700 hover:bg-gray-600 ring-2 ring-white"
+                "bg-gray-700 hover:bg-gray-600"
 
             else
                 "bg-gray-800 hover:bg-gray-700"
@@ -1190,6 +1183,8 @@ viewPercSymbol isActive percType =
 
 
 {-| TODO: why mod 7 and how it works
+it works for major and pentatonic, since we are doing mod by7
+but doesnt work for chromatic
 -}
 pitchCellColor : Int -> String
 pitchCellColor pitchIdx =
