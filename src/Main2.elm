@@ -303,16 +303,26 @@ type alias Model =
 
 init : Flags -> ( Model, Cmd Msg )
 init _ =
-    ( { scaleType = Major
-      , rootNote = C
-      , octaveRange = { start = 4, count = 2 }
-      , totalSteps = 16
-      , pitchGrid = Set.empty
-      , percGrid = Set.empty
-      , drawState = NotDrawing
-      , playState = Stopped
-      , audioContextTime = 0.0
-      , bpm = 120
+    let
+        initialModel =
+            { scaleType = Major
+            , rootNote = C
+            , octaveRange = { start = 3, count = 3 }
+            , totalSteps = 32
+            , pitchGrid = Set.empty
+            , percGrid = Set.empty
+            , drawState = NotDrawing
+            , playState = Stopped
+            , audioContextTime = 0.0
+            , bpm = 120
+            }
+    in
+    let
+        initialSong = createInitialMelody initialModel
+    in
+    ( { initialModel
+        | pitchGrid = initialSong.pitchGrid
+        , percGrid = initialSong.percGrid
       }
     , Cmd.none
     )
@@ -930,6 +940,98 @@ midiToPitchIdx targetMidi model =
         |> List.filter (\pitchIdx -> pitchIdxToMidi pitchIdx model == targetMidi)
         |> List.head
         |> Maybe.withDefault -1
+
+
+noteNameToPitchIdx : String -> Model -> Int
+noteNameToPitchIdx noteName model =
+    let
+        totalPitches = getTotalPitches model
+    in
+    List.range 0 (totalPitches - 1)
+        |> List.filter (\pitchIdx -> pitchIdxToNoteName pitchIdx model == noteName)
+        |> List.head
+        |> Maybe.withDefault -1
+
+
+createInitialMelody : Model -> { pitchGrid : PitchGrid, percGrid : PercGrid }
+createInitialMelody model =
+    let
+        -- Full Twinkle Twinkle Little Star with rich chords and harmony
+        melody =
+            -- First verse: Twinkle twinkle little star, how I wonder what you are
+            [ ("C4", [0, 1])     -- Twinkle twinkle
+            , ("C3", [0])        -- Bass C major
+            , ("E4", [0])        -- Chord harmony
+            , ("G4", [2, 3])     -- little star
+            , ("G3", [2])        -- Bass G major
+            , ("B4", [2])        -- Chord harmony
+            , ("A4", [4, 5])     -- how I won-
+            , ("F3", [4])        -- Bass F major
+            , ("C5", [4])        -- High harmony
+            , ("G4", [6])        -- der
+            , ("G3", [6])        -- Bass G
+            , ("F4", [8, 9])     -- what you
+            , ("F3", [8])        -- Bass F major
+            , ("A4", [8])        -- Chord harmony
+            , ("E4", [10, 11])   -- are so
+            , ("C3", [10])       -- Bass C major
+            , ("G4", [10])       -- Chord harmony
+            , ("D4", [12, 13])   -- far a-
+            , ("G3", [12])       -- Bass G major
+            , ("B4", [12])       -- High harmony
+            , ("C4", [14])       -- bove
+            , ("C3", [14])       -- Bass C major
+            , ("E4", [14])       -- Chord harmony
+
+            -- Second verse: Up above the world so high, like a diamond in the sky
+            , ("G4", [16, 17])   -- Up above
+            , ("G3", [16])       -- Bass G major
+            , ("B4", [16])       -- Chord harmony
+            , ("F4", [18, 19])   -- the world
+            , ("F3", [18])       -- Bass F major
+            , ("A4", [18])       -- Chord harmony
+            , ("E4", [20, 21])   -- so high
+            , ("C3", [20])       -- Bass C major
+            , ("G4", [20])       -- Chord harmony
+            , ("D4", [22])       -- like
+            , ("G3", [22])       -- Bass G
+            , ("C4", [24, 25])   -- a dia-
+            , ("C3", [24])       -- Bass C major
+            , ("E4", [24])       -- Chord harmony
+            , ("D4", [26, 27])   -- mond in
+            , ("G3", [26])       -- Bass G major
+            , ("F4", [26])       -- Chord harmony
+            , ("E4", [28, 29])   -- the sky
+            , ("C3", [28])       -- Bass C major
+            , ("G4", [28])       -- Chord harmony
+            , ("C4", [30])       -- (end)
+            , ("C3", [30])       -- Final bass
+            , ("E4", [30])       -- Final harmony
+            ]
+    in
+    let
+        pitchNotes = melody
+            |> List.concatMap (\(noteName, steps) ->
+                let
+                    pitchIdx = noteNameToPitchIdx noteName model
+                in
+                if pitchIdx >= 0 then
+                    List.map (\stepIdx -> (pitchIdx, stepIdx)) steps
+                else
+                    []
+            )
+
+        -- Add percussion pattern
+        percussionNotes =
+            [ (0, 0), (1, 2), (0, 4), (1, 6)     -- First phrase
+            , (0, 8), (1, 10), (0, 12), (1, 14)  -- Second phrase
+            , (0, 16), (1, 18), (0, 20), (1, 22) -- Third phrase
+            , (0, 24), (1, 26), (0, 28), (1, 30) -- Final phrase
+            ]
+    in
+    { pitchGrid = Set.fromList pitchNotes
+    , percGrid = Set.fromList percussionNotes
+    }
 
 
 -- Cell State Management
