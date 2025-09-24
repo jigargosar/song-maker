@@ -609,7 +609,16 @@ headerView model =
 
 centerView : Model -> Html Msg
 centerView model =
-    div [ class "flex-1 overflow-auto" ]
+    div
+        [ class "flex-1 overflow-auto"
+
+        --, class "scrollbar-thin"
+        , class "scrollbar"
+        , class "scrollbar-thumb-gray-500 scrollbar-track-gray-900"
+        , class "scrollbar-corner-gray-500"
+        , class "scrollbar-thumb-rounded-full"
+        , class "scrollbar-track-rounded-full"
+        ]
         [ viewGrid model ]
 
 
