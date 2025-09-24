@@ -5,9 +5,12 @@ module Scale exposing
     , chromaticNoteNames
     , getRootNoteOffset
     , getScalePattern
+    , getTotalPitches
     , notesPerOctave
     , parseRootNote
     , parseScaleType
+    , pitchIdxToMidi
+    , pitchIdxToNoteName
     , rootNoteToString
     )
 
@@ -198,3 +201,83 @@ parseRootNote str =
 
         _ ->
             Nothing
+
+
+getTotalPitches : ScaleType -> { start : Int, count : Int } -> Int
+getTotalPitches scaleType octaveRange =
+    notesPerOctave scaleType * octaveRange.count
+
+
+pitchIdxToMidi : Int -> ScaleType -> RootNote -> { start : Int, count : Int } -> Int
+pitchIdxToMidi pitchIdx scaleType rootNote octaveRange =
+    let
+        scalePattern =
+            getScalePattern scaleType
+
+        rootOffset =
+            getRootNoteOffset rootNote
+
+        notesInScale =
+            notesPerOctave scaleType
+
+        octaveIdx =
+            pitchIdx // notesInScale
+
+        noteIdx =
+            modBy notesInScale pitchIdx
+
+        octave =
+            octaveRange.start + octaveIdx
+
+        semitone =
+            Maybe.withDefault 0 (List.drop noteIdx scalePattern |> List.head)
+
+        baseC0 =
+            12
+    in
+    if octaveIdx < octaveRange.count then
+        baseC0 + (octave * 12) + rootOffset + semitone
+
+    else
+        60
+
+
+
+-- midiC4 fallback
+
+
+pitchIdxToNoteName : Int -> ScaleType -> RootNote -> { start : Int, count : Int } -> String
+pitchIdxToNoteName pitchIdx scaleType rootNote octaveRange =
+    let
+        scalePattern =
+            getScalePattern scaleType
+
+        rootOffset =
+            getRootNoteOffset rootNote
+
+        notesInScale =
+            notesPerOctave scaleType
+
+        octaveIdx =
+            pitchIdx // notesInScale
+
+        noteIdx =
+            modBy notesInScale pitchIdx
+
+        octave =
+            octaveRange.start + octaveIdx
+
+        semitone =
+            Maybe.withDefault 0 (List.drop noteIdx scalePattern |> List.head)
+
+        chromaticIndex =
+            modBy 12 (rootOffset + semitone)
+
+        noteName =
+            Maybe.withDefault "?" (List.drop chromaticIndex chromaticNoteNames |> List.head)
+    in
+    if octaveIdx < octaveRange.count then
+        noteName ++ String.fromInt octave
+
+    else
+        "C4"
