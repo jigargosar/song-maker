@@ -288,8 +288,8 @@ type DrawState
 
 
 type alias SongConfig =
-    { pitchGrid : PitchGrid
-    , percGrid : PercGrid
+    { melody : List (List String)       -- Each step can have multiple notes
+    , percussion : List (List PercType) -- Each step can have multiple drums
     , totalSteps : Int
     , bpm : Int
     , octaveRange : { start : Int, count : Int }
@@ -958,85 +958,41 @@ noteNameToPitchIdx noteName model =
 
 twinkleSong : SongConfig
 twinkleSong =
-    let
-        -- Full Twinkle Twinkle Little Star with rich chords and harmony
-        melody =
-            -- First verse: Twinkle twinkle little star, how I wonder what you are
-            [ ("C4", [0, 1])     -- Twinkle twinkle
-            , ("C3", [0])        -- Bass C major
-            , ("E4", [0])        -- Chord harmony
-            , ("G4", [2, 3])     -- little star
-            , ("G3", [2])        -- Bass G major
-            , ("B4", [2])        -- Chord harmony
-            , ("A4", [4, 5])     -- how I won-
-            , ("F3", [4])        -- Bass F major
-            , ("C5", [4])        -- High harmony
-            , ("G4", [6])        -- der
-            , ("G3", [6])        -- Bass G
-            , ("F4", [8, 9])     -- what you
-            , ("F3", [8])        -- Bass F major
-            , ("A4", [8])        -- Chord harmony
-            , ("E4", [10, 11])   -- are so
-            , ("C3", [10])       -- Bass C major
-            , ("G4", [10])       -- Chord harmony
-            , ("D4", [12, 13])   -- far a-
-            , ("G3", [12])       -- Bass G major
-            , ("B4", [12])       -- High harmony
-            , ("C4", [14])       -- bove
-            , ("C3", [14])       -- Bass C major
-            , ("E4", [14])       -- Chord harmony
+    { melody =
+        -- "Twinkle twinkle little star"
+        [ ["C4", "C3", "E4"], ["C4"], ["G4", "G3", "B4"], ["G4"] ]
+        -- "how I wonder what"
+        ++ [ ["A4", "F3", "C5"], ["A4"], ["G4", "G3"], [] ]
+        -- "what you are so"
+        ++ [ ["F4", "F3", "A4"], ["F4"], ["E4", "C3", "G4"], ["E4"] ]
+        -- "far above the world"
+        ++ [ ["D4", "G3", "B4"], ["D4"], ["C4", "C3", "E4"], [] ]
+        -- "Up above the world"
+        ++ [ ["G4", "G3", "B4"], ["G4"], ["F4", "F3", "A4"], ["F4"] ]
+        -- "so high like a"
+        ++ [ ["E4", "C3", "G4"], ["E4"], ["D4", "G3"], [] ]
+        -- "diamond in the"
+        ++ [ ["C4", "C3", "E4"], ["C4"], ["D4", "G3", "F4"], ["D4"] ]
+        -- "sky (end)"
+        ++ [ ["E4", "C3", "G4"], ["E4"], ["C4", "C3", "E4"], [] ]
 
-            -- Second verse: Up above the world so high, like a diamond in the sky
-            , ("G4", [16, 17])   -- Up above
-            , ("G3", [16])       -- Bass G major
-            , ("B4", [16])       -- Chord harmony
-            , ("F4", [18, 19])   -- the world
-            , ("F3", [18])       -- Bass F major
-            , ("A4", [18])       -- Chord harmony
-            , ("E4", [20, 21])   -- so high
-            , ("C3", [20])       -- Bass C major
-            , ("G4", [20])       -- Chord harmony
-            , ("D4", [22])       -- like
-            , ("G3", [22])       -- Bass G
-            , ("C4", [24, 25])   -- a dia-
-            , ("C3", [24])       -- Bass C major
-            , ("E4", [24])       -- Chord harmony
-            , ("D4", [26, 27])   -- mond in
-            , ("G3", [26])       -- Bass G major
-            , ("F4", [26])       -- Chord harmony
-            , ("E4", [28, 29])   -- the sky
-            , ("C3", [28])       -- Bass C major
-            , ("G4", [28])       -- Chord harmony
-            , ("C4", [30])       -- (end)
-            , ("C3", [30])       -- Final bass
-            , ("E4", [30])       -- Final harmony
-            ]
-    in
-    let
-        -- Helper model for note conversion
-        helperModel = { scaleType = Major, rootNote = C, octaveRange = { start = 3, count = 3 }, totalSteps = 32, pitchGrid = Set.empty, percGrid = Set.empty, drawState = NotDrawing, playState = Stopped, audioContextTime = 0.0, bpm = 180 }
-
-        pitchNotes = melody
-            |> List.concatMap (\(noteName, steps) ->
-                let
-                    pitchIdx = noteNameToPitchIdx noteName helperModel
-                in
-                if pitchIdx >= 0 then
-                    List.map (\stepIdx -> (pitchIdx, stepIdx)) steps
-                else
-                    []
-            )
-
-        -- Add percussion pattern
-        percussionNotes =
-            [ (0, 0), (1, 2), (0, 4), (1, 6)     -- First phrase
-            , (0, 8), (1, 10), (0, 12), (1, 14)  -- Second phrase
-            , (0, 16), (1, 18), (0, 20), (1, 22) -- Third phrase
-            , (0, 24), (1, 26), (0, 28), (1, 30) -- Final phrase
-            ]
-    in
-    { pitchGrid = Set.fromList pitchNotes
-    , percGrid = Set.fromList percussionNotes
+    , percussion =
+        -- "Twinkle twinkle little star"
+        [ [Kick], [], [Snare], [] ]
+        -- "how I wonder what"
+        ++ [ [Kick], [], [Snare], [] ]
+        -- "what you are so"
+        ++ [ [Kick], [], [Snare], [] ]
+        -- "far above the world"
+        ++ [ [Kick], [], [Snare], [] ]
+        -- "Up above the world"
+        ++ [ [Kick], [], [Snare], [] ]
+        -- "so high like a"
+        ++ [ [Kick], [], [Snare], [] ]
+        -- "diamond in the"
+        ++ [ [Kick], [], [Snare], [] ]
+        -- "sky (end)"
+        ++ [ [Kick], [], [Snare], [] ]
     , totalSteps = 32
     , bpm = 180
     , octaveRange = { start = 3, count = 3 }
@@ -1045,13 +1001,47 @@ twinkleSong =
 
 applySong : SongConfig -> Model -> Model
 applySong songConfig model =
+    let
+        pitchGrid = convertMelodyToGrid songConfig.melody model
+        percGrid = convertPercussionToGrid songConfig.percussion
+    in
     { model
-        | pitchGrid = songConfig.pitchGrid
-        , percGrid = songConfig.percGrid
+        | pitchGrid = pitchGrid
+        , percGrid = percGrid
         , totalSteps = songConfig.totalSteps
         , bpm = songConfig.bpm
         , octaveRange = songConfig.octaveRange
     }
+
+
+convertMelodyToGrid : List (List String) -> Model -> PitchGrid
+convertMelodyToGrid stepMelodies model =
+    stepMelodies
+        |> List.indexedMap (\stepIdx noteNames ->
+            List.filterMap (\noteName ->
+                let
+                    pitchIdx = noteNameToPitchIdx noteName model
+                in
+                if pitchIdx >= 0 then
+                    Just (pitchIdx, stepIdx)
+                else
+                    Nothing
+            ) noteNames
+        )
+        |> List.concat
+        |> Set.fromList
+
+
+convertPercussionToGrid : List (List PercType) -> PercGrid
+convertPercussionToGrid stepPercussion =
+    stepPercussion
+        |> List.indexedMap (\stepIdx percTypes ->
+            List.map (\percType ->
+                (toPercRowIdx percType, stepIdx)
+            ) percTypes
+        )
+        |> List.concat
+        |> Set.fromList
 
 
 
