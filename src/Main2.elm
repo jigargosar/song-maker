@@ -594,7 +594,7 @@ view model =
 
 headerView : Model -> Html Msg
 headerView model =
-    div [ class "bg-gray-800 border-b border-gray-700 px-6 py-4" ]
+    div [ class "bg-gray-800 z-20 shadow-2xl border-b border-gray-950 px-6 py-4" ]
         [ div [ class "flex items-center justify-between" ]
             [ div [ class "text-2xl font-bold text-white" ]
                 [ text "Song Maker V2" ]
