@@ -649,7 +649,7 @@ viewGrid model =
                 ]
     in
     div
-        [ class "grid bg-gray-800 border border-gray-700 w-max h-max min-w-full min-h-full"
+        [ class "grid bg-gray-800 w-max h-max min-w-full min-h-full"
         , style "grid-template-columns" gridTemplateCols
         , style "grid-template-rows" gridTemplateRows
         ]
@@ -738,7 +738,7 @@ viewPercRow percType totalSteps percGrid currentStep =
         stickyClass =
             case percType of
                 Snare ->
-                    "sticky bottom-12 h-12 z-10"
+                    "sticky bottom-12 h-12 z-10 border-t-3"
 
                 Kick ->
                     "sticky bottom-0 h-12 z-10"
@@ -765,7 +765,7 @@ viewPercCell percType percGrid currentStep stepIdx =
         stickyClass =
             case percType of
                 Snare ->
-                    "sticky bottom-12 h-12 z-10"
+                    "sticky bottom-12 h-12 z-10  border-t-3"
 
                 Kick ->
                     "sticky bottom-0 h-12 z-10"
@@ -779,7 +779,7 @@ viewPercCell percType percGrid currentStep stepIdx =
                 "bg-gray-800 hover:bg-gray-700"
     in
     div
-        [ class "border-r border-b border-gray-600 cursor-pointer  flex items-center justify-center"
+        [ class " border-gray-600 cursor-pointer  flex items-center justify-center"
         , class cellClass
         , class stickyClass
         , HE.onMouseDown (StartDrawingPerc position)
