@@ -2,11 +2,7 @@ module Scale exposing
     ( RootNote(..)
     , ScaleType(..)
     , allRootNotes
-    , chromaticNoteNames
-    , getRootNoteOffset
-    , getScalePattern
     , getTotalPitches
-    , notesPerOctave
     , parseRootNote
     , parseScaleType
     , pitchIdxToMidi
