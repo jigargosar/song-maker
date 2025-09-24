@@ -3,6 +3,7 @@ module Scale exposing
     , ScaleType(..)
     , allRootNotes
     , getTotalPitches
+    , noteNameToPitchIdx
     , parseRootNote
     , parseScaleType
     , pitchIdxToMidi
@@ -277,3 +278,15 @@ pitchIdxToNoteName pitchIdx scaleType rootNote octaveRange =
 
     else
         "C4"
+
+
+noteNameToPitchIdx : String -> ScaleType -> RootNote -> { start : Int, count : Int } -> Int
+noteNameToPitchIdx noteName scaleType rootNote octaveRange =
+    let
+        totalPitches =
+            getTotalPitches scaleType octaveRange
+    in
+    List.range 0 (totalPitches - 1)
+        |> List.filter (\pitchIdx -> pitchIdxToNoteName pitchIdx scaleType rootNote octaveRange == noteName)
+        |> List.head
+        |> Maybe.withDefault -1

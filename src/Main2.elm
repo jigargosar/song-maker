@@ -1,6 +1,7 @@
 port module Main2 exposing (main)
 
 import Browser
+import Grid exposing (PercGrid, PercPos, PitchGrid, PitchPos)
 import Html as H exposing (Html, div, text)
 import Html.Attributes as HA exposing (class, style)
 import Html.Events as HE
@@ -171,7 +172,7 @@ update msg model =
                 NotDrawing ->
                     let
                         currentlyActive =
-                            isPitchCellActive position model.pitchGrid
+                            Grid.isPitchCellActive position model.pitchGrid
 
                         newDrawState =
                             if currentlyActive then
@@ -182,7 +183,7 @@ update msg model =
                     in
                     ( { model
                         | drawState = newDrawState
-                        , pitchGrid = updatePitchCell position (not currentlyActive) model.pitchGrid
+                        , pitchGrid = Grid.updatePitchCell position (not currentlyActive) model.pitchGrid
                       }
                     , playPitchCmdIf (not currentlyActive) position.pitchIdx model
                     )
@@ -193,12 +194,12 @@ update msg model =
         ContinueDrawingPitch position ->
             case model.drawState of
                 DrawingPitch ->
-                    ( { model | pitchGrid = updatePitchCell position True model.pitchGrid }
+                    ( { model | pitchGrid = Grid.updatePitchCell position True model.pitchGrid }
                     , playPitchCmdIf True position.pitchIdx model
                     )
 
                 ErasingPitch ->
-                    ( { model | pitchGrid = updatePitchCell position False model.pitchGrid }, Cmd.none )
+                    ( { model | pitchGrid = Grid.updatePitchCell position False model.pitchGrid }, Cmd.none )
 
                 _ ->
                     ( model, Cmd.none )
@@ -211,7 +212,7 @@ update msg model =
                 NotDrawing ->
                     let
                         currentlyActive =
-                            isPercCellActive position model.percGrid
+                            Grid.isPercCellActive position model.percGrid
 
                         newDrawState =
                             if currentlyActive then
@@ -222,7 +223,7 @@ update msg model =
                     in
                     ( { model
                         | drawState = newDrawState
-                        , percGrid = updatePercCell position (not currentlyActive) model.percGrid
+                        , percGrid = Grid.updatePercCell position (not currentlyActive) model.percGrid
                       }
                     , playPercCmdIf (not currentlyActive) position.percType model
                     )
@@ -233,12 +234,12 @@ update msg model =
         ContinueDrawingPerc position ->
             case model.drawState of
                 DrawingPerc ->
-                    ( { model | percGrid = updatePercCell position True model.percGrid }
+                    ( { model | percGrid = Grid.updatePercCell position True model.percGrid }
                     , playPercCmdIf True position.percType model
                     )
 
                 ErasingPerc ->
-                    ( { model | percGrid = updatePercCell position False model.percGrid }, Cmd.none )
+                    ( { model | percGrid = Grid.updatePercCell position False model.percGrid }, Cmd.none )
 
                 _ ->
                     ( model, Cmd.none )
@@ -497,7 +498,7 @@ viewPitchCell pitchIdx pitchGrid currentStep stepIdx =
             { pitchIdx = pitchIdx, stepIdx = stepIdx }
 
         isActive =
-            isPitchCellActive position pitchGrid
+            Grid.isPitchCellActive position pitchGrid
 
         isCurrentStep =
             currentStep == Just stepIdx
@@ -553,7 +554,7 @@ viewPercCell percType percGrid currentStep stepIdx =
             { percType = percType, stepIdx = stepIdx }
 
         isActive =
-            isPercCellActive position percGrid
+            Grid.isPercCellActive position percGrid
 
         isCurrentStep =
             currentStep == Just stepIdx
@@ -603,25 +604,6 @@ footerView =
 -- Conversion Functions
 
 
-toPercRowIdx : PercType -> Int
-toPercRowIdx percType =
-    case percType of
-        Instrument.Snare ->
-            0
-
-        Instrument.Kick ->
-            1
-
-
-percPositionToTuple : PercPos -> ( Int, Int )
-percPositionToTuple { percType, stepIdx } =
-    ( toPercRowIdx percType, stepIdx )
-
-
-
--- Sequencer Functions
-
-
 noteDuration : Model -> Float
 noteDuration model =
     60.0 / toFloat model.bpm
@@ -657,7 +639,7 @@ getActiveNotesForStep stepIdx model =
                         position =
                             { pitchIdx = pitchIdx, stepIdx = stepIdx }
                     in
-                    if isPitchCellActive position model.pitchGrid then
+                    if Grid.isPitchCellActive position model.pitchGrid then
                         Just
                             { instrument = Instrument.pitchInstrumentName model.currentPitchInstrument
                             , midi = Scale.pitchIdxToMidi pitchIdx model.scaleType model.rootNote model.octaveRange
@@ -690,7 +672,7 @@ getActiveNotesForStep stepIdx model =
                                     Instrument.Snare ->
                                         ( drumConfig.snareInstrument, drumConfig.snareMidi )
                         in
-                        if isPercCellActive position model.percGrid then
+                        if Grid.isPercCellActive position model.percGrid then
                             Just
                                 { instrument = instrumentName
                                 , midi = midiNote
@@ -845,10 +827,10 @@ applySong : SongConfig -> Model -> Model
 applySong songConfig model =
     let
         pitchGrid =
-            convertMelodyToGrid songConfig.melody model
+            Grid.convertMelodyToGrid songConfig.melody model.scaleType model.rootNote model.octaveRange
 
         percGrid =
-            convertPercussionToGrid songConfig.percussion
+            Grid.convertPercussionToGrid songConfig.percussion
     in
     { model
         | pitchGrid = pitchGrid
@@ -857,80 +839,6 @@ applySong songConfig model =
         , bpm = songConfig.bpm
         , octaveRange = songConfig.octaveRange
     }
-
-
-convertMelodyToGrid : List (List String) -> Model -> PitchGrid
-convertMelodyToGrid stepMelodies model =
-    stepMelodies
-        |> List.indexedMap
-            (\stepIdx noteNames ->
-                List.filterMap
-                    (\noteName ->
-                        let
-                            pitchIdx =
-                                noteNameToPitchIdx noteName model
-                        in
-                        if pitchIdx >= 0 then
-                            Just ( pitchIdx, stepIdx )
-
-                        else
-                            Nothing
-                    )
-                    noteNames
-            )
-        |> List.concat
-        |> Set.fromList
-
-
-convertPercussionToGrid : List (List PercType) -> PercGrid
-convertPercussionToGrid stepPercussion =
-    stepPercussion
-        |> List.indexedMap
-            (\stepIdx percTypes ->
-                List.map
-                    (\percType ->
-                        ( toPercRowIdx percType, stepIdx )
-                    )
-                    percTypes
-            )
-        |> List.concat
-        |> Set.fromList
-
-
-
--- Cell State Management
-
-
-isPitchCellActive : PitchPos -> PitchGrid -> Bool
-isPitchCellActive { pitchIdx, stepIdx } pitchGrid =
-    Set.member ( pitchIdx, stepIdx ) pitchGrid
-
-
-updatePitchCell : PitchPos -> Bool -> PitchGrid -> PitchGrid
-updatePitchCell { pitchIdx, stepIdx } isActive pitchGrid =
-    if isActive then
-        Set.insert ( pitchIdx, stepIdx ) pitchGrid
-
-    else
-        Set.remove ( pitchIdx, stepIdx ) pitchGrid
-
-
-isPercCellActive : PercPos -> PercGrid -> Bool
-isPercCellActive position grid =
-    Set.member (percPositionToTuple position) grid
-
-
-updatePercCell : PercPos -> Bool -> PercGrid -> PercGrid
-updatePercCell position isActive grid =
-    let
-        tuple =
-            percPositionToTuple position
-    in
-    if isActive then
-        Set.insert tuple grid
-
-    else
-        Set.remove tuple grid
 
 
 
