@@ -770,14 +770,16 @@ viewPercCell percType percGrid currentStep stepIdx =
         -- TODO: check and remove class concatenation issue
         cellClass =
             if isCurrentStep then
-                "bg-gray-700 hover:bg-gray-600 ring-2 ring-white " ++ stickyClass
+                -- TODO: do we need rings here?
+                "bg-gray-700 hover:bg-gray-600 ring-2 ring-white"
 
             else
-                "bg-gray-800 hover:bg-gray-700 " ++ stickyClass
+                "bg-gray-800 hover:bg-gray-700"
     in
     div
         [ class "border-r border-b border-gray-600 cursor-pointer  flex items-center justify-center"
         , class cellClass
+        , class stickyClass
         , HE.onMouseDown (StartDrawingPerc position)
         , HE.onMouseEnter (ContinueDrawingPerc position)
         , HE.onMouseUp StopDrawing
