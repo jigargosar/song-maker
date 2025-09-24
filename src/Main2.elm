@@ -684,7 +684,7 @@ viewPitchRow model pitchGrid currentStep pitchIdx =
     let
         viewPitchLabel =
             div
-                [ class labelBgColorAndClass ]
+                [ class labelBgColorAndClass, class "border-[0.5px]" ]
                 [ text (pitchIdxToNoteName pitchIdx model) ]
     in
     -- TODO: Should we fix function parameters?
@@ -716,7 +716,7 @@ viewPitchCell pitchIdx pitchGrid currentStep stepIdx =
     in
     div
         [ class noteClass
-        , class "border-r border-b border-gray-600 cursor-pointer "
+        , class "border-[0.5px] border-gray-600 cursor-pointer "
         , HE.onMouseDown (StartDrawingPitch position)
         , HE.onMouseEnter (ContinueDrawingPitch position)
         , HE.onMouseUp StopDrawing
