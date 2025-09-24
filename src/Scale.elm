@@ -205,6 +205,11 @@ getTotalPitches scaleType octaveRange =
     notesPerOctave scaleType * octaveRange.count
 
 
+midiC4 : Int
+midiC4 =
+    60
+
+
 pitchIdxToMidi : Int -> ScaleType -> RootNote -> { start : Int, count : Int } -> Int
 pitchIdxToMidi pitchIdx scaleType rootNote octaveRange =
     let
@@ -228,15 +233,12 @@ pitchIdxToMidi pitchIdx scaleType rootNote octaveRange =
 
         semitone =
             Maybe.withDefault 0 (List.drop noteIdx scalePattern |> List.head)
-
-        baseC0 =
-            12
     in
     if octaveIdx < octaveRange.count then
-        baseC0 + (octave * 12) + rootOffset + semitone
+        midiC4 + ((octave - 4) * 12) + rootOffset + semitone
 
     else
-        60
+        midiC4
 
 
 
