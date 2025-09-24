@@ -34,7 +34,82 @@ midiC4 =
 
 
 -- SCALE SYSTEM
--- REMOVED: getTotalPitches, pitchIdxToMidi, pitchIdxToNoteName
+
+
+getTotalPitches : Model -> Int
+getTotalPitches model =
+    Scale.notesPerOctave model.scaleType * model.octaveRange.count
+
+
+pitchIdxToMidi : Int -> Model -> Int
+pitchIdxToMidi pitchIdx model =
+    let
+        scalePattern =
+            Scale.getScalePattern model.scaleType
+
+        rootOffset =
+            Scale.getRootNoteOffset model.rootNote
+
+        notesInScale =
+            Scale.notesPerOctave model.scaleType
+
+        octaveIdx =
+            pitchIdx // notesInScale
+
+        noteIdx =
+            modBy notesInScale pitchIdx
+
+        octave =
+            model.octaveRange.start + octaveIdx
+
+        semitone =
+            Maybe.withDefault 0 (List.drop noteIdx scalePattern |> List.head)
+
+        baseC0 =
+            12
+    in
+    if octaveIdx < model.octaveRange.count then
+        baseC0 + (octave * 12) + rootOffset + semitone
+
+    else
+        midiC4
+
+
+pitchIdxToNoteName : Int -> Model -> String
+pitchIdxToNoteName pitchIdx model =
+    let
+        scalePattern =
+            Scale.getScalePattern model.scaleType
+
+        rootOffset =
+            Scale.getRootNoteOffset model.rootNote
+
+        notesInScale =
+            Scale.notesPerOctave model.scaleType
+
+        octaveIdx =
+            pitchIdx // notesInScale
+
+        noteIdx =
+            modBy notesInScale pitchIdx
+
+        octave =
+            model.octaveRange.start + octaveIdx
+
+        semitone =
+            Maybe.withDefault 0 (List.drop noteIdx scalePattern |> List.head)
+
+        chromaticIndex =
+            modBy 12 (rootOffset + semitone)
+
+        noteName =
+            Maybe.withDefault "?" (List.drop chromaticIndex Scale.chromaticNoteNames |> List.head)
+    in
+    if octaveIdx < model.octaveRange.count then
+        noteName ++ String.fromInt octave
+
+    else
+        "C4"
 
 
 type alias Flags =
@@ -442,7 +517,7 @@ viewGrid model =
         gridTemplateRows =
             format "minmax($stepLabelRowMinHeight, auto) repeat($totalPitches, minmax($pitchRowMinHeight, 1fr)) repeat(2, $percRowHeight)"
                 [ ( "$stepLabelRowMinHeight", px 32 )
-                , ( "$totalPitches", String.fromInt (Scale.getTotalPitches model.scaleType model.octaveRange) )
+                , ( "$totalPitches", String.fromInt (getTotalPitches model) )
                 , ( "$pitchRowMinHeight", px 32 )
                 , ( "$percRowHeight", px 48 )
                 ]
@@ -454,7 +529,7 @@ viewGrid model =
         ]
         ([ {- Empty corner cell -} div [ class labelBgColorAndClass, class "border-b border-gray-600" ] [] ]
             ++ {- Step Labels row -} times (\stepIdx -> viewStepLabel currentStep stepIdx) model.totalSteps
-            ++ {- Pitch rows -} (times (\pitchIdx -> viewPitchRow model model.pitchGrid currentStep pitchIdx) (Scale.getTotalPitches model.scaleType model.octaveRange) |> List.concat)
+            ++ {- Pitch rows -} (times (\pitchIdx -> viewPitchRow model model.pitchGrid currentStep pitchIdx) (getTotalPitches model) |> List.concat)
             ++ {- Perc Snare row -} viewPercRow Instrument.Snare model.totalSteps model.percGrid currentStep
             ++ {- Perc Kick row -} viewPercRow Instrument.Kick model.totalSteps model.percGrid currentStep
         )
@@ -484,7 +559,7 @@ viewPitchRow model pitchGrid currentStep pitchIdx =
         viewPitchLabel =
             div
                 [ class labelBgColorAndClass, class "border-[0.5px]" ]
-                [ text (Scale.pitchIdxToNoteName pitchIdx model.scaleType model.rootNote model.octaveRange) ]
+                [ text (pitchIdxToNoteName pitchIdx model) ]
     in
     -- TODO: Should we fix function parameters?
     viewPitchLabel :: times (\stepIdx -> viewPitchCell pitchIdx pitchGrid currentStep stepIdx) model.totalSteps
@@ -660,7 +735,7 @@ getActiveNotesForStep stepIdx model =
                     if isPitchCellActive position model.pitchGrid then
                         Just
                             { instrument = Instrument.pitchInstrumentName model.currentPitchInstrument
-                            , midi = Scale.pitchIdxToMidi pitchIdx model.scaleType model.rootNote model.octaveRange
+                            , midi = pitchIdxToMidi pitchIdx model
                             , duration = duration
                             , volume = 0.7
                             }
@@ -668,7 +743,7 @@ getActiveNotesForStep stepIdx model =
                     else
                         Nothing
                 )
-                (Scale.getTotalPitches model.scaleType model.octaveRange)
+                (getTotalPitches model)
                 |> List.filterMap identity
 
         drumConfig =
@@ -714,7 +789,7 @@ playPitchCmdIf shouldPlay pitchIdx model =
     if shouldPlay then
         playNote
             { instrument = Instrument.pitchInstrumentName model.currentPitchInstrument
-            , midi = Scale.pitchIdxToMidi pitchIdx model.scaleType model.rootNote model.octaveRange
+            , midi = pitchIdxToMidi pitchIdx model
             , duration = 0.5
             , volume = 0.7
             }
@@ -761,12 +836,12 @@ resizePitchGrid oldModel newModel existingGrid =
             (\( pitchIdx, stepIdx ) ->
                 let
                     midiPitch =
-                        Scale.pitchIdxToMidi pitchIdx oldModel.scaleType oldModel.rootNote oldModel.octaveRange
+                        pitchIdxToMidi pitchIdx oldModel
 
                     newPitchIdx =
                         midiToPitchIdx midiPitch newModel
                 in
-                if newPitchIdx >= 0 && newPitchIdx < Scale.getTotalPitches newModel.scaleType newModel.octaveRange && stepIdx < newModel.totalSteps then
+                if newPitchIdx >= 0 && newPitchIdx < getTotalPitches newModel && stepIdx < newModel.totalSteps then
                     Just ( newPitchIdx, stepIdx )
 
                 else
@@ -779,10 +854,10 @@ midiToPitchIdx : Int -> Model -> Int
 midiToPitchIdx targetMidi model =
     let
         totalPitches =
-            Scale.getTotalPitches model.scaleType model.octaveRange
+            getTotalPitches model
     in
     List.range 0 (totalPitches - 1)
-        |> List.filter (\pitchIdx -> Scale.pitchIdxToMidi pitchIdx model.scaleType model.rootNote model.octaveRange == targetMidi)
+        |> List.filter (\pitchIdx -> pitchIdxToMidi pitchIdx model == targetMidi)
         |> List.head
         |> Maybe.withDefault -1
 
@@ -791,10 +866,10 @@ noteNameToPitchIdx : String -> Model -> Int
 noteNameToPitchIdx noteName model =
     let
         totalPitches =
-            Scale.getTotalPitches model.scaleType model.octaveRange
+            getTotalPitches model
     in
     List.range 0 (totalPitches - 1)
-        |> List.filter (\pitchIdx -> Scale.pitchIdxToNoteName pitchIdx model.scaleType model.rootNote model.octaveRange == noteName)
+        |> List.filter (\pitchIdx -> pitchIdxToNoteName pitchIdx model == noteName)
         |> List.head
         |> Maybe.withDefault -1
 
