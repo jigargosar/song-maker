@@ -644,7 +644,7 @@ viewGrid model =
         , style "grid-template-columns" gridTemplateCols
         , style "grid-template-rows" gridTemplateRows
         ]
-        ([ {- Empty corner cell -} div [ class labelAndBgClass, class "border-b border-gray-600" ] [] ]
+        ([ {- Empty corner cell -} div [ class labelBgColorAndClass, class "border-b border-gray-600" ] [] ]
             ++ {- Step headers row -} times (\stepIdx -> viewStepHeader currentStep stepIdx) model.totalSteps
             ++ {- Pitch rows -} (times (\pitchIdx -> viewPitchRow model model.totalSteps model.pitchGrid currentStep pitchIdx) (getTotalPitches model) |> List.concat)
             ++ {- Perc Snare row -} viewPercRow Snare model.totalSteps model.percGrid currentStep
@@ -680,7 +680,7 @@ viewPitchRow model stepCount pitchGrid currentStep pitchIdx =
     let
         viewPitchLabel =
             div
-                [ class labelAndBgClass ]
+                [ class labelBgColorAndClass ]
                 [ text (pitchIdxToNoteName pitchIdx model) ]
     in
     viewPitchLabel :: times (\stepIdx -> viewPitchCell pitchIdx pitchGrid currentStep stepIdx) stepCount
@@ -748,7 +748,7 @@ viewPercRow percType totalSteps percGrid currentStep =
                 Kick ->
                     "sticky bottom-0 h-12 z-10"
     in
-    div [ class labelAndBgClass, class stickyClass ] [ text percTypeName ]
+    div [ class labelBgColorAndClass, class stickyClass ] [ text percTypeName ]
         :: times (\stepIdx -> viewPercCell percType percGrid currentStep stepIdx) totalSteps
 
 
@@ -1146,7 +1146,7 @@ accentBgColorWithHover =
     accentBgColor ++ " " ++ accentBgColorHover
 
 
-labelAndBgClass =
+labelBgColorAndClass =
     labelClass ++ " " ++ labelBgColor
 
 
