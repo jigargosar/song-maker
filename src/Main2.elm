@@ -208,13 +208,17 @@ drumKitConfig : DrumKit -> { kickInstrument : String, kickMidi : Int, snareInstr
 drumKitConfig kit =
     case kit of
         StandardKit ->
-            { kickInstrument = "_drum_36_0_SBLive_sf2", kickMidi = 36
-            , snareInstrument = "_drum_38_0_SBLive_sf2", snareMidi = 38
+            { kickInstrument = "_drum_36_0_SBLive_sf2"
+            , kickMidi = 36
+            , snareInstrument = "_drum_38_0_SBLive_sf2"
+            , snareMidi = 38
             }
 
         RockKit ->
-            { kickInstrument = "_drum_36_0_SBLive_sf2", kickMidi = 36
-            , snareInstrument = "_drum_38_0_SBLive_sf2", snareMidi = 38
+            { kickInstrument = "_drum_36_0_SBLive_sf2"
+            , kickMidi = 36
+            , snareInstrument = "_drum_38_0_SBLive_sf2"
+            , snareMidi = 38
             }
 
 
@@ -600,20 +604,19 @@ update msg model =
 view : Model -> Html Msg
 view model =
     div [ class "h-screen bg-gray-900 text-white flex flex-col select-none" ]
-        [ headerView model
+        [ viewHeader model
         , centerView model
         , footerView
         ]
 
 
-headerView : Model -> Html Msg
-headerView model =
+viewHeader : Model -> Html Msg
+viewHeader model =
     div [ class "bg-gray-800 z-20 shadow-2xl border-b border-gray-950 px-6 py-4" ]
-        [ div [ class "flex items-center justify-between" ]
-            [ div [ class "text-2xl font-bold text-white" ]
-                [ text "Song Maker V2" ]
-            , div [ class "flex items-center gap-6" ]
-                [ viewScaleControls model
+        [ div [ class "flex flex-wrap items-center justify-between" ]
+            [ div [ class "flex flex-wrap items-center gap-6" ]
+                [ div [ class "text-2xl font-bold text-white" ] [ text "Song Maker V2" ]
+                , viewScaleControls model
                 , viewInstrumentControls model
                 , viewControlGroup "BPM" (viewBPMInput model.bpm)
                 , viewPlayStopButton model.playState
@@ -906,10 +909,13 @@ getActiveNotesForStep stepIdx model =
                             position =
                                 { percType = percType, stepIdx = stepIdx }
 
-                            (instrumentName, midiNote) =
+                            ( instrumentName, midiNote ) =
                                 case percType of
-                                    Kick -> (drumConfig.kickInstrument, drumConfig.kickMidi)
-                                    Snare -> (drumConfig.snareInstrument, drumConfig.snareMidi)
+                                    Kick ->
+                                        ( drumConfig.kickInstrument, drumConfig.kickMidi )
+
+                                    Snare ->
+                                        ( drumConfig.snareInstrument, drumConfig.snareMidi )
                         in
                         if isPercCellActive position model.percGrid then
                             Just
@@ -951,10 +957,13 @@ playPercCmdIf shouldPlay percType model =
             drumConfig =
                 drumKitConfig model.currentDrumKit
 
-            (instrumentName, midiNote) =
+            ( instrumentName, midiNote ) =
                 case percType of
-                    Kick -> (drumConfig.kickInstrument, drumConfig.kickMidi)
-                    Snare -> (drumConfig.snareInstrument, drumConfig.snareMidi)
+                    Kick ->
+                        ( drumConfig.kickInstrument, drumConfig.kickMidi )
+
+                    Snare ->
+                        ( drumConfig.snareInstrument, drumConfig.snareMidi )
         in
         playNote
             { instrument = instrumentName

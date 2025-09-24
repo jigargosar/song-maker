@@ -42,13 +42,9 @@
     const audioContext = new AudioContext();
     const player = new WebAudioFontPlayer();
 
-    // const WebAudioFontLoader = window.WebAudioFontLoader;
-    // const loader = new WebAudioFontLoader(player);
-    // console.log( loader.instrumentInfo(11), loader.findInstrument(11) );
-
-
     // Load instruments
     player.loader.decodeAfterLoading(audioContext, piano);
+    player.loader.decodeAfterLoading(audioContext, marimba);
     Object.values(percussionKit).forEach(instrument => {
         player.loader.decodeAfterLoading(audioContext, instrument);
     });
