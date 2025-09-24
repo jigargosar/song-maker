@@ -4,7 +4,6 @@ import Browser
 import Html as H exposing (Html, div, text)
 import Html.Attributes as HA exposing (class, style)
 import Html.Events as HE
-import Scale exposing (RootNote, ScaleType)
 import Set exposing (Set)
 
 
@@ -35,22 +34,106 @@ midiC4 =
 -- SCALE SYSTEM
 
 
+type ScaleType
+    = Major
+    | Pentatonic
+    | Chromatic
+
+
+type RootNote
+    = C
+    | CSharp
+    | D
+    | DSharp
+    | E
+    | F
+    | FSharp
+    | G
+    | GSharp
+    | A
+    | ASharp
+    | B
+
+
+getScalePattern : ScaleType -> List Int
+getScalePattern scaleType =
+    case scaleType of
+        Major ->
+            [ 0, 2, 4, 5, 7, 9, 11 ]
+
+        Pentatonic ->
+            [ 0, 2, 4, 7, 9 ]
+
+        Chromatic ->
+            [ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11 ]
+
+
+getRootNoteOffset : RootNote -> Int
+getRootNoteOffset rootNote =
+    case rootNote of
+        C ->
+            0
+
+        CSharp ->
+            1
+
+        D ->
+            2
+
+        DSharp ->
+            3
+
+        E ->
+            4
+
+        F ->
+            5
+
+        FSharp ->
+            6
+
+        G ->
+            7
+
+        GSharp ->
+            8
+
+        A ->
+            9
+
+        ASharp ->
+            10
+
+        B ->
+            11
+
+
+chromaticNoteNames : List String
+chromaticNoteNames =
+    [ "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B" ]
+
+
+notesPerOctave : ScaleType -> Int
+notesPerOctave scaleType =
+    List.length (getScalePattern scaleType)
+
+
 getTotalPitches : Model -> Int
 getTotalPitches model =
-    Scale.notesPerOctave model.scaleType * model.octaveRange.count
+    notesPerOctave model.scaleType * model.octaveRange.count
 
 
 pitchIdxToMidi : Int -> Model -> Int
 pitchIdxToMidi pitchIdx model =
     let
         scalePattern =
-            Scale.getScalePattern model.scaleType
+            getScalePattern model.scaleType
 
         rootOffset =
-            Scale.getRootNoteOffset model.rootNote
+            getRootNoteOffset model.rootNote
 
         notesInScale =
-            Scale.notesPerOctave model.scaleType
+            notesPerOctave model.scaleType
 
         octaveIdx =
             pitchIdx // notesInScale
@@ -78,13 +161,13 @@ pitchIdxToNoteName : Int -> Model -> String
 pitchIdxToNoteName pitchIdx model =
     let
         scalePattern =
-            Scale.getScalePattern model.scaleType
+            getScalePattern model.scaleType
 
         rootOffset =
-            Scale.getRootNoteOffset model.rootNote
+            getRootNoteOffset model.rootNote
 
         notesInScale =
-            Scale.notesPerOctave model.scaleType
+            notesPerOctave model.scaleType
 
         octaveIdx =
             pitchIdx // notesInScale
@@ -102,7 +185,7 @@ pitchIdxToNoteName pitchIdx model =
             modBy 12 (rootOffset + semitone)
 
         noteName =
-            Maybe.withDefault "?" (List.drop chromaticIndex Scale.chromaticNoteNames |> List.head)
+            Maybe.withDefault "?" (List.drop chromaticIndex chromaticNoteNames |> List.head)
     in
     if octaveIdx < model.octaveRange.count then
         noteName ++ String.fromInt octave
@@ -233,8 +316,8 @@ type alias Model =
 
 init : Flags -> ( Model, Cmd Msg )
 init _ =
-    ( { scaleType = Scale.Major
-      , rootNote = Scale.C
+    ( { scaleType = Major
+      , rootNote = C
       , octaveRange = { start = 3, count = 3 }
       , totalSteps = 32
       , pitchGrid = Set.empty
@@ -1196,11 +1279,11 @@ viewScaleTypeSelector : ScaleType -> Html Msg
 viewScaleTypeSelector currentScale =
     H.select
         [ class "bg-gray-700 text-white text-sm border border-gray-600 rounded px-2 py-1 cursor-pointer hover:bg-gray-600 transition-colors"
-        , HE.onInput (Scale.parseScaleType >> Maybe.withDefault Scale.Major >> ChangeScaleType)
+        , HE.onInput (parseScaleType >> Maybe.withDefault Major >> ChangeScaleType)
         ]
-        [ H.option [ HA.value "Major", HA.selected (currentScale == Scale.Major) ] [ text "Major" ]
-        , H.option [ HA.value "Pentatonic", HA.selected (currentScale == Scale.Pentatonic) ] [ text "Pentatonic" ]
-        , H.option [ HA.value "Chromatic", HA.selected (currentScale == Scale.Chromatic) ] [ text "Chromatic" ]
+        [ H.option [ HA.value "Major", HA.selected (currentScale == Major) ] [ text "Major" ]
+        , H.option [ HA.value "Pentatonic", HA.selected (currentScale == Pentatonic) ] [ text "Pentatonic" ]
+        , H.option [ HA.value "Chromatic", HA.selected (currentScale == Chromatic) ] [ text "Chromatic" ]
         ]
 
 
@@ -1208,18 +1291,18 @@ viewRootNoteSelector : RootNote -> Html Msg
 viewRootNoteSelector currentRoot =
     H.select
         [ class "bg-gray-700 text-white text-sm border border-gray-600 rounded px-2 py-1 cursor-pointer hover:bg-gray-600 transition-colors"
-        , HE.onInput (Scale.parseRootNote >> Maybe.withDefault Scale.C >> ChangeRootNote)
+        , HE.onInput (parseRootNote >> Maybe.withDefault C >> ChangeRootNote)
         ]
-        (List.map (viewRootNoteOption currentRoot) Scale.allRootNotes)
+        (List.map (viewRootNoteOption currentRoot) allRootNotes)
 
 
 viewRootNoteOption : RootNote -> RootNote -> Html Msg
 viewRootNoteOption currentRoot rootNote =
     H.option
-        [ HA.value (Scale.rootNoteToString rootNote)
+        [ HA.value (rootNoteToString rootNote)
         , HA.selected (currentRoot == rootNote)
         ]
-        [ text (Scale.rootNoteToString rootNote) ]
+        [ text (rootNoteToString rootNote) ]
 
 
 viewOctaveStartInput : Int -> Html Msg
@@ -1253,6 +1336,110 @@ viewBPMInput currentBPM =
         , HE.onInput (String.toInt >> Maybe.withDefault 120 >> ChangeBPM)
         ]
         []
+
+
+allRootNotes : List RootNote
+allRootNotes =
+    [ C, CSharp, D, DSharp, E, F, FSharp, G, GSharp, A, ASharp, B ]
+
+
+rootNoteToString : RootNote -> String
+rootNoteToString rootNote =
+    case rootNote of
+        C ->
+            "C"
+
+        CSharp ->
+            "C#"
+
+        D ->
+            "D"
+
+        DSharp ->
+            "D#"
+
+        E ->
+            "E"
+
+        F ->
+            "F"
+
+        FSharp ->
+            "F#"
+
+        G ->
+            "G"
+
+        GSharp ->
+            "G#"
+
+        A ->
+            "A"
+
+        ASharp ->
+            "A#"
+
+        B ->
+            "B"
+
+
+parseScaleType : String -> Maybe ScaleType
+parseScaleType str =
+    case str of
+        "Major" ->
+            Just Major
+
+        "Pentatonic" ->
+            Just Pentatonic
+
+        "Chromatic" ->
+            Just Chromatic
+
+        _ ->
+            Nothing
+
+
+parseRootNote : String -> Maybe RootNote
+parseRootNote str =
+    case str of
+        "C" ->
+            Just C
+
+        "C#" ->
+            Just CSharp
+
+        "D" ->
+            Just D
+
+        "D#" ->
+            Just DSharp
+
+        "E" ->
+            Just E
+
+        "F" ->
+            Just F
+
+        "F#" ->
+            Just FSharp
+
+        "G" ->
+            Just G
+
+        "G#" ->
+            Just GSharp
+
+        "A" ->
+            Just A
+
+        "A#" ->
+            Just ASharp
+
+        "B" ->
+            Just B
+
+        _ ->
+            Nothing
 
 
 viewPitchInstrumentSelector : PitchInstrument -> Html Msg
