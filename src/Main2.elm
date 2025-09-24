@@ -4,6 +4,7 @@ import Browser
 import Html as H exposing (Html, div, text)
 import Html.Attributes as HA exposing (class, style)
 import Html.Events as HE
+import Instrument exposing (DrumKit, PercType, PitchInstrument)
 import Scale exposing (RootNote, ScaleType)
 import Set exposing (Set)
 
@@ -111,38 +112,6 @@ pitchIdxToNoteName pitchIdx model =
         "C4"
 
 
-pitchInstrumentName : PitchInstrument -> String
-pitchInstrumentName instrument =
-    case instrument of
-        Piano ->
-            "_tone_0250_SoundBlasterOld_sf2"
-
-        Marimba ->
-            "_tone_0110_SBLive_sf2"
-
-
-drumKitConfig : DrumKit -> { kickInstrument : String, kickMidi : Int, snareInstrument : String, snareMidi : Int }
-drumKitConfig kit =
-    case kit of
-        StandardKit ->
-            { kickInstrument = "_drum_36_0_SBLive_sf2"
-            , kickMidi = 36
-            , snareInstrument = "_drum_38_0_SBLive_sf2"
-            , snareMidi = 38
-            }
-
-        RockKit ->
-            { kickInstrument = "_drum_36_0_SBLive_sf2"
-            , kickMidi = 36
-            , snareInstrument = "_drum_38_0_SBLive_sf2"
-            , snareMidi = 38
-            }
-
-
-
--- Standard snare perc MIDI note
-
-
 type alias Flags =
     {}
 
@@ -167,21 +136,6 @@ type alias PitchPos =
 
 type alias PitchGrid =
     Set ( Int, Int )
-
-
-type PitchInstrument
-    = Piano
-    | Marimba
-
-
-type DrumKit
-    = StandardKit
-    | RockKit
-
-
-type PercType
-    = Kick
-    | Snare
 
 
 type alias PercPos =
@@ -243,8 +197,8 @@ init _ =
       , playState = Stopped
       , audioContextTime = 0.0
       , bpm = 120
-      , currentPitchInstrument = Piano
-      , currentDrumKit = StandardKit
+      , currentPitchInstrument = Instrument.Piano
+      , currentDrumKit = Instrument.StandardKit
       }
         |> applySong twinkleSong
     , Cmd.none
@@ -576,8 +530,8 @@ viewGrid model =
         ([ {- Empty corner cell -} div [ class labelBgColorAndClass, class "border-b border-gray-600" ] [] ]
             ++ {- Step Labels row -} times (\stepIdx -> viewStepLabel currentStep stepIdx) model.totalSteps
             ++ {- Pitch rows -} (times (\pitchIdx -> viewPitchRow model model.pitchGrid currentStep pitchIdx) (getTotalPitches model) |> List.concat)
-            ++ {- Perc Snare row -} viewPercRow Snare model.totalSteps model.percGrid currentStep
-            ++ {- Perc Kick row -} viewPercRow Kick model.totalSteps model.percGrid currentStep
+            ++ {- Perc Snare row -} viewPercRow Instrument.Snare model.totalSteps model.percGrid currentStep
+            ++ {- Perc Kick row -} viewPercRow Instrument.Kick model.totalSteps model.percGrid currentStep
         )
 
 
@@ -649,18 +603,18 @@ viewPercRow percType totalSteps percGrid currentStep =
     let
         percTypeName =
             case percType of
-                Snare ->
+                Instrument.Snare ->
                     "Snare"
 
-                Kick ->
+                Instrument.Kick ->
                     "Kick"
 
         stickyClass =
             case percType of
-                Snare ->
+                Instrument.Snare ->
                     "sticky bottom-12 h-12 z-10 border-t-3"
 
-                Kick ->
+                Instrument.Kick ->
                     "sticky bottom-0 h-12 z-10"
     in
     div [ class labelBgColorAndClass, class stickyClass ] [ text percTypeName ]
@@ -684,10 +638,10 @@ viewPercCell percType percGrid currentStep stepIdx =
 
         stickyClass =
             case percType of
-                Snare ->
+                Instrument.Snare ->
                     "sticky bottom-12 h-12 z-10  border-t-3"
 
-                Kick ->
+                Instrument.Kick ->
                     "sticky bottom-0 h-12 z-10"
 
         cellClass =
@@ -727,10 +681,10 @@ footerView =
 toPercRowIdx : PercType -> Int
 toPercRowIdx percType =
     case percType of
-        Snare ->
+        Instrument.Snare ->
             0
 
-        Kick ->
+        Instrument.Kick ->
             1
 
 
@@ -780,7 +734,7 @@ getActiveNotesForStep stepIdx model =
                     in
                     if isPitchCellActive position model.pitchGrid then
                         Just
-                            { instrument = pitchInstrumentName model.currentPitchInstrument
+                            { instrument = Instrument.pitchInstrumentName model.currentPitchInstrument
                             , midi = pitchIdxToMidi pitchIdx model
                             , duration = duration
                             , volume = 0.7
@@ -793,10 +747,10 @@ getActiveNotesForStep stepIdx model =
                 |> List.filterMap identity
 
         drumConfig =
-            drumKitConfig model.currentDrumKit
+            Instrument.drumKitConfig model.currentDrumKit
 
         percNotes =
-            [ Kick, Snare ]
+            [ Instrument.Kick, Instrument.Snare ]
                 |> List.filterMap
                     (\percType ->
                         let
@@ -805,10 +759,10 @@ getActiveNotesForStep stepIdx model =
 
                             ( instrumentName, midiNote ) =
                                 case percType of
-                                    Kick ->
+                                    Instrument.Kick ->
                                         ( drumConfig.kickInstrument, drumConfig.kickMidi )
 
-                                    Snare ->
+                                    Instrument.Snare ->
                                         ( drumConfig.snareInstrument, drumConfig.snareMidi )
                         in
                         if isPercCellActive position model.percGrid then
@@ -834,7 +788,7 @@ playPitchCmdIf : Bool -> Int -> Model -> Cmd Msg
 playPitchCmdIf shouldPlay pitchIdx model =
     if shouldPlay then
         playNote
-            { instrument = pitchInstrumentName model.currentPitchInstrument
+            { instrument = Instrument.pitchInstrumentName model.currentPitchInstrument
             , midi = pitchIdxToMidi pitchIdx model
             , duration = 0.5
             , volume = 0.7
@@ -849,14 +803,14 @@ playPercCmdIf shouldPlay percType model =
     if shouldPlay then
         let
             drumConfig =
-                drumKitConfig model.currentDrumKit
+                Instrument.drumKitConfig model.currentDrumKit
 
             ( instrumentName, midiNote ) =
                 case percType of
-                    Kick ->
+                    Instrument.Kick ->
                         ( drumConfig.kickInstrument, drumConfig.kickMidi )
 
-                    Snare ->
+                    Instrument.Snare ->
                         ( drumConfig.snareInstrument, drumConfig.snareMidi )
         in
         playNote
@@ -941,21 +895,21 @@ twinkleSong =
             ++ [ [ "C4", "C3", "E4" ], [], [], [] ]
     , percussion =
         -- "Twinkle twinkle little star"
-        [ [ Kick ], [], [ Snare ], [] ]
+        [ [ Instrument.Kick ], [], [ Instrument.Snare ], [] ]
             -- "how I wonder what"
-            ++ [ [ Kick ], [], [ Snare ], [] ]
+            ++ [ [ Instrument.Kick ], [], [ Instrument.Snare ], [] ]
             -- "what you are so"
-            ++ [ [ Kick ], [], [ Snare ], [] ]
+            ++ [ [ Instrument.Kick ], [], [ Instrument.Snare ], [] ]
             -- "far above the world"
-            ++ [ [ Kick ], [], [ Snare ], [] ]
+            ++ [ [ Instrument.Kick ], [], [ Instrument.Snare ], [] ]
             -- "Up above the world"
-            ++ [ [ Kick ], [], [ Snare ], [] ]
+            ++ [ [ Instrument.Kick ], [], [ Instrument.Snare ], [] ]
             -- "so high like a"
-            ++ [ [ Kick ], [], [ Snare ], [] ]
+            ++ [ [ Instrument.Kick ], [], [ Instrument.Snare ], [] ]
             -- "diamond in the"
-            ++ [ [ Kick ], [], [ Snare ], [] ]
+            ++ [ [ Instrument.Kick ], [], [ Instrument.Snare ], [] ]
             -- "sky (end)"
-            ++ [ [ Kick ], [], [ Snare ], [] ]
+            ++ [ [ Instrument.Kick ], [], [ Instrument.Snare ], [] ]
     , totalSteps = 32
     , bpm = 180
     , octaveRange = { start = 3, count = 3 }
@@ -1113,11 +1067,11 @@ viewPercSymbol : Bool -> PercType -> Html Msg
 viewPercSymbol isActive percType =
     if isActive then
         case percType of
-            Kick ->
+            Instrument.Kick ->
                 -- Circle symbol
                 div [ class "w-6 h-6 rounded-full", class accentBgColor ] []
 
-            Snare ->
+            Instrument.Snare ->
                 -- Triangle symbol
                 div [ class "w-6 h-6", class accentBgColor, style "clip-path" "polygon(50% 0%, 0% 100%, 100% 100%)" ] []
 
@@ -1259,95 +1213,40 @@ viewPitchInstrumentSelector : PitchInstrument -> Html Msg
 viewPitchInstrumentSelector currentInstrument =
     H.select
         [ class "bg-gray-700 text-white text-sm border border-gray-600 rounded px-2 py-1 cursor-pointer hover:bg-gray-600 transition-colors"
-        , HE.onInput (parsePitchInstrument >> ChangePitchInstrument)
+        , HE.onInput (Instrument.parsePitchInstrument >> ChangePitchInstrument)
         ]
-        (List.map (viewPitchInstrumentOption currentInstrument) allPitchInstruments)
+        (List.map (viewPitchInstrumentOption currentInstrument) Instrument.allPitchInstruments)
 
 
 viewDrumKitSelector : DrumKit -> Html Msg
 viewDrumKitSelector currentDrumKit =
     H.select
         [ class "bg-gray-700 text-white text-sm border border-gray-600 rounded px-2 py-1 cursor-pointer hover:bg-gray-600 transition-colors"
-        , HE.onInput (parseDrumKit >> ChangeDrumKit)
+        , HE.onInput (Instrument.parseDrumKit >> ChangeDrumKit)
         ]
-        (List.map (viewDrumKitOption currentDrumKit) allDrumKits)
+        (List.map (viewDrumKitOption currentDrumKit) Instrument.allDrumKits)
 
 
 viewPitchInstrumentOption : PitchInstrument -> PitchInstrument -> Html Msg
 viewPitchInstrumentOption currentInstrument instrument =
     H.option
-        [ HA.value (pitchInstrumentToString instrument)
+        [ HA.value (Instrument.pitchInstrumentToString instrument)
         , HA.selected (currentInstrument == instrument)
         ]
-        [ text (pitchInstrumentToString instrument) ]
+        [ text (Instrument.pitchInstrumentToString instrument) ]
 
 
 viewDrumKitOption : DrumKit -> DrumKit -> Html Msg
 viewDrumKitOption currentDrumKit drumKit =
     H.option
-        [ HA.value (drumKitToString drumKit)
+        [ HA.value (Instrument.drumKitToString drumKit)
         , HA.selected (currentDrumKit == drumKit)
         ]
-        [ text (drumKitToString drumKit) ]
-
-
-allPitchInstruments : List PitchInstrument
-allPitchInstruments =
-    [ Piano, Marimba ]
-
-
-allDrumKits : List DrumKit
-allDrumKits =
-    [ StandardKit, RockKit ]
-
-
-pitchInstrumentToString : PitchInstrument -> String
-pitchInstrumentToString instrument =
-    case instrument of
-        Piano ->
-            "Piano"
-
-        Marimba ->
-            "Marimba"
-
-
-drumKitToString : DrumKit -> String
-drumKitToString drumKit =
-    case drumKit of
-        StandardKit ->
-            "Standard"
-
-        RockKit ->
-            "Rock"
-
-
-parsePitchInstrument : String -> PitchInstrument
-parsePitchInstrument str =
-    case str of
-        "Piano" ->
-            Piano
-
-        "Marimba" ->
-            Marimba
-
-        _ ->
-            Piano
-
-
-parseDrumKit : String -> DrumKit
-parseDrumKit str =
-    case str of
-        "Standard" ->
-            StandardKit
-
-        "Rock" ->
-            RockKit
-
-        _ ->
-            StandardKit
+        [ text (Instrument.drumKitToString drumKit) ]
 
 
 
+--
 -- BASIC VIEW UTILS
 
 
