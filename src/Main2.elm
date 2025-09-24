@@ -646,7 +646,7 @@ viewGrid model =
         ]
         ([ {- Empty corner cell -} div [ class labelBgColorAndClass, class "border-b border-gray-600" ] [] ]
             ++ {- Step Labels row -} times (\stepIdx -> viewStepLabel currentStep stepIdx) model.totalSteps
-            ++ {- Pitch rows -} (times (\pitchIdx -> viewPitchRow model model.totalSteps model.pitchGrid currentStep pitchIdx) (getTotalPitches model) |> List.concat)
+            ++ {- Pitch rows -} (times (\pitchIdx -> viewPitchRow model model.pitchGrid currentStep pitchIdx) (getTotalPitches model) |> List.concat)
             ++ {- Perc Snare row -} viewPercRow Snare model.totalSteps model.percGrid currentStep
             ++ {- Perc Kick row -} viewPercRow Kick model.totalSteps model.percGrid currentStep
         )
@@ -656,12 +656,7 @@ viewStepLabel : Maybe Int -> Int -> Html Msg
 viewStepLabel currentStep stepIdx =
     let
         isCurrentStep =
-            case currentStep of
-                Just current ->
-                    current == stepIdx
-
-                Nothing ->
-                    False
+            currentStep == Just stepIdx
 
         bgClass =
             if isCurrentStep then
@@ -675,15 +670,16 @@ viewStepLabel currentStep stepIdx =
         [ text (String.fromInt (stepIdx + 1)) ]
 
 
-viewPitchRow : Model -> Int -> PitchGrid -> Maybe Int -> Int -> List (Html Msg)
-viewPitchRow model stepCount pitchGrid currentStep pitchIdx =
+viewPitchRow : Model -> PitchGrid -> Maybe Int -> Int -> List (Html Msg)
+viewPitchRow model pitchGrid currentStep pitchIdx =
     let
         viewPitchLabel =
             div
                 [ class labelBgColorAndClass ]
                 [ text (pitchIdxToNoteName pitchIdx model) ]
     in
-    viewPitchLabel :: times (\stepIdx -> viewPitchCell pitchIdx pitchGrid currentStep stepIdx) stepCount
+    -- TODO: Should we fix function parameters?
+    viewPitchLabel :: times (\stepIdx -> viewPitchCell pitchIdx pitchGrid currentStep stepIdx) model.totalSteps
 
 
 viewPitchCell : Int -> PitchGrid -> Maybe Int -> Int -> Html Msg
@@ -696,13 +692,9 @@ viewPitchCell pitchIdx pitchGrid currentStep stepIdx =
             isPitchCellActive position pitchGrid
 
         isCurrentStep =
-            case currentStep of
-                Just current ->
-                    current == stepIdx
+            currentStep == Just stepIdx
 
-                Nothing ->
-                    False
-
+        -- TODO: try refactor
         noteClass =
             if isActive then
                 pitchCellColor pitchIdx
@@ -762,12 +754,7 @@ viewPercCell percType percGrid currentStep stepIdx =
             isPercCellActive position percGrid
 
         isCurrentStep =
-            case currentStep of
-                Just current ->
-                    current == stepIdx
-
-                Nothing ->
-                    False
+            currentStep == Just stepIdx
 
         symbol =
             viewPercSymbol isActive percType
@@ -780,6 +767,7 @@ viewPercCell percType percGrid currentStep stepIdx =
                 Kick ->
                     "sticky bottom-0 h-12 z-10"
 
+        -- TODO: check and remove class concatenation issue
         cellClass =
             if isCurrentStep then
                 "bg-gray-700 hover:bg-gray-600 ring-2 ring-white " ++ stickyClass
@@ -1199,6 +1187,8 @@ viewPercSymbol isActive percType =
         div [ class "w-1.5 h-1.5 bg-gray-500 rounded-full" ] []
 
 
+{-| TODO: why mod 7 and how it works
+-}
 pitchCellColor : Int -> String
 pitchCellColor pitchIdx =
     case modBy 7 pitchIdx of
