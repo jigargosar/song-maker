@@ -630,11 +630,6 @@ centerView model =
     div [ class "flex-1 overflow-auto" ] [ viewGrid model ]
 
 
-format : String -> List ( String, String ) -> String
-format templateString replacements =
-    List.foldr (\( a, b ) -> String.replace a b) templateString replacements
-
-
 viewGrid : Model -> Html Msg
 viewGrid model =
     let
@@ -806,14 +801,6 @@ footerView =
             , div [] [ text "V2 - Clean Architecture" ]
             ]
         ]
-
-
-
--- Basic Helpers
-
-
-times fn i =
-    List.range 0 (i - 1) |> List.map fn
 
 
 
@@ -1261,14 +1248,6 @@ pitchCellColor pitchIdx =
             "bg-[oklch(60%_0.02_0)] hover:bg-[oklch(64%_0.05_0)] transition-colors"
 
 
-
--- Fallback
-
-
-px f =
-    String.fromFloat f ++ "px"
-
-
 viewScaleControls : Model -> Html Msg
 viewScaleControls model =
     div [ class "flex items-center gap-4" ]
@@ -1553,3 +1532,25 @@ parseDrumKit str =
 
         _ ->
             StandardKit
+
+
+
+-- BASIC VIEW UTILS
+
+
+px : Float -> String
+px f =
+    String.fromFloat f ++ "px"
+
+
+
+-- BASIC UTILS
+
+
+format : String -> List ( String, String ) -> String
+format templateString replacements =
+    List.foldr (\( a, b ) -> String.replace a b) templateString replacements
+
+
+times fn i =
+    List.range 0 (i - 1) |> List.map fn
