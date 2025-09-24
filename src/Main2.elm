@@ -668,7 +668,7 @@ viewStepHeader currentStep stepIdx =
                 accentBgColor
 
             else
-                ""
+                labelBgColor
     in
     div
         [ class labelClass, class headerBgClass, class "border-b border-gray-600" ]
@@ -721,7 +721,7 @@ viewPitchCell pitchIdx pitchGrid currentStep stepIdx =
     in
     div
         [ class noteClass
-        , class "border-r border-b border-gray-600 cursor-pointer"
+        , class "border-r border-b border-gray-600 cursor-pointer "
         , HE.onMouseDown (StartDrawingPitch position)
         , HE.onMouseEnter (ContinueDrawingPitch position)
         , HE.onMouseUp StopDrawing
@@ -782,13 +782,14 @@ viewPercCell percType percGrid currentStep stepIdx =
 
         cellClass =
             if isCurrentStep then
-                "bg-gray-700 hover:bg-gray-600 border-r border-b border-gray-600 cursor-pointer transition-colors flex items-center justify-center ring-2 ring-white " ++ stickyClass
+                "bg-gray-700 hover:bg-gray-600 ring-2 ring-white " ++ stickyClass
 
             else
-                "bg-gray-800 hover:bg-gray-700 border-r border-b border-gray-600 cursor-pointer transition-colors flex items-center justify-center " ++ stickyClass
+                "bg-gray-800 hover:bg-gray-700 " ++ stickyClass
     in
     div
-        [ class cellClass
+        [ class "border-r border-b border-gray-600 cursor-pointer  flex items-center justify-center"
+        , class cellClass
         , HE.onMouseDown (StartDrawingPerc position)
         , HE.onMouseEnter (ContinueDrawingPerc position)
         , HE.onMouseUp StopDrawing
