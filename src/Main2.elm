@@ -644,7 +644,7 @@ viewGrid model =
         , style "grid-template-columns" gridTemplateCols
         , style "grid-template-rows" gridTemplateRows
         ]
-        ([ {- Empty corner cell -} div [ class labelClass, class "border-b border-gray-600" ] [] ]
+        ([ {- Empty corner cell -} div [ class labelAndBgClass, class "border-b border-gray-600" ] [] ]
             ++ {- Step headers row -} times (\stepIdx -> viewStepHeader currentStep stepIdx) model.totalSteps
             ++ {- Pitch rows -} (times (\pitchIdx -> viewPitchRow model model.totalSteps model.pitchGrid currentStep pitchIdx) (getTotalPitches model) |> List.concat)
             ++ {- Perc Snare row -} viewPercRow Snare model.totalSteps model.percGrid currentStep
@@ -663,15 +663,15 @@ viewStepHeader currentStep stepIdx =
                 Nothing ->
                     False
 
-        headerClass =
+        headerBgClass =
             if isCurrentStep then
-                labelClass ++ " " ++ accentBgColor
+                accentBgColor
 
             else
-                labelClass
+                ""
     in
     div
-        [ class headerClass, class "border-b border-gray-600" ]
+        [ class labelClass, class headerBgClass, class "border-b border-gray-600" ]
         [ text (String.fromInt (stepIdx + 1)) ]
 
 
@@ -680,7 +680,7 @@ viewPitchRow model stepCount pitchGrid currentStep pitchIdx =
     let
         viewPitchLabel =
             div
-                [ class labelClass ]
+                [ class labelAndBgClass ]
                 [ text (pitchIdxToNoteName pitchIdx model) ]
     in
     viewPitchLabel :: times (\stepIdx -> viewPitchCell pitchIdx pitchGrid currentStep stepIdx) stepCount
@@ -748,7 +748,7 @@ viewPercRow percType totalSteps percGrid currentStep =
                 Kick ->
                     "sticky bottom-0 h-12 z-10"
     in
-    div [ class labelClass, class stickyClass ] [ text percTypeName ]
+    div [ class labelAndBgClass, class stickyClass ] [ text percTypeName ]
         :: times (\stepIdx -> viewPercCell percType percGrid currentStep stepIdx) totalSteps
 
 
@@ -1145,9 +1145,17 @@ accentBgColorWithHover =
     accentBgColor ++ " " ++ accentBgColorHover
 
 
+labelAndBgClass =
+    labelClass ++ " " ++ labelBgColor
+
+
 labelClass : String
 labelClass =
-    "bg-gray-900 border-r border-gray-600 flex items-center justify-center text-xs font-bold text-white"
+    "border-r border-gray-600 flex items-center justify-center text-xs font-bold text-white"
+
+
+labelBgColor =
+    "bg-gray-900"
 
 
 
