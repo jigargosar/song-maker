@@ -1752,3 +1752,54 @@ times fn i =
      - **Instruments.elm**: Sound source definitions and instrument-related functions
 
 -}
+
+
+{- TODO: Simplify SequenceConfig to Single Steps Input
+
+   ## Current Problem
+
+   The current SequenceConfig with bars/beatsPerBar/subdivisions is overcomplicated:
+   - Users need to understand musical theory concepts
+   - Three inputs (bars, beats, subdivisions) for what should be simple
+   - Mental overhead of calculating total steps from these values
+
+   ## Proposed Simplification
+
+   Replace the current SequenceConfig UI with a single "Steps" input:
+
+   ```elm
+   -- Keep internal model the same for future extensibility
+   type alias SequenceConfig =
+       { bars : Int, beatsPerBar : Int, subdivisions : Int }
+
+   -- But show user just one input
+   viewStepsInput : Int -> Html Msg  -- Shows getTotalSteps model
+
+   -- Handle conversion internally
+   ChangeSteps newSteps ->
+       let
+           newConfig = { bars = 1, beatsPerBar = 1, subdivisions = newSteps }
+       in
+       { model | sequenceConfig = newConfig }
+   ```
+
+   ## Benefits
+
+   - **Much simpler UI**: One input instead of three
+   - **User-friendly**: Just "how many steps do you want?"
+   - **No constraints**: Any step count (7, 13, 37, 128, etc.)
+   - **No musical theory required**: Users don't need to understand bars/beats
+   - **Flexible**: 16, 32, 48, 64, 128 steps - whatever they need
+   - **Future-proof**: Internal structure preserved for advanced features later
+
+   ## Implementation
+
+   1. Replace viewSequenceControls with single viewStepsInput
+   2. Add ChangeSteps message handler
+   3. Remove ChangeBars, ChangeBeatsPerBar, ChangeSubdivisions
+   4. Keep SequenceConfig type for internal consistency
+   5. Test with various step counts
+
+   This gives maximum user flexibility with minimum UI complexity.
+
+-}
