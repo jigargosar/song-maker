@@ -198,7 +198,6 @@ pitchInstrumentName : PitchInstrument -> String
 pitchInstrumentName instrument =
     case instrument of
         Piano ->
-            --"_tone_0250_SoundBlasterOld_sf2"
             "_tone_0000_SBLive_sf2"
 
         MarimbaSB ->
