@@ -3,11 +3,14 @@ module Instruments exposing
     , PercType(..)
     , TonalInstrument(..)
     , allDrumKits
+    , allPercTypes
     , allTonal
     , drumKitConfig
     , drumKitLabel
     , parseDrumKit
     , parseTonal
+    , percLabel
+    , percRowIdx
     , tonalJsVarName
     , tonalLabel
     )
@@ -110,3 +113,28 @@ parseDrumKit str =
 
         _ ->
             StandardKit
+
+
+allPercTypes : List PercType
+allPercTypes =
+    [ Kick, Snare ]
+
+
+percLabel : PercType -> String
+percLabel percType =
+    case percType of
+        Kick ->
+            "Kick"
+
+        Snare ->
+            "Snare"
+
+
+percRowIdx : PercType -> Int
+percRowIdx percType =
+    case percType of
+        Snare ->
+            0
+
+        Kick ->
+            1

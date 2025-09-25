@@ -689,12 +689,7 @@ viewPercRow : PercType -> Int -> PercGrid -> Maybe Int -> List (Html Msg)
 viewPercRow percType totalSteps percGrid currentStep =
     let
         percTypeName =
-            case percType of
-                Instruments.Snare ->
-                    "Snare"
-
-                Instruments.Kick ->
-                    "Kick"
+            Instruments.percLabel percType
 
         stickyClass =
             case percType of
@@ -765,19 +760,11 @@ footerView =
 -- Conversion Functions
 
 
-toPercRowIdx : PercType -> Int
-toPercRowIdx percType =
-    case percType of
-        Instruments.Snare ->
-            0
-
-        Instruments.Kick ->
-            1
 
 
 percPositionToTuple : PercPos -> ( Int, Int )
 percPositionToTuple { percType, stepIdx } =
-    ( toPercRowIdx percType, stepIdx )
+    ( Instruments.percRowIdx percType, stepIdx )
 
 
 
@@ -837,7 +824,7 @@ getActiveNotesForStep stepIdx model =
             Instruments.drumKitConfig model.currentDrumKit
 
         percNotes =
-            [ Instruments.Kick, Instruments.Snare ]
+            Instruments.allPercTypes
                 |> List.filterMap
                     (\percType ->
                         let
@@ -1058,7 +1045,7 @@ convertPercussionToGrid stepPercussion =
             (\stepIdx percTypes ->
                 List.map
                     (\percType ->
-                        ( toPercRowIdx percType, stepIdx )
+                        ( Instruments.percRowIdx percType, stepIdx )
                     )
                     percTypes
             )
