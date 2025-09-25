@@ -118,13 +118,13 @@ notesPerOctave scaleType =
     List.length (getScalePattern scaleType)
 
 
-getTotalTonees : Model -> Int
-getTotalTonees model =
+getTotalPitches : Model -> Int
+getTotalPitches model =
     notesPerOctave model.scaleType * model.octaveRange.count
 
 
-toneIdxToMidi : Int -> Model -> Int
-toneIdxToMidi toneIdx model =
+pitchIdxToMidi : Int -> Model -> Int
+pitchIdxToMidi pitchIdx model =
     let
         scalePattern =
             getScalePattern model.scaleType
@@ -136,10 +136,10 @@ toneIdxToMidi toneIdx model =
             notesPerOctave model.scaleType
 
         octaveIdx =
-            toneIdx // notesInScale
+            pitchIdx // notesInScale
 
         noteIdx =
-            modBy notesInScale toneIdx
+            modBy notesInScale pitchIdx
 
         octave =
             model.octaveRange.start + octaveIdx
@@ -157,8 +157,8 @@ toneIdxToMidi toneIdx model =
         midiC4
 
 
-toneIdxToNoteName : Int -> Model -> String
-toneIdxToNoteName toneIdx model =
+pitchIdxToNoteName : Int -> Model -> String
+pitchIdxToNoteName pitchIdx model =
     let
         scalePattern =
             getScalePattern model.scaleType
@@ -170,10 +170,10 @@ toneIdxToNoteName toneIdx model =
             notesPerOctave model.scaleType
 
         octaveIdx =
-            toneIdx // notesInScale
+            pitchIdx // notesInScale
 
         noteIdx =
-            modBy notesInScale toneIdx
+            modBy notesInScale pitchIdx
 
         octave =
             model.octaveRange.start + octaveIdx
@@ -194,8 +194,8 @@ toneIdxToNoteName toneIdx model =
         "C4"
 
 
-toneInstrumentName : ToneInstrument -> String
-toneInstrumentName instrument =
+toneName : Tone -> String
+toneName instrument =
     case instrument of
         GrandPianoSBLive ->
             "_tone_0000_SBLive_sf2"
@@ -244,15 +244,15 @@ main =
 -- Model
 
 
-type alias TonePos =
-    { toneIdx : Int, stepIdx : Int }
+type alias PitchPos =
+    { pitchIdx : Int, stepIdx : Int }
 
 
-type alias ToneGrid =
+type alias PitchGrid =
     Set ( Int, Int )
 
 
-type ToneInstrument
+type Tone
     = GrandPianoSBLive
     | MarimbaSBLLive
 
@@ -283,8 +283,8 @@ type PlayState
 
 type DrawState
     = NotDrawing
-    | DrawingTone
-    | ErasingTone
+    | DrawingPitch
+    | ErasingPitch
     | DrawingPerc
     | ErasingPerc
 
@@ -303,13 +303,13 @@ type alias Model =
     , rootNote : RootNote
     , octaveRange : { start : Int, count : Int }
     , totalSteps : Int
-    , toneGrid : ToneGrid
+    , pitchGrid : PitchGrid
     , percGrid : PercGrid
     , drawState : DrawState
     , playState : PlayState
     , audioContextTime : Float
     , bpm : Int
-    , currentToneInstrument : ToneInstrument
+    , currentTone : Tone
     , currentDrumKit : DrumKit
     }
 
@@ -320,13 +320,13 @@ init _ =
       , rootNote = C
       , octaveRange = { start = 3, count = 3 }
       , totalSteps = 32
-      , toneGrid = Set.empty
+      , pitchGrid = Set.empty
       , percGrid = Set.empty
       , drawState = NotDrawing
       , playState = Stopped
       , audioContextTime = 0.0
       , bpm = 120
-      , currentToneInstrument = GrandPianoSBLive
+      , currentTone = GrandPianoSBLive
       , currentDrumKit = StandardKit
       }
         |> applySong twinkleSong
@@ -340,12 +340,12 @@ init _ =
 
 type Msg
     = NoOp
-    | StartDrawingTone TonePos
-    | ContinueDrawingTone TonePos
+    | StartDrawingPitch PitchPos
+    | ContinueDrawingPitch PitchPos
     | StopDrawing
     | StartDrawingPerc PercPos
     | ContinueDrawingPerc PercPos
-    | PlayToneNote Int
+    | PlayPitchNote Int
     | PlayPercNote PercType
     | Play
     | Stop
@@ -355,7 +355,7 @@ type Msg
     | ChangeOctaveStart Int
     | ChangeOctaveCount Int
     | ChangeBPM Int
-    | ChangeToneInstrument ToneInstrument
+    | ChangeTone Tone
     | ChangeDrumKit DrumKit
 
 
@@ -370,39 +370,39 @@ update msg model =
         NoOp ->
             ( model, Cmd.none )
 
-        StartDrawingTone position ->
+        StartDrawingPitch position ->
             case model.drawState of
                 NotDrawing ->
                     let
                         currentlyActive =
-                            isToneCellActive position model.toneGrid
+                            isPitchCellActive position model.pitchGrid
 
                         newDrawState =
                             if currentlyActive then
-                                ErasingTone
+                                ErasingPitch
 
                             else
-                                DrawingTone
+                                DrawingPitch
                     in
                     ( { model
                         | drawState = newDrawState
-                        , toneGrid = updateToneCell position (not currentlyActive) model.toneGrid
+                        , pitchGrid = updatePitchCell position (not currentlyActive) model.pitchGrid
                       }
-                    , playToneCmdIf (not currentlyActive) position.toneIdx model
+                    , playPitchCmdIf (not currentlyActive) position.pitchIdx model
                     )
 
                 _ ->
                     ( model, Cmd.none )
 
-        ContinueDrawingTone position ->
+        ContinueDrawingPitch position ->
             case model.drawState of
-                DrawingTone ->
-                    ( { model | toneGrid = updateToneCell position True model.toneGrid }
-                    , playToneCmdIf True position.toneIdx model
+                DrawingPitch ->
+                    ( { model | pitchGrid = updatePitchCell position True model.pitchGrid }
+                    , playPitchCmdIf True position.pitchIdx model
                     )
 
-                ErasingTone ->
-                    ( { model | toneGrid = updateToneCell position False model.toneGrid }, Cmd.none )
+                ErasingPitch ->
+                    ( { model | pitchGrid = updatePitchCell position False model.pitchGrid }, Cmd.none )
 
                 _ ->
                     ( model, Cmd.none )
@@ -447,8 +447,8 @@ update msg model =
                 _ ->
                     ( model, Cmd.none )
 
-        PlayToneNote toneIdx ->
-            ( model, playToneCmdIf True toneIdx model )
+        PlayPitchNote pitchIdx ->
+            ( model, playPitchCmdIf True pitchIdx model )
 
         PlayPercNote percType ->
             ( model, playPercCmdIf True percType model )
@@ -532,10 +532,10 @@ update msg model =
                 newModel =
                     { model | scaleType = newScaleType }
 
-                newToneGrid =
-                    resizeToneGrid model newModel model.toneGrid
+                newPitchGrid =
+                    resizePitchGrid model newModel model.pitchGrid
             in
-            ( { newModel | toneGrid = newToneGrid }
+            ( { newModel | pitchGrid = newPitchGrid }
             , Cmd.none
             )
 
@@ -544,10 +544,10 @@ update msg model =
                 newModel =
                     { model | rootNote = newRootNote }
 
-                newToneGrid =
-                    resizeToneGrid model newModel model.toneGrid
+                newPitchGrid =
+                    resizePitchGrid model newModel model.pitchGrid
             in
-            ( { newModel | toneGrid = newToneGrid }
+            ( { newModel | pitchGrid = newPitchGrid }
             , Cmd.none
             )
 
@@ -559,10 +559,10 @@ update msg model =
                 newModel =
                     { model | octaveRange = { start = clampedStart, count = model.octaveRange.count } }
 
-                newToneGrid =
-                    resizeToneGrid model newModel model.toneGrid
+                newPitchGrid =
+                    resizePitchGrid model newModel model.pitchGrid
             in
-            ( { newModel | toneGrid = newToneGrid }
+            ( { newModel | pitchGrid = newPitchGrid }
             , Cmd.none
             )
 
@@ -574,10 +574,10 @@ update msg model =
                 newModel =
                     { model | octaveRange = { start = model.octaveRange.start, count = clampedCount } }
 
-                newToneGrid =
-                    resizeToneGrid model newModel model.toneGrid
+                newPitchGrid =
+                    resizePitchGrid model newModel model.pitchGrid
             in
-            ( { newModel | toneGrid = newToneGrid }
+            ( { newModel | pitchGrid = newPitchGrid }
             , Cmd.none
             )
 
@@ -586,8 +586,8 @@ update msg model =
             , Cmd.none
             )
 
-        ChangeToneInstrument newInstrument ->
-            ( { model | currentToneInstrument = newInstrument }
+        ChangeTone newInstrument ->
+            ( { model | currentTone = newInstrument }
             , Cmd.none
             )
 
@@ -637,17 +637,17 @@ viewGrid model =
             getCurrentPlayingStep model
 
         gridTemplateCols =
-            format "minmax($toneLabelColMinWidth, auto) repeat($totalSteps, minmax($stepColMinWidth, 1fr))"
-                [ ( "$toneLabelColMinWidth", px 48 )
+            format "minmax($pitchLabelColMinWidth, auto) repeat($totalSteps, minmax($stepColMinWidth, 1fr))"
+                [ ( "$pitchLabelColMinWidth", px 48 )
                 , ( "$totalSteps", String.fromInt model.totalSteps )
                 , ( "$stepColMinWidth", px 48 )
                 ]
 
         gridTemplateRows =
-            format "minmax($stepLabelRowMinHeight, auto) repeat($totalTonees, minmax($toneRowMinHeight, 1fr)) repeat(2, $percRowHeight)"
+            format "minmax($stepLabelRowMinHeight, auto) repeat($totalPitches, minmax($pitchRowMinHeight, 1fr)) repeat(2, $percRowHeight)"
                 [ ( "$stepLabelRowMinHeight", px 32 )
-                , ( "$totalTonees", String.fromInt (getTotalTonees model) )
-                , ( "$toneRowMinHeight", px 32 )
+                , ( "$totalPitches", String.fromInt (getTotalPitches model) )
+                , ( "$pitchRowMinHeight", px 32 )
                 , ( "$percRowHeight", px 48 )
                 ]
     in
@@ -658,7 +658,7 @@ viewGrid model =
         ]
         ([ {- Empty corner cell -} div [ class labelBgColorAndClass, class "border-b border-gray-600" ] [] ]
             ++ {- Step Labels row -} times (\stepIdx -> viewStepLabel currentStep stepIdx) model.totalSteps
-            ++ {- Tone rows -} (times (\toneIdx -> viewToneRow model model.toneGrid currentStep toneIdx) (getTotalTonees model) |> List.concat)
+            ++ {- Pitch rows -} (times (\pitchIdx -> viewPitchRow model model.pitchGrid currentStep pitchIdx) (getTotalPitches model) |> List.concat)
             ++ {- Perc Snare row -} viewPercRow Snare model.totalSteps model.percGrid currentStep
             ++ {- Perc Kick row -} viewPercRow Kick model.totalSteps model.percGrid currentStep
         )
@@ -682,26 +682,26 @@ viewStepLabel currentStep stepIdx =
         [ text (String.fromInt (stepIdx + 1)) ]
 
 
-viewToneRow : Model -> ToneGrid -> Maybe Int -> Int -> List (Html Msg)
-viewToneRow model toneGrid currentStep toneIdx =
+viewPitchRow : Model -> PitchGrid -> Maybe Int -> Int -> List (Html Msg)
+viewPitchRow model pitchGrid currentStep pitchIdx =
     let
-        viewToneLabel =
+        viewPitchLabel =
             div
                 [ class labelBgColorAndClass, class "border-[0.5px]" ]
-                [ text (toneIdxToNoteName toneIdx model) ]
+                [ text (pitchIdxToNoteName pitchIdx model) ]
     in
     -- TODO: Should we fix function parameters?
-    viewToneLabel :: times (\stepIdx -> viewToneCell toneIdx toneGrid currentStep stepIdx) model.totalSteps
+    viewPitchLabel :: times (\stepIdx -> viewPitchCell pitchIdx pitchGrid currentStep stepIdx) model.totalSteps
 
 
-viewToneCell : Int -> ToneGrid -> Maybe Int -> Int -> Html Msg
-viewToneCell toneIdx toneGrid currentStep stepIdx =
+viewPitchCell : Int -> PitchGrid -> Maybe Int -> Int -> Html Msg
+viewPitchCell pitchIdx pitchGrid currentStep stepIdx =
     let
         position =
-            { toneIdx = toneIdx, stepIdx = stepIdx }
+            { pitchIdx = pitchIdx, stepIdx = stepIdx }
 
         isActive =
-            isToneCellActive position toneGrid
+            isPitchCellActive position pitchGrid
 
         isCurrentStep =
             currentStep == Just stepIdx
@@ -709,7 +709,7 @@ viewToneCell toneIdx toneGrid currentStep stepIdx =
         -- TODO: try refactor
         noteClass =
             if isActive then
-                toneCellColor toneIdx
+                pitchCellColor pitchIdx
 
             else if isCurrentStep then
                 "bg-gray-700 hover:bg-gray-600"
@@ -720,8 +720,8 @@ viewToneCell toneIdx toneGrid currentStep stepIdx =
     div
         [ class noteClass
         , class "border-[0.5px] border-gray-600 cursor-pointer "
-        , HE.onMouseDown (StartDrawingTone position)
-        , HE.onMouseEnter (ContinueDrawingTone position)
+        , HE.onMouseDown (StartDrawingPitch position)
+        , HE.onMouseEnter (ContinueDrawingPitch position)
         , HE.onMouseUp StopDrawing
         ]
         []
@@ -854,17 +854,17 @@ getActiveNotesForStep stepIdx model =
         duration =
             noteDuration model
 
-        toneNotes =
+        pitchNotes =
             times
-                (\toneIdx ->
+                (\pitchIdx ->
                     let
                         position =
-                            { toneIdx = toneIdx, stepIdx = stepIdx }
+                            { pitchIdx = pitchIdx, stepIdx = stepIdx }
                     in
-                    if isToneCellActive position model.toneGrid then
+                    if isPitchCellActive position model.pitchGrid then
                         Just
-                            { instrument = toneInstrumentName model.currentToneInstrument
-                            , midi = toneIdxToMidi toneIdx model
+                            { instrument = toneName model.currentTone
+                            , midi = pitchIdxToMidi pitchIdx model
                             , duration = duration
                             , volume = 0.7
                             }
@@ -872,7 +872,7 @@ getActiveNotesForStep stepIdx model =
                     else
                         Nothing
                 )
-                (getTotalTonees model)
+                (getTotalPitches model)
                 |> List.filterMap identity
 
         drumConfig =
@@ -906,19 +906,19 @@ getActiveNotesForStep stepIdx model =
                             Nothing
                     )
     in
-    toneNotes ++ percNotes
+    pitchNotes ++ percNotes
 
 
 
 -- Audio Helper Functions
 
 
-playToneCmdIf : Bool -> Int -> Model -> Cmd Msg
-playToneCmdIf shouldPlay toneIdx model =
+playPitchCmdIf : Bool -> Int -> Model -> Cmd Msg
+playPitchCmdIf shouldPlay pitchIdx model =
     if shouldPlay then
         playNote
-            { instrument = toneInstrumentName model.currentToneInstrument
-            , midi = toneIdxToMidi toneIdx model
+            { instrument = toneName model.currentTone
+            , midi = pitchIdxToMidi pitchIdx model
             , duration = 0.5
             , volume = 0.7
             }
@@ -957,21 +957,21 @@ playPercCmdIf shouldPlay percType model =
 -- Grid Resize Functions
 
 
-resizeToneGrid : Model -> Model -> ToneGrid -> ToneGrid
-resizeToneGrid oldModel newModel existingGrid =
+resizePitchGrid : Model -> Model -> PitchGrid -> PitchGrid
+resizePitchGrid oldModel newModel existingGrid =
     existingGrid
         |> Set.toList
         |> List.filterMap
-            (\( toneIdx, stepIdx ) ->
+            (\( pitchIdx, stepIdx ) ->
                 let
-                    midiTone =
-                        toneIdxToMidi toneIdx oldModel
+                    midiPitch =
+                        pitchIdxToMidi pitchIdx oldModel
 
-                    newToneIdx =
-                        midiToToneIdx midiTone newModel
+                    newPitchIdx =
+                        midiToPitchIdx midiPitch newModel
                 in
-                if newToneIdx >= 0 && newToneIdx < getTotalTonees newModel && stepIdx < newModel.totalSteps then
-                    Just ( newToneIdx, stepIdx )
+                if newPitchIdx >= 0 && newPitchIdx < getTotalPitches newModel && stepIdx < newModel.totalSteps then
+                    Just ( newPitchIdx, stepIdx )
 
                 else
                     Nothing
@@ -979,26 +979,26 @@ resizeToneGrid oldModel newModel existingGrid =
         |> Set.fromList
 
 
-midiToToneIdx : Int -> Model -> Int
-midiToToneIdx targetMidi model =
+midiToPitchIdx : Int -> Model -> Int
+midiToPitchIdx targetMidi model =
     let
-        totalTonees =
-            getTotalTonees model
+        totalPitches =
+            getTotalPitches model
     in
-    List.range 0 (totalTonees - 1)
-        |> List.filter (\toneIdx -> toneIdxToMidi toneIdx model == targetMidi)
+    List.range 0 (totalPitches - 1)
+        |> List.filter (\pitchIdx -> pitchIdxToMidi pitchIdx model == targetMidi)
         |> List.head
         |> Maybe.withDefault -1
 
 
-noteNameToToneIdx : String -> Model -> Int
-noteNameToToneIdx noteName model =
+noteNameToPitchIdx : String -> Model -> Int
+noteNameToPitchIdx noteName model =
     let
-        totalTonees =
-            getTotalTonees model
+        totalPitches =
+            getTotalPitches model
     in
-    List.range 0 (totalTonees - 1)
-        |> List.filter (\toneIdx -> toneIdxToNoteName toneIdx model == noteName)
+    List.range 0 (totalPitches - 1)
+        |> List.filter (\pitchIdx -> pitchIdxToNoteName pitchIdx model == noteName)
         |> List.head
         |> Maybe.withDefault -1
 
@@ -1048,14 +1048,14 @@ twinkleSong =
 applySong : SongConfig -> Model -> Model
 applySong songConfig model =
     let
-        toneGrid =
+        pitchGrid =
             convertMelodyToGrid songConfig.melody model
 
         percGrid =
             convertPercussionToGrid songConfig.percussion
     in
     { model
-        | toneGrid = toneGrid
+        | pitchGrid = pitchGrid
         , percGrid = percGrid
         , totalSteps = songConfig.totalSteps
         , bpm = songConfig.bpm
@@ -1063,7 +1063,7 @@ applySong songConfig model =
     }
 
 
-convertMelodyToGrid : List (List String) -> Model -> ToneGrid
+convertMelodyToGrid : List (List String) -> Model -> PitchGrid
 convertMelodyToGrid stepMelodies model =
     stepMelodies
         |> List.indexedMap
@@ -1071,11 +1071,11 @@ convertMelodyToGrid stepMelodies model =
                 List.filterMap
                     (\noteName ->
                         let
-                            toneIdx =
-                                noteNameToToneIdx noteName model
+                            pitchIdx =
+                                noteNameToPitchIdx noteName model
                         in
-                        if toneIdx >= 0 then
-                            Just ( toneIdx, stepIdx )
+                        if pitchIdx >= 0 then
+                            Just ( pitchIdx, stepIdx )
 
                         else
                             Nothing
@@ -1105,18 +1105,18 @@ convertPercussionToGrid stepPercussion =
 -- Cell State Management
 
 
-isToneCellActive : TonePos -> ToneGrid -> Bool
-isToneCellActive { toneIdx, stepIdx } toneGrid =
-    Set.member ( toneIdx, stepIdx ) toneGrid
+isPitchCellActive : PitchPos -> PitchGrid -> Bool
+isPitchCellActive { pitchIdx, stepIdx } pitchGrid =
+    Set.member ( pitchIdx, stepIdx ) pitchGrid
 
 
-updateToneCell : TonePos -> Bool -> ToneGrid -> ToneGrid
-updateToneCell { toneIdx, stepIdx } isActive toneGrid =
+updatePitchCell : PitchPos -> Bool -> PitchGrid -> PitchGrid
+updatePitchCell { pitchIdx, stepIdx } isActive pitchGrid =
     if isActive then
-        Set.insert ( toneIdx, stepIdx ) toneGrid
+        Set.insert ( pitchIdx, stepIdx ) pitchGrid
 
     else
-        Set.remove ( toneIdx, stepIdx ) toneGrid
+        Set.remove ( pitchIdx, stepIdx ) pitchGrid
 
 
 isPercCellActive : PercPos -> PercGrid -> Bool
@@ -1213,9 +1213,9 @@ viewPercSymbol isActive percType =
 it works for major and pentatonic, since we are doing mod by7
 but doesnt work for chromatic
 -}
-toneCellColor : Int -> String
-toneCellColor toneIdx =
-    case modBy 7 toneIdx of
+pitchCellColor : Int -> String
+pitchCellColor pitchIdx =
+    case modBy 7 pitchIdx of
         0 ->
             "bg-[oklch(70%_0.13_0)] hover:bg-[oklch(74%_0.16_0)] transition-colors"
 
@@ -1261,7 +1261,7 @@ viewScaleControls model =
 viewInstrumentControls : Model -> Html Msg
 viewInstrumentControls model =
     div [ class "flex items-center gap-4" ]
-        [ viewControlGroup "Tone" (viewToneInstrumentSelector model.currentToneInstrument)
+        [ viewControlGroup "Pitch" (viewToneSelector model.currentTone)
         , viewControlGroup "Drums" (viewDrumKitSelector model.currentDrumKit)
         ]
 
@@ -1442,13 +1442,13 @@ parseRootNote str =
             Nothing
 
 
-viewToneInstrumentSelector : ToneInstrument -> Html Msg
-viewToneInstrumentSelector currentInstrument =
+viewToneSelector : Tone -> Html Msg
+viewToneSelector currentInstrument =
     H.select
         [ class "bg-gray-700 text-white text-sm border border-gray-600 rounded px-2 py-1 cursor-pointer hover:bg-gray-600 transition-colors"
-        , HE.onInput (parseToneInstrument >> ChangeToneInstrument)
+        , HE.onInput (parseTone >> ChangeTone)
         ]
-        (List.map (viewToneInstrumentOption currentInstrument) allToneInstruments)
+        (List.map (viewToneOption currentInstrument) allTones)
 
 
 viewDrumKitSelector : DrumKit -> Html Msg
@@ -1460,13 +1460,13 @@ viewDrumKitSelector currentDrumKit =
         (List.map (viewDrumKitOption currentDrumKit) allDrumKits)
 
 
-viewToneInstrumentOption : ToneInstrument -> ToneInstrument -> Html Msg
-viewToneInstrumentOption currentInstrument instrument =
+viewToneOption : Tone -> Tone -> Html Msg
+viewToneOption currentInstrument instrument =
     H.option
-        [ HA.value (toneInstrumentToString instrument)
+        [ HA.value (toneToString instrument)
         , HA.selected (currentInstrument == instrument)
         ]
-        [ text (toneInstrumentToString instrument) ]
+        [ text (toneToString instrument) ]
 
 
 viewDrumKitOption : DrumKit -> DrumKit -> Html Msg
@@ -1478,8 +1478,8 @@ viewDrumKitOption currentDrumKit drumKit =
         [ text (drumKitToString drumKit) ]
 
 
-allToneInstruments : List ToneInstrument
-allToneInstruments =
+allTones : List Tone
+allTones =
     [ GrandPianoSBLive, MarimbaSBLLive ]
 
 
@@ -1488,8 +1488,8 @@ allDrumKits =
     [ StandardKit, RockKit ]
 
 
-toneInstrumentToString : ToneInstrument -> String
-toneInstrumentToString instrument =
+toneToString : Tone -> String
+toneToString instrument =
     case instrument of
         GrandPianoSBLive ->
             "Piano"
@@ -1508,8 +1508,8 @@ drumKitToString drumKit =
             "Rock"
 
 
-parseToneInstrument : String -> ToneInstrument
-parseToneInstrument str =
+parseTone : String -> Tone
+parseTone str =
     case str of
         "Piano" ->
             GrandPianoSBLive
