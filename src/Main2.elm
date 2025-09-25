@@ -760,8 +760,6 @@ footerView =
 -- Conversion Functions
 
 
-
-
 percPositionToTuple : PercPos -> ( Int, Int )
 percPositionToTuple { percType, stepIdx } =
     ( Instruments.percRowIdx percType, stepIdx )
@@ -1450,3 +1448,135 @@ format templateString replacements =
 
 times fn i =
     List.range 0 (i - 1) |> List.map fn
+
+
+
+{- REFACTORING PLAN: Extract MusicTheory Module
+
+
+   ## Goal
+
+   Extract pure music theory code into a separate MusicTheory.elm module while maintaining clean boundaries and dependencies.
+
+
+   ## Module Design
+
+
+   ### MusicTheory.elm (Pure Functions - No Dependencies)
+
+       module MusicTheory exposing
+           ( RootNote(..)
+           , ScaleType(..)
+           , allRootNotes
+           , allScaleTypes
+           , chromaticNoteNames
+           , getRootNoteOffset
+           , getScalePattern
+           , notesPerOctave
+           , parseRootNote
+           , parseScaleType
+           , rootNoteLabel
+           , scaleLabel
+           )
+
+
+   #### Types to Extract:
+
+     - `ScaleType` (Major | Pentatonic | Chromatic)
+     - `RootNote` (C | CSharp | D | DSharp | E | F | FSharp | G | GSharp | A | ASharp | B)
+
+
+   #### Functions to Extract:
+
+     - `getScalePattern : ScaleType -> List Int`
+     - `getRootNoteOffset : RootNote -> Int`
+     - `chromaticNoteNames : List String`
+     - `notesPerOctave : ScaleType -> Int`
+
+
+   #### New Functions to Add:
+
+     - `scaleLabel : ScaleType -> String` (for UI)
+     - `rootNoteLabel : RootNote -> String` (for UI)
+     - `parseScaleType : String -> ScaleType` (with default)
+     - `parseRootNote : String -> RootNote` (with default)
+     - `allScaleTypes : List ScaleType`
+     - `allRootNotes : List RootNote`
+
+
+   ### Main2.elm Updates
+
+
+   #### Import:
+
+       import MusicTheory exposing (ScaleType, RootNote)
+
+
+   #### Functions to Keep (Model-dependent):
+
+     - `getTotalPitches : Model -> Int` - needs Model.scaleType and Model.octaveRange.count
+     - `pitchIdxToMidi : Int -> Model -> Int` - needs Model context for calculations
+     - `pitchIdxToNoteName : Int -> Model -> String` - needs Model context for calculations
+     - All view functions (UI-specific)
+     - All parsing functions in view selectors
+
+
+   #### Update Function Calls:
+
+   Replace direct calls with module-prefixed versions:
+
+     - `getScalePattern model.scaleType` → `MusicTheory.getScalePattern model.scaleType`
+     - `getRootNoteOffset model.rootNote` → `MusicTheory.getRootNoteOffset model.rootNote`
+     - `notesPerOctave model.scaleType` → `MusicTheory.notesPerOctave model.scaleType`
+     - Update view functions to use `MusicTheory.scaleLabel`, `MusicTheory.rootNoteLabel`
+     - Update selectors to use `MusicTheory.allScaleTypes`, `MusicTheory.allRootNotes`
+
+
+   #### Remove from Main2.elm:
+
+     - `ScaleType`, `RootNote` type definitions
+     - `getScalePattern`, `getRootNoteOffset`, `chromaticNoteNames`, `notesPerOctave` functions
+     - Hardcoded scale/root note lists and parsing functions
+     - Move `parseScaleType`, `parseRootNote` to MusicTheory.elm
+
+
+   ## Implementation Steps
+
+   1.  **Create MusicTheory.elm**:
+         - Extract pure types and functions
+         - Add missing label and parsing functions
+         - Add allScaleTypes, allRootNotes lists
+         - Test compilation
+
+   2.  **Update Main2.elm imports**:
+         - Add MusicTheory import with explicit types
+         - Update all function calls to use MusicTheory prefix
+         - Remove extracted type definitions and functions
+
+   3.  **Update view functions**:
+         - Replace hardcoded lists with MusicTheory.allScaleTypes/allRootNotes
+         - Replace hardcoded case expressions with MusicTheory.scaleLabel/rootNoteLabel
+         - Update parsing calls to use MusicTheory functions
+
+   4.  **Test and refine**:
+         - Ensure compilation succeeds
+         - Verify UI still works correctly
+         - Check that no music theory logic remains in Main2.elm
+
+
+   ## Benefits
+
+     - **Clean separation**: Music theory vs app-specific logic
+     - **Reusability**: MusicTheory.elm can be used by other music applications
+     - **Maintainability**: Easier to extend with new scales, modes, chord progressions
+     - **Testability**: Pure functions are easy to unit test
+     - **Consistency**: Follows same pattern as Instruments.elm module
+
+
+   ## Module Boundaries
+
+     - **MusicTheory.elm**: Pure music theory concepts, no Model dependencies
+     - **Main2.elm**: App-specific pitch calculations that require Model context
+     - **Instruments.elm**: Sound source definitions and instrument-related functions
+
+-}
