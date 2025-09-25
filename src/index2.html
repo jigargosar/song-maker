@@ -10,7 +10,8 @@
 <div id="root"></div>
 
 <!-- Load piano instrument data from CDN -->
-<script src='https://surikov.github.io/webaudiofontdata/sound/0250_SoundBlasterOld_sf2.js'></script>
+<!--<script src='https://surikov.github.io/webaudiofontdata/sound/0250_SoundBlasterOld_sf2.js'></script>-->
+<script src='https://surikov.github.io/webaudiofontdata/sound/0000_SBLive_sf2.js'></script>
 
 <!-- Load individual percussion sounds from CDN kick snare default drumkit-->
 <script src='https://surikov.github.io/webaudiofontdata/sound/12836_0_SBLive_sf2.js'></script>
@@ -35,7 +36,8 @@
     const audioContext = new AudioContext();
     const player = new WebAudioFontPlayer();
 
-    player.loader.decodeAfterLoading(audioContext, '_tone_0250_SoundBlasterOld_sf2'); // piano
+    // player.loader.decodeAfterLoading(audioContext, '_tone_0250_SoundBlasterOld_sf2'); // piano
+    player.loader.decodeAfterLoading(audioContext, '_tone_0000_SBLive_sf2'); // piano
     player.loader.decodeAfterLoading(audioContext, '_drum_36_0_SBLive_sf2'); // kick
     player.loader.decodeAfterLoading(audioContext, '_drum_38_0_SBLive_sf2'); // snare
     player.loader.decodeAfterLoading(audioContext, '_tone_0120_SBLive_sf2'); // marimba 1
