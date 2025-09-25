@@ -1279,7 +1279,7 @@ viewScaleTypeSelector : ScaleType -> Html Msg
 viewScaleTypeSelector currentScale =
     H.select
         [ class "bg-gray-700 text-white text-sm border border-gray-600 rounded px-2 py-1 cursor-pointer hover:bg-gray-600 transition-colors"
-        , HE.onInput (parseScaleType >> Maybe.withDefault Major >> ChangeScaleType)
+        , HE.onInput (parseScaleType >> ChangeScaleType)
         ]
         [ H.option [ HA.value "Major", HA.selected (currentScale == Major) ] [ text "Major" ]
         , H.option [ HA.value "Pentatonic", HA.selected (currentScale == Pentatonic) ] [ text "Pentatonic" ]
@@ -1291,7 +1291,7 @@ viewRootNoteSelector : RootNote -> Html Msg
 viewRootNoteSelector currentRoot =
     H.select
         [ class "bg-gray-700 text-white text-sm border border-gray-600 rounded px-2 py-1 cursor-pointer hover:bg-gray-600 transition-colors"
-        , HE.onInput (parseRootNote >> Maybe.withDefault C >> ChangeRootNote)
+        , HE.onInput (parseRootNote >> ChangeRootNote)
         ]
         (List.map (viewRootNoteOption currentRoot) allRootNotes)
 
@@ -1383,63 +1383,63 @@ rootNoteToString rootNote =
             "B"
 
 
-parseScaleType : String -> Maybe ScaleType
+parseScaleType : String -> ScaleType
 parseScaleType str =
     case str of
         "Major" ->
-            Just Major
+            Major
 
         "Pentatonic" ->
-            Just Pentatonic
+            Pentatonic
 
         "Chromatic" ->
-            Just Chromatic
+            Chromatic
 
         _ ->
-            Nothing
+            Major
 
 
-parseRootNote : String -> Maybe RootNote
+parseRootNote : String -> RootNote
 parseRootNote str =
     case str of
         "C" ->
-            Just C
+            C
 
         "C#" ->
-            Just CSharp
+            CSharp
 
         "D" ->
-            Just D
+            D
 
         "D#" ->
-            Just DSharp
+            DSharp
 
         "E" ->
-            Just E
+            E
 
         "F" ->
-            Just F
+            F
 
         "F#" ->
-            Just FSharp
+            FSharp
 
         "G" ->
-            Just G
+            G
 
         "G#" ->
-            Just GSharp
+            GSharp
 
         "A" ->
-            Just A
+            A
 
         "A#" ->
-            Just ASharp
+            ASharp
 
         "B" ->
-            Just B
+            B
 
         _ ->
-            Nothing
+            C
 
 
 viewTonalInstrumentSelector : TonalInstrument -> Html Msg
