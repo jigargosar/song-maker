@@ -2082,18 +2082,57 @@ historyStateToModel historyState model =
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
-        -- Undoable operations - push history first
+        -- Grid Modifications (capture history at start of drawing)
         StartDrawingPitch pos ->
             pushToHistory model
                 |> updateStartDrawingPitch pos
+
+        StartDrawingPerc pos ->
+            pushToHistory model
+                |> updateStartDrawingPerc pos
+
+        -- Configuration Changes (capture before each change)
+        ChangeScaleType newScale ->
+            pushToHistory model
+                |> updateChangeScaleType newScale
 
         ChangeRootNote newRoot ->
             pushToHistory model
                 |> updateChangeRootNote newRoot
 
+        ChangeOctaveStart newStart ->
+            pushToHistory model
+                |> updateChangeOctaveStart newStart
+
+        ChangeOctaveCount newCount ->
+            pushToHistory model
+                |> updateChangeOctaveCount newCount
+
+        -- Sequence Structure Changes (can truncate/lose notes)
+        ChangeBars newBars ->
+            pushToHistory model
+                |> updateChangeBars newBars
+
+        ChangeBeatsPerBar newBeats ->
+            pushToHistory model
+                |> updateChangeBeatsPerBar newBeats
+
+        ChangeSubdivisions newSubdivs ->
+            pushToHistory model
+                |> updateChangeSubdivisions newSubdivs
+
         -- Non-undoable operations - no history push
-        Play ->
-            updatePlay model
+        ContinueDrawingPitch pos -> updateContinueDrawingPitch pos model
+        ContinueDrawingPerc pos -> updateContinueDrawingPerc pos model
+        StopDrawing -> updateStopDrawing model
+        Play -> updatePlay model
+        Stop -> updateStop model
+        TimeSync time -> updateTimeSync time model
+        PlayPitchNote idx -> updatePlayPitchNote idx model
+        PlayPercNote perc -> updatePlayPercNote perc model
+        ChangeBPM newBPM -> updateChangeBPM newBPM model
+        ChangeTonalInstrument inst -> updateChangeTonalInstrument inst model
+        ChangeDrumKit kit -> updateChangeDrumKit kit model
 
         -- Undo/Redo operations
         Undo ->
