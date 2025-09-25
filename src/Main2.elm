@@ -390,6 +390,9 @@ type Msg
     | ChangeBPM Int
     | ChangeTonalInstrument TonalInstrument
     | ChangeDrumKit DrumKit
+    | ChangeBars Int
+    | ChangeBeatsPerBar Int
+    | ChangeSubdivisions Int
 
 
 subscriptions : Model -> Sub Msg
@@ -629,6 +632,51 @@ update msg model =
             , Cmd.none
             )
 
+        ChangeBars newBars ->
+            let
+                clampedBars =
+                    max 1 newBars
+
+                oldConfig =
+                    model.sequenceConfig
+
+                newConfig =
+                    { oldConfig | bars = clampedBars }
+            in
+            ( { model | sequenceConfig = newConfig }
+            , Cmd.none
+            )
+
+        ChangeBeatsPerBar newBeatsPerBar ->
+            let
+                clampedBeatsPerBar =
+                    max 1 newBeatsPerBar
+
+                oldConfig =
+                    model.sequenceConfig
+
+                newConfig =
+                    { oldConfig | beatsPerBar = clampedBeatsPerBar }
+            in
+            ( { model | sequenceConfig = newConfig }
+            , Cmd.none
+            )
+
+        ChangeSubdivisions newSubdivisions ->
+            let
+                clampedSubdivisions =
+                    max 1 newSubdivisions
+
+                oldConfig =
+                    model.sequenceConfig
+
+                newConfig =
+                    { oldConfig | subdivisions = clampedSubdivisions }
+            in
+            ( { model | sequenceConfig = newConfig }
+            , Cmd.none
+            )
+
 
 
 -- View
@@ -651,6 +699,7 @@ viewHeader model =
                 [ div [ class "text-2xl font-bold text-white" ] [ text "Song Maker V2" ]
                 , viewScaleControls model
                 , viewInstrumentControls model
+                , viewSequenceControls model
                 , viewControlGroup "BPM" (viewBPMInput model.bpm)
                 , viewPlayStopButton model.playState
                 ]
@@ -1297,6 +1346,15 @@ viewInstrumentControls model =
         ]
 
 
+viewSequenceControls : Model -> Html Msg
+viewSequenceControls model =
+    div [ class "flex items-center gap-4" ]
+        [ viewControlGroup "Bars" (viewBarsInput model.sequenceConfig.bars)
+        , viewControlGroup "Beats" (viewBeatsPerBarInput model.sequenceConfig.beatsPerBar)
+        , viewControlGroup "Subdivs" (viewSubdivisionsInput model.sequenceConfig.subdivisions)
+        ]
+
+
 viewControlGroup : String -> Html Msg -> Html Msg
 viewControlGroup labelText control =
     div [ class "flex flex-col items-center gap-1" ]
@@ -1365,6 +1423,39 @@ viewBPMInput currentBPM =
         , class "bg-gray-700 text-white text-sm border border-gray-600 rounded px-2 py-1 w-16 text-center hover:bg-gray-600 transition-colors"
         , HA.value (String.fromInt currentBPM)
         , HE.onInput (String.toInt >> Maybe.withDefault 120 >> ChangeBPM)
+        ]
+        []
+
+
+viewBarsInput : Int -> Html Msg
+viewBarsInput currentBars =
+    H.input
+        [ HA.type_ "number"
+        , class "bg-gray-700 text-white text-sm border border-gray-600 rounded px-2 py-1 w-16 text-center hover:bg-gray-600 transition-colors"
+        , HA.value (String.fromInt currentBars)
+        , HE.onInput (String.toInt >> Maybe.withDefault 4 >> ChangeBars)
+        ]
+        []
+
+
+viewBeatsPerBarInput : Int -> Html Msg
+viewBeatsPerBarInput currentBeatsPerBar =
+    H.input
+        [ HA.type_ "number"
+        , class "bg-gray-700 text-white text-sm border border-gray-600 rounded px-2 py-1 w-16 text-center hover:bg-gray-600 transition-colors"
+        , HA.value (String.fromInt currentBeatsPerBar)
+        , HE.onInput (String.toInt >> Maybe.withDefault 4 >> ChangeBeatsPerBar)
+        ]
+        []
+
+
+viewSubdivisionsInput : Int -> Html Msg
+viewSubdivisionsInput currentSubdivisions =
+    H.input
+        [ HA.type_ "number"
+        , class "bg-gray-700 text-white text-sm border border-gray-600 rounded px-2 py-1 w-16 text-center hover:bg-gray-600 transition-colors"
+        , HA.value (String.fromInt currentSubdivisions)
+        , HE.onInput (String.toInt >> Maybe.withDefault 1 >> ChangeSubdivisions)
         ]
         []
 
