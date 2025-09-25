@@ -1803,3 +1803,69 @@ times fn i =
    This gives maximum user flexibility with minimum UI complexity.
 
 -}
+
+
+{- TODO: Make JavaScript Variable Names Consistent Throughout Codebase
+
+   ## Current Problem
+
+   The naming for JavaScript variable names (used for WebAudio instrument selection) is inconsistent:
+
+   **Unclear/Inconsistent naming:**
+   - `kickInstrument` - doesn't indicate it's a JS variable name
+   - `snareInstrument` - doesn't indicate it's a JS variable name
+   - `tonalJsVarName` - ✅ clearly indicates JS variable name (correct)
+   - `instrument` field in playNote - unclear that it's a JS variable name
+   - Port function uses generic `instrument` parameter name
+
+   ## Proposed Consistent Naming
+
+   **Update Instruments.elm:**
+   ```elm
+   drumKitConfig : DrumKit ->
+       { kickJsVarName : String, kickMidi : Int
+       , snareJsVarName : String, snareMidi : Int
+       }
+   ```
+
+   **Update Main2.elm types:**
+   ```elm
+   type alias NoteToPlay =
+       { jsVarName : String  -- instead of instrument
+       , midi : Int
+       , duration : Float
+       , volume : Float
+       }
+   ```
+
+   **Update port definition:**
+   ```elm
+   port playNote : { jsVarName : String, midi : Int, duration : Float, volume : Float } -> Cmd msg
+   ```
+
+   **Update all usage sites:**
+   - `drumConfig.kickInstrument` → `drumConfig.kickJsVarName`
+   - `drumConfig.snareInstrument` → `drumConfig.snareJsVarName`
+   - `{ instrument = ... }` → `{ jsVarName = ... }`
+   - All playNote calls updated to use jsVarName field
+
+   ## Benefits
+
+   - **Clear intent**: Makes it obvious these are JavaScript variable names
+   - **Consistent naming**: All JS variable name functions follow same pattern
+   - **Better maintainability**: No confusion about what these strings represent
+   - **Type safety**: Field names clearly indicate their purpose
+   - **Documentation**: Self-documenting code through naming
+
+   ## Implementation Steps
+
+   1. Update Instruments.elm drumKitConfig record field names
+   2. Update NoteToPlay type alias in Main2.elm
+   3. Update port playNote parameter names
+   4. Update all usage sites in getActiveNotesForStep and playback functions
+   5. Update all playNote calls throughout codebase
+   6. Test compilation and functionality
+
+   This makes it crystal clear that these strings are WebAudio JavaScript variable names.
+
+-}
