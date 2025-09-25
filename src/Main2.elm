@@ -1580,3 +1580,194 @@ times fn i =
      - **Instruments.elm**: Sound source definitions and instrument-related functions
 
 -}
+
+
+{- REFACTORING PLAN: Configurable Timing Structure (Bars/Beats/Split-beats)
+
+   ## Goal
+
+   Replace flat `totalSteps` with configurable timing structure based on musical bars, beats, and sub-beat divisions.
+
+   ## Current Problem
+
+   - `totalSteps = 32` is hardcoded and flat
+   - No musical context (bars, beats, time signatures)
+   - Difficult to align with standard musical notation
+   - No visual grouping of beats/bars in UI
+
+   ## Proposed Design
+
+   ### New Types:
+
+       type alias TimeSignature =
+           { beatsPerBar : Int        -- 4 (for 4/4 time)
+           , noteValue : NoteValue    -- Quarter (for 4/4 time)
+           }
+
+       type NoteValue = Whole | Half | Quarter | Eighth | Sixteenth
+
+       type alias TimingConfig =
+           { bars : Int               -- Number of bars (measures)
+           , timeSignature : TimeSignature  -- Time signature
+           , subdivisions : Int       -- Split-beats per beat (1, 2, 4, etc.)
+           }
+
+   ### Helper Functions:
+
+       -- Calculate total steps from timing config
+       totalStepsFromTiming : TimingConfig -> Int
+       totalStepsFromTiming config =
+           config.bars * config.timeSignature.beatsPerBar * config.subdivisions
+
+       -- Convert absolute step index to bar/beat/subdivision
+       stepToPosition : Int -> TimingConfig -> { bar : Int, beat : Int, subdivision : Int }
+
+       -- Convert bar/beat/subdivision to absolute step index
+       positionToStep : { bar : Int, beat : Int, subdivision : Int } -> TimingConfig -> Int
+
+       -- Check if step is on beat boundary (for visual emphasis)
+       isOnBeat : Int -> TimingConfig -> Bool
+
+       -- Check if step is on bar boundary (for visual emphasis)
+       isOnBar : Int -> TimingConfig -> Bool
+
+   ## Implementation Plan
+
+   ### Phase 1: Add TimingConfig to Model
+
+   1. **Add new types and config to Model**:
+       ```elm
+       type alias Model =
+           { -- ... existing fields
+           , timingConfig : TimingConfig  -- Replace totalSteps
+           -- ... rest
+           }
+       ```
+
+   2. **Add helper function**:
+       ```elm
+       getTotalSteps : Model -> Int
+       getTotalSteps model =
+           totalStepsFromTiming model.timingConfig
+       ```
+
+   3. **Update all totalSteps references**:
+       - `model.totalSteps` → `getTotalSteps model`
+       - Keep existing logic working while adding new structure
+
+   ### Phase 2: Enhance UI with Musical Context
+
+   1. **Update grid rendering**:
+       - Add bar separators (thicker borders every bar)
+       - Add beat emphasis (subtle borders on beats)
+       - Group step labels by bars/beats
+
+   2. **Add timing controls in header**:
+       ```elm
+       viewTimingControls : Model -> Html Msg
+       viewTimingControls model =
+           div [ class "flex items-center gap-4" ]
+               [ viewControlGroup "Bars" (viewBarsInput model.timingConfig.bars)
+               , viewControlGroup "Beats" (viewTimeSignatureSelector model.timingConfig.timeSignature)
+               , viewControlGroup "Subdivisions" (viewSubdivisionsInput model.timingConfig.subdivisions)
+               ]
+       ```
+
+   3. **Update step labels to show bar.beat.subdivision**:
+       ```elm
+       viewStepLabel : Maybe Int -> Int -> TimingConfig -> Html Msg
+       viewStepLabel currentStep stepIdx timingConfig =
+           let
+               position = stepToPosition stepIdx timingConfig
+               labelText =
+                   if timingConfig.subdivisions == 1 then
+                       String.fromInt (position.bar + 1) ++ "." ++ String.fromInt (position.beat + 1)
+                   else
+                       String.fromInt (position.bar + 1) ++ "." ++ String.fromInt (position.beat + 1)
+                       ++ "." ++ String.fromInt (position.subdivision + 1)
+           ```
+
+   ### Phase 3: Update Song Configuration
+
+   1. **Replace totalSteps in SongConfig**:
+       ```elm
+       type alias SongConfig =
+           { melody : List (List String)
+           , percussion : List (List PercType)
+           , timingConfig : TimingConfig  -- Replace totalSteps
+           , bpm : Int
+           , octaveRange : { start : Int, count : Int }
+           }
+       ```
+
+   2. **Update twinkleSong example**:
+       ```elm
+       twinkleSong : SongConfig
+       twinkleSong =
+           { -- ... melody and percussion data (32 steps)
+           , timingConfig =
+               { bars = 8
+               , timeSignature = { beatsPerBar = 4, noteValue = Quarter }
+               , subdivisions = 1  -- 8 bars × 4 beats × 1 = 32 steps
+               }
+           , bpm = 180
+           , octaveRange = { start = 3, count = 3 }
+           }
+       ```
+
+   ### Phase 4: Enhanced Features (Future)
+
+   1. **Visual improvements**:
+       - Bar numbers in grid
+       - Beat emphasis with different cell colors
+       - Metronome click on beats vs subdivisions
+
+   2. **Musical features**:
+       - Different time signatures (3/4, 6/8, etc.)
+       - Swing timing
+       - Polyrhythms (different timing for different tracks)
+
+   ## Migration Strategy
+
+   ### Backward Compatibility:
+   - Keep `getTotalSteps` function for existing code
+   - Migrate incrementally (UI first, then internal logic)
+   - Default timing config for existing songs
+
+   ### Example Migration:
+   ```elm
+   -- Before:
+   model.totalSteps
+
+   -- After:
+   getTotalSteps model
+
+   -- Before:
+   times (\stepIdx -> viewStepLabel currentStep stepIdx) model.totalSteps
+
+   -- After:
+   times (\stepIdx -> viewStepLabel currentStep stepIdx model.timingConfig) (getTotalSteps model)
+   ```
+
+   ## Benefits
+
+   - **Musical context**: Aligns with standard musical notation and thinking
+   - **Better UX**: Visual grouping of bars and beats makes patterns clearer
+   - **Flexibility**: Easy to change song length, time signatures, subdivisions
+   - **Future-proof**: Foundation for advanced rhythmic features
+   - **Professional feel**: Standard music production interface conventions
+
+   ## UI Mockup Concept
+
+   ```
+   [Bars: 8] [Time: 4/4] [Subdivisions: 1]
+
+   Grid:
+   Bar |  1.1 |  1.2 |  1.3 |  1.4 || 2.1 |  2.2 |  2.3 |  2.4 ||
+   C4  | [●]  |      |  [●] |      || [●] |      |  [●] |      ||
+   G3  |      |  [●] |      |  [●] ||     |  [●] |      |  [●] ||
+   ```
+
+   Double bars (||) between measures, single bars (|) between beats.
+
+-}
