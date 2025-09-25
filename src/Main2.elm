@@ -200,9 +200,8 @@ pitchInstrumentName instrument =
         Piano ->
             "_tone_0250_SoundBlasterOld_sf2"
 
-        Marimba ->
-            --"_tone_0120_SBLive_sf2"
-            "_tone_0120_JCLive_sf2_file"
+        MarimbaSB ->
+            "_tone_0120_SBLive_sf2"
 
 
 drumKitConfig : DrumKit -> { kickInstrument : String, kickMidi : Int, snareInstrument : String, snareMidi : Int }
@@ -255,7 +254,7 @@ type alias PitchGrid =
 
 type PitchInstrument
     = Piano
-    | Marimba
+    | MarimbaSB
 
 
 type DrumKit
@@ -1481,7 +1480,7 @@ viewDrumKitOption currentDrumKit drumKit =
 
 allPitchInstruments : List PitchInstrument
 allPitchInstruments =
-    [ Piano, Marimba ]
+    [ Piano, MarimbaSB ]
 
 
 allDrumKits : List DrumKit
@@ -1495,7 +1494,7 @@ pitchInstrumentToString instrument =
         Piano ->
             "Piano"
 
-        Marimba ->
+        MarimbaSB ->
             "Marimba"
 
 
@@ -1516,7 +1515,7 @@ parsePitchInstrument str =
             Piano
 
         "Marimba" ->
-            Marimba
+            MarimbaSB
 
         _ ->
             Piano
