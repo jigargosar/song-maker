@@ -351,7 +351,7 @@ init _ =
       , timingConfig =
           { bars = 8
           , beatsPerBar = 4
-          , subdivisions = 1
+          , subdivisions = 2
           }
       , pitchGrid = Set.empty
       , percGrid = Set.empty
@@ -846,7 +846,9 @@ percPositionToTuple { percType, stepIdx } =
 
 noteDuration : Model -> Float
 noteDuration model =
-    60.0 / toFloat model.bpm
+    -- 60 seconds/minute ÷ BPM = seconds per beat
+    -- Then divide by subdivisions = seconds per step
+    (60.0 / toFloat model.bpm) / toFloat model.timingConfig.subdivisions
 
 
 getCurrentPlayingStep : Model -> Maybe Int
@@ -1067,7 +1069,7 @@ twinkleSong =
     , timingConfig =
         { bars = 8
         , beatsPerBar = 4
-        , subdivisions = 1
+        , subdivisions = 2
         }
     , bpm = 180
     , octaveRange = { start = 3, count = 3 }
