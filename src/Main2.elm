@@ -32,22 +32,22 @@ midiC4 =
 
 
 
--- TIMING SYSTEM
+-- SEQUENCE SYSTEM
 
 
-type alias TimingConfig =
+type alias SequenceConfig =
     { bars : Int
     , beatsPerBar : Int
     , subdivisions : Int
     }
 
 
-totalStepsFromTiming : TimingConfig -> Int
-totalStepsFromTiming config =
+totalStepsFromSequence : SequenceConfig -> Int
+totalStepsFromSequence config =
     config.bars * config.beatsPerBar * config.subdivisions
 
 
-stepToPosition : Int -> TimingConfig -> { bar : Int, beat : Int, subdivision : Int }
+stepToPosition : Int -> SequenceConfig -> { bar : Int, beat : Int, subdivision : Int }
 stepToPosition stepIdx config =
     let
         stepsPerBar =
@@ -71,7 +71,7 @@ stepToPosition stepIdx config =
     { bar = bar, beat = beat, subdivision = subdivision }
 
 
-positionToStep : { bar : Int, beat : Int, subdivision : Int } -> TimingConfig -> Int
+positionToStep : { bar : Int, beat : Int, subdivision : Int } -> SequenceConfig -> Int
 positionToStep position config =
     let
         stepsPerBar =
@@ -83,12 +83,12 @@ positionToStep position config =
     position.bar * stepsPerBar + position.beat * stepsPerBeat + position.subdivision
 
 
-isOnBeat : Int -> TimingConfig -> Bool
+isOnBeat : Int -> SequenceConfig -> Bool
 isOnBeat stepIdx config =
     modBy config.subdivisions stepIdx == 0
 
 
-isOnBar : Int -> TimingConfig -> Bool
+isOnBar : Int -> SequenceConfig -> Bool
 isOnBar stepIdx config =
     let
         stepsPerBar =
@@ -192,7 +192,7 @@ getTotalPitches model =
 
 getTotalSteps : Model -> Int
 getTotalSteps model =
-    totalStepsFromTiming model.timingConfig
+    totalStepsFromSequence model.sequenceConfig
 
 
 pitchIdxToMidi : Int -> Model -> Int
@@ -321,7 +321,7 @@ type DrawState
 type alias SongConfig =
     { melody : List (List String) -- Each step can have multiple notes
     , percussion : List (List PercType) -- Each step can have multiple drums
-    , timingConfig : TimingConfig
+    , sequenceConfig : SequenceConfig
     , bpm : Int
     , octaveRange : { start : Int, count : Int }
     }
@@ -331,7 +331,7 @@ type alias Model =
     { scaleType : ScaleType
     , rootNote : RootNote
     , octaveRange : { start : Int, count : Int }
-    , timingConfig : TimingConfig
+    , sequenceConfig : SequenceConfig
     , pitchGrid : PitchGrid
     , percGrid : PercGrid
     , drawState : DrawState
@@ -348,7 +348,7 @@ init _ =
     ( { scaleType = Major
       , rootNote = C
       , octaveRange = { start = 3, count = 3 }
-      , timingConfig =
+      , sequenceConfig =
             { bars = 8
             , beatsPerBar = 4
             , subdivisions = 2
@@ -848,7 +848,7 @@ noteDuration : Model -> Float
 noteDuration model =
     -- 60 seconds/minute ÷ BPM = seconds per beat
     -- Then divide by subdivisions = seconds per step
-    (60.0 / toFloat model.bpm) / toFloat model.timingConfig.subdivisions
+    (60.0 / toFloat model.bpm) / toFloat model.sequenceConfig.subdivisions
 
 
 getCurrentPlayingStep : Model -> Maybe Int
@@ -1066,7 +1066,7 @@ twinkleSong =
             ++ [ [ kick ], [], [ snare ], [] ]
             -- "sky (end)"
             ++ [ [ kick ], [], [ snare ], [] ]
-    , timingConfig =
+    , sequenceConfig =
         { bars = 4
         , beatsPerBar = 4
         , subdivisions = 2
@@ -1088,7 +1088,7 @@ applySong songConfig model =
     { model
         | pitchGrid = pitchGrid
         , percGrid = percGrid
-        , timingConfig = songConfig.timingConfig
+        , sequenceConfig = songConfig.sequenceConfig
         , bpm = songConfig.bpm
         , octaveRange = songConfig.octaveRange
     }
@@ -1685,7 +1685,7 @@ times fn i =
 
        type NoteValue = Whole | Half | Quarter | Eighth | Sixteenth
 
-       type alias TimingConfig =
+       type alias SequenceConfig =
            { bars : Int               -- Number of bars (measures)
            , timeSignature : TimeSignature  -- Time signature
            , subdivisions : Int       -- Split-beats per beat (1, 2, 4, etc.)
@@ -1694,31 +1694,31 @@ times fn i =
    ### Helper Functions:
 
        -- Calculate total steps from timing config
-       totalStepsFromTiming : TimingConfig -> Int
+       totalStepsFromTiming : SequenceConfig -> Int
        totalStepsFromTiming config =
            config.bars * config.beatsPerBar * config.subdivisions
 
        -- Convert absolute step index to bar/beat/subdivision
-       stepToPosition : Int -> TimingConfig -> { bar : Int, beat : Int, subdivision : Int }
+       stepToPosition : Int -> SequenceConfig -> { bar : Int, beat : Int, subdivision : Int }
 
        -- Convert bar/beat/subdivision to absolute step index
-       positionToStep : { bar : Int, beat : Int, subdivision : Int } -> TimingConfig -> Int
+       positionToStep : { bar : Int, beat : Int, subdivision : Int } -> SequenceConfig -> Int
 
        -- Check if step is on beat boundary (for visual emphasis)
-       isOnBeat : Int -> TimingConfig -> Bool
+       isOnBeat : Int -> SequenceConfig -> Bool
 
        -- Check if step is on bar boundary (for visual emphasis)
-       isOnBar : Int -> TimingConfig -> Bool
+       isOnBar : Int -> SequenceConfig -> Bool
 
    ## Implementation Plan
 
-   ### Phase 1: Add TimingConfig to Model
+   ### Phase 1: Add SequenceConfig to Model
 
    1. **Add new types and config to Model**:
        ```elm
        type alias Model =
            { -- ... existing fields
-           , timingConfig : TimingConfig  -- Replace totalSteps
+           , sequenceConfig : SequenceConfig  -- Replace totalSteps
            -- ... rest
            }
        ```
@@ -1727,7 +1727,7 @@ times fn i =
        ```elm
        getTotalSteps : Model -> Int
        getTotalSteps model =
-           totalStepsFromTiming model.timingConfig
+           totalStepsFromTiming model.sequenceConfig
        ```
 
    3. **Update all totalSteps references**:
@@ -1746,20 +1746,20 @@ times fn i =
        viewTimingControls : Model -> Html Msg
        viewTimingControls model =
            div [ class "flex items-center gap-4" ]
-               [ viewControlGroup "Bars" (viewBarsInput model.timingConfig.bars)
-               , viewControlGroup "Beats" (viewTimeSignatureSelector model.timingConfig.timeSignature)
-               , viewControlGroup "Subdivisions" (viewSubdivisionsInput model.timingConfig.subdivisions)
+               [ viewControlGroup "Bars" (viewBarsInput model.sequenceConfig.bars)
+               , viewControlGroup "Beats" (viewTimeSignatureSelector model.sequenceConfig.timeSignature)
+               , viewControlGroup "Subdivisions" (viewSubdivisionsInput model.sequenceConfig.subdivisions)
                ]
        ```
 
    3. **Update step labels to show bar.beat.subdivision**:
        ```elm
-       viewStepLabel : Maybe Int -> Int -> TimingConfig -> Html Msg
-       viewStepLabel currentStep stepIdx timingConfig =
+       viewStepLabel : Maybe Int -> Int -> SequenceConfig -> Html Msg
+       viewStepLabel currentStep stepIdx sequenceConfig =
            let
-               position = stepToPosition stepIdx timingConfig
+               position = stepToPosition stepIdx sequenceConfig
                labelText =
-                   if timingConfig.subdivisions == 1 then
+                   if sequenceConfig.subdivisions == 1 then
                        String.fromInt (position.bar + 1) ++ "." ++ String.fromInt (position.beat + 1)
                    else
                        String.fromInt (position.bar + 1) ++ "." ++ String.fromInt (position.beat + 1)
@@ -1773,7 +1773,7 @@ times fn i =
        type alias SongConfig =
            { melody : List (List String)
            , percussion : List (List PercType)
-           , timingConfig : TimingConfig  -- Replace totalSteps
+           , sequenceConfig : SequenceConfig  -- Replace totalSteps
            , bpm : Int
            , octaveRange : { start : Int, count : Int }
            }
@@ -1784,7 +1784,7 @@ times fn i =
        twinkleSong : SongConfig
        twinkleSong =
            { -- ... melody and percussion data (32 steps)
-           , timingConfig =
+           , sequenceConfig =
                { bars = 8
                , beatsPerBar = 4
                , subdivisions = 1  -- 8 bars × 4 beats × 1 = 32 steps
@@ -1825,7 +1825,7 @@ times fn i =
    times (\stepIdx -> viewStepLabel currentStep stepIdx) model.totalSteps
 
    -- After:
-   times (\stepIdx -> viewStepLabel currentStep stepIdx model.timingConfig) (getTotalSteps model)
+   times (\stepIdx -> viewStepLabel currentStep stepIdx model.sequenceConfig) (getTotalSteps model)
    ```
 
    ## Benefits
