@@ -32,6 +32,72 @@ midiC4 =
 
 
 
+-- TIMING SYSTEM
+
+
+type alias TimingConfig =
+    { bars : Int
+    , beatsPerBar : Int
+    , subdivisions : Int
+    }
+
+
+totalStepsFromTiming : TimingConfig -> Int
+totalStepsFromTiming config =
+    config.bars * config.beatsPerBar * config.subdivisions
+
+
+stepToPosition : Int -> TimingConfig -> { bar : Int, beat : Int, subdivision : Int }
+stepToPosition stepIdx config =
+    let
+        stepsPerBar =
+            config.beatsPerBar * config.subdivisions
+
+        stepsPerBeat =
+            config.subdivisions
+
+        bar =
+            stepIdx // stepsPerBar
+
+        remainingAfterBars =
+            modBy stepsPerBar stepIdx
+
+        beat =
+            remainingAfterBars // stepsPerBeat
+
+        subdivision =
+            modBy stepsPerBeat remainingAfterBars
+    in
+    { bar = bar, beat = beat, subdivision = subdivision }
+
+
+positionToStep : { bar : Int, beat : Int, subdivision : Int } -> TimingConfig -> Int
+positionToStep position config =
+    let
+        stepsPerBar =
+            config.beatsPerBar * config.subdivisions
+
+        stepsPerBeat =
+            config.subdivisions
+    in
+    position.bar * stepsPerBar + position.beat * stepsPerBeat + position.subdivision
+
+
+isOnBeat : Int -> TimingConfig -> Bool
+isOnBeat stepIdx config =
+    modBy config.subdivisions stepIdx == 0
+
+
+isOnBar : Int -> TimingConfig -> Bool
+isOnBar stepIdx config =
+    let
+        stepsPerBar =
+            config.beatsPerBar * config.subdivisions
+    in
+    modBy stepsPerBar stepIdx == 0
+
+
+
 -- SCALE SYSTEM
 
 
@@ -122,6 +188,11 @@ notesPerOctave scaleType =
 getTotalPitches : Model -> Int
 getTotalPitches model =
     notesPerOctave model.scaleType * model.octaveRange.count
+
+
+getTotalSteps : Model -> Int
+getTotalSteps model =
+    totalStepsFromTiming model.timingConfig
 
 
 pitchIdxToMidi : Int -> Model -> Int
@@ -250,7 +321,7 @@ type DrawState
 type alias SongConfig =
     { melody : List (List String) -- Each step can have multiple notes
     , percussion : List (List PercType) -- Each step can have multiple drums
-    , totalSteps : Int
+    , timingConfig : TimingConfig
     , bpm : Int
     , octaveRange : { start : Int, count : Int }
     }
@@ -260,7 +331,7 @@ type alias Model =
     { scaleType : ScaleType
     , rootNote : RootNote
     , octaveRange : { start : Int, count : Int }
-    , totalSteps : Int
+    , timingConfig : TimingConfig
     , pitchGrid : PitchGrid
     , percGrid : PercGrid
     , drawState : DrawState
@@ -277,7 +348,11 @@ init _ =
     ( { scaleType = Major
       , rootNote = C
       , octaveRange = { start = 3, count = 3 }
-      , totalSteps = 32
+      , timingConfig =
+          { bars = 8
+          , beatsPerBar = 4
+          , subdivisions = 1
+          }
       , pitchGrid = Set.empty
       , percGrid = Set.empty
       , drawState = NotDrawing
@@ -466,7 +541,7 @@ update msg model =
                     if currentStep >= nextStep then
                         let
                             stepToSchedule =
-                                modBy model.totalSteps nextStep
+                                modBy (getTotalSteps model) nextStep
 
                             activeNotes =
                                 getActiveNotesForStep stepToSchedule updatedModel
@@ -597,7 +672,7 @@ viewGrid model =
         gridTemplateCols =
             format "minmax($pitchLabelColMinWidth, auto) repeat($totalSteps, minmax($stepColMinWidth, 1fr))"
                 [ ( "$pitchLabelColMinWidth", px 48 )
-                , ( "$totalSteps", String.fromInt model.totalSteps )
+                , ( "$totalSteps", String.fromInt (getTotalSteps model) )
                 , ( "$stepColMinWidth", px 48 )
                 ]
 
@@ -615,10 +690,10 @@ viewGrid model =
         , style "grid-template-rows" gridTemplateRows
         ]
         ([ {- Empty corner cell -} div [ class labelBgColorAndClass, class "border-b border-gray-600" ] [] ]
-            ++ {- Step Labels row -} times (\stepIdx -> viewStepLabel currentStep stepIdx) model.totalSteps
+            ++ {- Step Labels row -} times (\stepIdx -> viewStepLabel currentStep stepIdx) (getTotalSteps model)
             ++ {- Pitch rows -} (times (\pitchIdx -> viewPitchRow model model.pitchGrid currentStep pitchIdx) (getTotalPitches model) |> List.concat)
-            ++ {- Perc Snare row -} viewPercRow Instruments.Snare model.totalSteps model.percGrid currentStep
-            ++ {- Perc Kick row -} viewPercRow Instruments.Kick model.totalSteps model.percGrid currentStep
+            ++ {- Perc Snare row -} viewPercRow Instruments.Snare (getTotalSteps model) model.percGrid currentStep
+            ++ {- Perc Kick row -} viewPercRow Instruments.Kick (getTotalSteps model) model.percGrid currentStep
         )
 
 
@@ -649,7 +724,7 @@ viewPitchRow model pitchGrid currentStep pitchIdx =
                 [ text (pitchIdxToNoteName pitchIdx model) ]
     in
     -- TODO: Should we fix function parameters?
-    viewPitchLabel :: times (\stepIdx -> viewPitchCell pitchIdx pitchGrid currentStep stepIdx) model.totalSteps
+    viewPitchLabel :: times (\stepIdx -> viewPitchCell pitchIdx pitchGrid currentStep stepIdx) (getTotalSteps model)
 
 
 viewPitchCell : Int -> PitchGrid -> Maybe Int -> Int -> Html Msg
@@ -781,7 +856,7 @@ getCurrentPlayingStep model =
             Just 0
 
         Playing { nextStep } ->
-            Just (modBy model.totalSteps (nextStep - 1))
+            Just (modBy (getTotalSteps model) (nextStep - 1))
 
         Stopped ->
             Nothing
@@ -913,7 +988,7 @@ resizePitchGrid oldModel newModel existingGrid =
                     newPitchIdx =
                         midiToPitchIdx midiPitch newModel
                 in
-                if newPitchIdx >= 0 && newPitchIdx < getTotalPitches newModel && stepIdx < newModel.totalSteps then
+                if newPitchIdx >= 0 && newPitchIdx < getTotalPitches newModel && stepIdx < getTotalSteps newModel then
                     Just ( newPitchIdx, stepIdx )
 
                 else
@@ -989,7 +1064,11 @@ twinkleSong =
             ++ [ [ kick ], [], [ snare ], [] ]
             -- "sky (end)"
             ++ [ [ kick ], [], [ snare ], [] ]
-    , totalSteps = 32
+    , timingConfig =
+        { bars = 8
+        , beatsPerBar = 4
+        , subdivisions = 1
+        }
     , bpm = 180
     , octaveRange = { start = 3, count = 3 }
     }
@@ -1007,7 +1086,7 @@ applySong songConfig model =
     { model
         | pitchGrid = pitchGrid
         , percGrid = percGrid
-        , totalSteps = songConfig.totalSteps
+        , timingConfig = songConfig.timingConfig
         , bpm = songConfig.bpm
         , octaveRange = songConfig.octaveRange
     }
@@ -1617,7 +1696,7 @@ times fn i =
        -- Calculate total steps from timing config
        totalStepsFromTiming : TimingConfig -> Int
        totalStepsFromTiming config =
-           config.bars * config.timeSignature.beatsPerBar * config.subdivisions
+           config.bars * config.beatsPerBar * config.subdivisions
 
        -- Convert absolute step index to bar/beat/subdivision
        stepToPosition : Int -> TimingConfig -> { bar : Int, beat : Int, subdivision : Int }
@@ -1707,7 +1786,7 @@ times fn i =
            { -- ... melody and percussion data (32 steps)
            , timingConfig =
                { bars = 8
-               , timeSignature = { beatsPerBar = 4, noteValue = Quarter }
+               , beatsPerBar = 4
                , subdivisions = 1  -- 8 bars × 4 beats × 1 = 32 steps
                }
            , bpm = 180
