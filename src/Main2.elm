@@ -1823,15 +1823,15 @@ times fn i =
    **Update Instruments.elm:**
    ```elm
    drumKitConfig : DrumKit ->
-       { kickJsVarName : String, kickMidi : Int
-       , snareJsVarName : String, snareMidi : Int
+       { kickWebAudioFont : String, kickMidi : Int
+       , snareWebAudioFont : String, snareMidi : Int
        }
    ```
 
    **Update Main2.elm types:**
    ```elm
    type alias NoteToPlay =
-       { jsVarName : String  -- instead of instrument
+       { webAudioFont : String  -- instead of instrument
        , midi : Int
        , duration : Float
        , volume : Float
@@ -1840,14 +1840,14 @@ times fn i =
 
    **Update port definition:**
    ```elm
-   port playNote : { jsVarName : String, midi : Int, duration : Float, volume : Float } -> Cmd msg
+   port playNote : { webAudioFont : String, midi : Int, duration : Float, volume : Float } -> Cmd msg
    ```
 
    **Update all usage sites:**
-   - `drumConfig.kickInstrument` → `drumConfig.kickJsVarName`
-   - `drumConfig.snareInstrument` → `drumConfig.snareJsVarName`
-   - `{ instrument = ... }` → `{ jsVarName = ... }`
-   - All playNote calls updated to use jsVarName field
+   - `drumConfig.kickInstrument` → `drumConfig.kickWebAudioFont`
+   - `drumConfig.snareInstrument` → `drumConfig.snareWebAudioFont`
+   - `{ instrument = ... }` → `{ webAudioFont = ... }`
+   - All playNote calls updated to use webAudioFont field
 
    ## Benefits
 
