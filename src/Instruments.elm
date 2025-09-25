@@ -11,7 +11,7 @@ module Instruments exposing
     , parseTonal
     , percLabel
     , percRowIdx
-    , tonalJsVarName
+    , tonalWebAudioFont
     , tonalLabel
     )
 
@@ -31,8 +31,8 @@ type PercType
     | Snare
 
 
-tonalJsVarName : TonalInstrument -> String
-tonalJsVarName instrument =
+tonalWebAudioFont : TonalInstrument -> String
+tonalWebAudioFont instrument =
     case instrument of
         GrandPianoSBLive ->
             "_tone_0000_SBLive_sf2"
@@ -41,20 +41,20 @@ tonalJsVarName instrument =
             "_tone_0120_SBLive_sf2"
 
 
-drumKitConfig : DrumKit -> { kickInstrument : String, kickMidi : Int, snareInstrument : String, snareMidi : Int }
+drumKitConfig : DrumKit -> { kickWebAudioFont : String, kickMidi : Int, snareWebAudioFont : String, snareMidi : Int }
 drumKitConfig kit =
     case kit of
         StandardKit ->
-            { kickInstrument = "_drum_36_0_SBLive_sf2"
+            { kickWebAudioFont = "_drum_36_0_SBLive_sf2"
             , kickMidi = 36
-            , snareInstrument = "_drum_38_0_SBLive_sf2"
+            , snareWebAudioFont = "_drum_38_0_SBLive_sf2"
             , snareMidi = 38
             }
 
         RockKit ->
-            { kickInstrument = "_drum_36_0_SBLive_sf2"
+            { kickWebAudioFont = "_drum_36_0_SBLive_sf2"
             , kickMidi = 36
-            , snareInstrument = "_drum_38_0_SBLive_sf2"
+            , snareWebAudioFont = "_drum_38_0_SBLive_sf2"
             , snareMidi = 38
             }
 

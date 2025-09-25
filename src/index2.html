@@ -42,11 +42,11 @@
 
     // Handle unified note playback
     app.ports.playNote.subscribe((data) => {
-        const { instrument, midi, duration, volume } = data;
+        const { webAudioFont, midi, duration, volume } = data;
         const when = audioContext.currentTime;
 
-        // Look up instrument by name from window object
-        const instrumentSample = window[instrument];
+        // Look up WebAudioFont instrument by name from window object
+        const instrumentSample = window[webAudioFont];
 
         if (instrumentSample) {
             player.queueWaveTable(
@@ -59,7 +59,7 @@
                 volume
             );
         } else {
-            console.warn(`Instrument not found: ${instrument}`);
+            console.warn(`WebAudioFont instrument not found: ${webAudioFont}`);
         }
     });
 

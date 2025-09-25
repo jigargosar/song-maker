@@ -16,7 +16,7 @@ import Set exposing (Set)
 -- PORTS
 
 
-port playNote : { instrument : String, midi : Int, duration : Float, volume : Float } -> Cmd msg
+port playNote : { webAudioFont : String, midi : Int, duration : Float, volume : Float } -> Cmd msg
 
 
 port timeSync : (Float -> msg) -> Sub msg
@@ -914,7 +914,7 @@ getCurrentPlayingStep model =
 
 
 type alias NoteToPlay =
-    { instrument : String, midi : Int, duration : Float, volume : Float }
+    { webAudioFont : String, midi : Int, duration : Float, volume : Float }
 
 
 getActiveNotesForStep : Int -> Model -> List NoteToPlay
@@ -932,7 +932,7 @@ getActiveNotesForStep stepIdx model =
                     in
                     if isPitchCellActive position model.pitchGrid then
                         Just
-                            { instrument = Instruments.tonalJsVarName model.currentTonalInstrument
+                            { webAudioFont = Instruments.tonalWebAudioFont model.currentTonalInstrument
                             , midi = pitchIdxToMidi pitchIdx model
                             , duration = duration
                             , volume = 0.7
@@ -955,17 +955,17 @@ getActiveNotesForStep stepIdx model =
                             position =
                                 { percType = percType, stepIdx = stepIdx }
 
-                            ( instrumentName, midiNote ) =
+                            ( webAudioFontName, midiNote ) =
                                 case percType of
                                     Instruments.Kick ->
-                                        ( drumConfig.kickInstrument, drumConfig.kickMidi )
+                                        ( drumConfig.kickWebAudioFont, drumConfig.kickMidi )
 
                                     Instruments.Snare ->
-                                        ( drumConfig.snareInstrument, drumConfig.snareMidi )
+                                        ( drumConfig.snareWebAudioFont, drumConfig.snareMidi )
                         in
                         if isPercCellActive position model.percGrid then
                             Just
-                                { instrument = instrumentName
+                                { webAudioFont = webAudioFontName
                                 , midi = midiNote
                                 , duration = duration
                                 , volume = 0.8
@@ -986,7 +986,7 @@ playPitchCmdIf : Bool -> Int -> Model -> Cmd Msg
 playPitchCmdIf shouldPlay pitchIdx model =
     if shouldPlay then
         playNote
-            { instrument = Instruments.tonalJsVarName model.currentTonalInstrument
+            { webAudioFont = Instruments.tonalWebAudioFont model.currentTonalInstrument
             , midi = pitchIdxToMidi pitchIdx model
             , duration = 0.5
             , volume = 0.7
@@ -1003,16 +1003,16 @@ playPercCmdIf shouldPlay percType model =
             drumConfig =
                 Instruments.drumKitConfig model.currentDrumKit
 
-            ( instrumentName, midiNote ) =
+            ( webAudioFontName, midiNote ) =
                 case percType of
                     Instruments.Kick ->
-                        ( drumConfig.kickInstrument, drumConfig.kickMidi )
+                        ( drumConfig.kickWebAudioFont, drumConfig.kickMidi )
 
                     Instruments.Snare ->
-                        ( drumConfig.snareInstrument, drumConfig.snareMidi )
+                        ( drumConfig.snareWebAudioFont, drumConfig.snareMidi )
         in
         playNote
-            { instrument = instrumentName
+            { webAudioFont = webAudioFontName
             , midi = midiNote
             , duration = 0.5
             , volume = 0.8
