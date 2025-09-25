@@ -201,7 +201,8 @@ pitchInstrumentName instrument =
             "_tone_0250_SoundBlasterOld_sf2"
 
         Marimba ->
-            "_tone_0110_SBLive_sf2"
+            --"_tone_0120_SBLive_sf2"
+            "_tone_0120_JCLive_sf2_file"
 
 
 drumKitConfig : DrumKit -> { kickInstrument : String, kickMidi : Int, snareInstrument : String, snareMidi : Int }

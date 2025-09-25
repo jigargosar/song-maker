@@ -12,11 +12,13 @@
 <!-- Load piano instrument data from CDN -->
 <script src='https://surikov.github.io/webaudiofontdata/sound/0250_SoundBlasterOld_sf2.js'></script>
 
-<!-- Load individual percussion sounds from CDN -->
+<!-- Load individual percussion sounds from CDN kick snare default drumkit-->
 <script src='https://surikov.github.io/webaudiofontdata/sound/12836_0_SBLive_sf2.js'></script>
 <script src='https://surikov.github.io/webaudiofontdata/sound/12838_0_SBLive_sf2.js'></script>
 
-<script src='https://surikov.github.io/webaudiofontdata/sound/0110_SBLive_sf2.js'></script>
+<!-- marimba pitch/tone -->
+<script src='https://surikov.github.io/webaudiofontdata/sound/0120_JCLive_sf2_file.js'></script>
+<script src='https://surikov.github.io/webaudiofontdata/sound/0120_SBLive_sf2.js'></script>
 
 <!-- Load WebAudioFont player from CDN -->
 <script src='https://surikov.github.io/webaudiofont/npm/dist/WebAudioFontPlayer.js'></script>
@@ -25,15 +27,6 @@
     import { Elm } from "./Main2.elm";
 
     // Capture globals as clean constants
-    const WebAudioFontPlayer = window.WebAudioFontPlayer;
-    const piano = window._tone_0250_SoundBlasterOld_sf2;
-    const marimba = window._tone_0110_SBLive_sf2
-
-    // Percussion kit configuration
-    const percussionKit = {
-        36: window._drum_36_0_SBLive_sf2,  // Kick
-        38: window._drum_38_0_SBLive_sf2   // Snare
-    };
 
     // Initialize Elm
     const app = Elm.Main2.init({ node: document.getElementById("root") });
@@ -42,12 +35,12 @@
     const audioContext = new AudioContext();
     const player = new WebAudioFontPlayer();
 
-    // Load instruments
-    player.loader.decodeAfterLoading(audioContext, piano);
-    player.loader.decodeAfterLoading(audioContext, marimba);
-    Object.values(percussionKit).forEach(instrument => {
-        player.loader.decodeAfterLoading(audioContext, instrument);
-    });
+    player.loader.decodeAfterLoading(audioContext, '_tone_0250_SoundBlasterOld_sf2'); // piano
+    player.loader.decodeAfterLoading(audioContext, '_drum_36_0_SBLive_sf2'); // kick
+    player.loader.decodeAfterLoading(audioContext, '_drum_38_0_SBLive_sf2'); // snare
+    player.loader.decodeAfterLoading(audioContext, '_tone_0120_SBLive_sf2'); // marimba 1
+    player.loader.decodeAfterLoading(audioContext, '_tone_0120_JCLive_sf2_file'); // marimba 2
+
 
     // Handle unified note playback
     app.ports.playNote.subscribe((data) => {
