@@ -349,10 +349,10 @@ init _ =
       , rootNote = C
       , octaveRange = { start = 3, count = 3 }
       , timingConfig =
-          { bars = 8
-          , beatsPerBar = 4
-          , subdivisions = 2
-          }
+            { bars = 8
+            , beatsPerBar = 4
+            , subdivisions = 2
+            }
       , pitchGrid = Set.empty
       , percGrid = Set.empty
       , drawState = NotDrawing
@@ -1067,11 +1067,11 @@ twinkleSong =
             -- "sky (end)"
             ++ [ [ kick ], [], [ snare ], [] ]
     , timingConfig =
-        { bars = 8
+        { bars = 4
         , beatsPerBar = 4
         , subdivisions = 2
         }
-    , bpm = 180
+    , bpm = 90
     , octaveRange = { start = 3, count = 3 }
     }
 
@@ -1661,8 +1661,6 @@ times fn i =
      - **Instruments.elm**: Sound source definitions and instrument-related functions
 
 -}
-
-
 {- REFACTORING PLAN: Configurable Timing Structure (Bars/Beats/Split-beats)
 
    ## Goal
