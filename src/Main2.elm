@@ -194,8 +194,8 @@ toneIdxToNoteName toneIdx model =
         "C4"
 
 
-toneInstrumentName : ToneInstrument -> String
-toneInstrumentName instrument =
+toneName : Tone -> String
+toneName instrument =
     case instrument of
         GrandPianoSBLive ->
             "_tone_0000_SBLive_sf2"
@@ -252,7 +252,7 @@ type alias ToneGrid =
     Set ( Int, Int )
 
 
-type ToneInstrument
+type Tone
     = GrandPianoSBLive
     | MarimbaSBLLive
 
@@ -309,7 +309,7 @@ type alias Model =
     , playState : PlayState
     , audioContextTime : Float
     , bpm : Int
-    , currentToneInstrument : ToneInstrument
+    , currentTone : Tone
     , currentDrumKit : DrumKit
     }
 
@@ -326,7 +326,7 @@ init _ =
       , playState = Stopped
       , audioContextTime = 0.0
       , bpm = 120
-      , currentToneInstrument = GrandPianoSBLive
+      , currentTone = GrandPianoSBLive
       , currentDrumKit = StandardKit
       }
         |> applySong twinkleSong
@@ -355,7 +355,7 @@ type Msg
     | ChangeOctaveStart Int
     | ChangeOctaveCount Int
     | ChangeBPM Int
-    | ChangeToneInstrument ToneInstrument
+    | ChangeTone Tone
     | ChangeDrumKit DrumKit
 
 
@@ -586,8 +586,8 @@ update msg model =
             , Cmd.none
             )
 
-        ChangeToneInstrument newInstrument ->
-            ( { model | currentToneInstrument = newInstrument }
+        ChangeTone newInstrument ->
+            ( { model | currentTone = newInstrument }
             , Cmd.none
             )
 
@@ -863,7 +863,7 @@ getActiveNotesForStep stepIdx model =
                     in
                     if isToneCellActive position model.toneGrid then
                         Just
-                            { instrument = toneInstrumentName model.currentToneInstrument
+                            { instrument = toneName model.currentTone
                             , midi = toneIdxToMidi toneIdx model
                             , duration = duration
                             , volume = 0.7
@@ -917,7 +917,7 @@ playToneCmdIf : Bool -> Int -> Model -> Cmd Msg
 playToneCmdIf shouldPlay toneIdx model =
     if shouldPlay then
         playNote
-            { instrument = toneInstrumentName model.currentToneInstrument
+            { instrument = toneName model.currentTone
             , midi = toneIdxToMidi toneIdx model
             , duration = 0.5
             , volume = 0.7
@@ -1261,7 +1261,7 @@ viewScaleControls model =
 viewInstrumentControls : Model -> Html Msg
 viewInstrumentControls model =
     div [ class "flex items-center gap-4" ]
-        [ viewControlGroup "Tone" (viewToneInstrumentSelector model.currentToneInstrument)
+        [ viewControlGroup "Tone" (viewToneSelector model.currentTone)
         , viewControlGroup "Drums" (viewDrumKitSelector model.currentDrumKit)
         ]
 
@@ -1442,13 +1442,13 @@ parseRootNote str =
             Nothing
 
 
-viewToneInstrumentSelector : ToneInstrument -> Html Msg
-viewToneInstrumentSelector currentInstrument =
+viewToneSelector : Tone -> Html Msg
+viewToneSelector currentInstrument =
     H.select
         [ class "bg-gray-700 text-white text-sm border border-gray-600 rounded px-2 py-1 cursor-pointer hover:bg-gray-600 transition-colors"
-        , HE.onInput (parseToneInstrument >> ChangeToneInstrument)
+        , HE.onInput (parseTone >> ChangeTone)
         ]
-        (List.map (viewToneInstrumentOption currentInstrument) allToneInstruments)
+        (List.map (viewToneOption currentInstrument) allTones)
 
 
 viewDrumKitSelector : DrumKit -> Html Msg
@@ -1460,13 +1460,13 @@ viewDrumKitSelector currentDrumKit =
         (List.map (viewDrumKitOption currentDrumKit) allDrumKits)
 
 
-viewToneInstrumentOption : ToneInstrument -> ToneInstrument -> Html Msg
-viewToneInstrumentOption currentInstrument instrument =
+viewToneOption : Tone -> Tone -> Html Msg
+viewToneOption currentInstrument instrument =
     H.option
-        [ HA.value (toneInstrumentToString instrument)
+        [ HA.value (toneToString instrument)
         , HA.selected (currentInstrument == instrument)
         ]
-        [ text (toneInstrumentToString instrument) ]
+        [ text (toneToString instrument) ]
 
 
 viewDrumKitOption : DrumKit -> DrumKit -> Html Msg
@@ -1478,8 +1478,8 @@ viewDrumKitOption currentDrumKit drumKit =
         [ text (drumKitToString drumKit) ]
 
 
-allToneInstruments : List ToneInstrument
-allToneInstruments =
+allTones : List Tone
+allTones =
     [ GrandPianoSBLive, MarimbaSBLLive ]
 
 
@@ -1488,8 +1488,8 @@ allDrumKits =
     [ StandardKit, RockKit ]
 
 
-toneInstrumentToString : ToneInstrument -> String
-toneInstrumentToString instrument =
+toneToString : Tone -> String
+toneToString instrument =
     case instrument of
         GrandPianoSBLive ->
             "Piano"
@@ -1508,8 +1508,8 @@ drumKitToString drumKit =
             "Rock"
 
 
-parseToneInstrument : String -> ToneInstrument
-parseToneInstrument str =
+parseTone : String -> Tone
+parseTone str =
     case str of
         "Piano" ->
             GrandPianoSBLive
