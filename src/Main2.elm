@@ -581,7 +581,7 @@ update msg model =
                     { model | rootNote = newRootNote }
 
                 newPitchGrid =
-                    resizePitchGrid model newModel model.pitchGrid
+                    transposePitchGrid model newModel model.pitchGrid
             in
             ( { newModel | pitchGrid = newPitchGrid }
             , Cmd.none
@@ -1021,6 +1021,66 @@ playPercCmdIf shouldPlay percType model =
     else
         Cmd.none
 
+
+
+-- Grid Transpose Functions
+
+
+{-| Convert pitch index to scale degree and octave relative to current root/scale -}
+pitchIdxToScaleDegree : Int -> Model -> { scaleDegree : Int, octave : Int }
+pitchIdxToScaleDegree pitchIdx model =
+    let
+        notesInScale =
+            notesPerOctave model.scaleType
+
+        octaveIdx =
+            pitchIdx // notesInScale
+
+        noteIdx =
+            modBy notesInScale pitchIdx
+
+        absoluteOctave =
+            model.octaveRange.start + octaveIdx
+    in
+    { scaleDegree = noteIdx, octave = absoluteOctave }
+
+
+{-| Convert scale degree and octave to pitch index in target model -}
+scaleDegreeToPitchIdx : { scaleDegree : Int, octave : Int } -> Model -> Int
+scaleDegreeToPitchIdx { scaleDegree, octave } model =
+    let
+        notesInScale =
+            notesPerOctave model.scaleType
+
+        octaveIdx =
+            octave - model.octaveRange.start
+    in
+    if octaveIdx >= 0 && octaveIdx < model.octaveRange.count && scaleDegree >= 0 && scaleDegree < notesInScale then
+        octaveIdx * notesInScale + scaleDegree
+    else
+        -1  -- Invalid pitch
+
+
+{-| Transpose pitch grid preserving scale degree relationships -}
+transposePitchGrid : Model -> Model -> PitchGrid -> PitchGrid
+transposePitchGrid oldModel newModel existingGrid =
+    existingGrid
+        |> Set.toList
+        |> List.filterMap
+            (\( pitchIdx, stepIdx ) ->
+                let
+                    scaleDegreeInfo =
+                        pitchIdxToScaleDegree pitchIdx oldModel
+
+                    newPitchIdx =
+                        scaleDegreeToPitchIdx scaleDegreeInfo newModel
+                in
+                if newPitchIdx >= 0 then
+                    Just ( newPitchIdx, stepIdx )
+                else
+                    Nothing
+            )
+        |> Set.fromList
 
 
 -- Grid Resize Functions
@@ -1801,6 +1861,309 @@ times fn i =
    This gives maximum user flexibility with minimum UI complexity.
 
 -}
+
+
+{- TODO: Improve Octave Controls - Musical Operations vs Workspace Management
+
+   ## Current Problems
+
+   1. **Poor UX**: Start/Count inputs require mental math (start=3, count=3 = octaves 3,4,5)
+   2. **Destructive behavior**: Changing Start/Count loses notes outside new range
+   3. **Missing transpose**: No way to move all notes up/down by octaves
+   4. **Confusing purpose**: Start/Count conflates workspace management with musical operations
+
+   ## Proposed Solution: Separate Musical Operations from Workspace Management
+
+   ### Musical Operations (Move Notes)
+   ```elm
+   -- Transpose all notes by octaves with auto-range-expansion
+   Transpose: [ ⬆️ Up Octave ] [ ⬇️ Down Octave ]
+   Key: [C] [C#] [D] ... -- (existing root note selector - already works correctly)
+
+   -- Example: Transpose Up
+   -- Notes: C4,E4,G4 → C5,E5,G5
+   -- Range: 3,4,5 → auto-expands to 3,4,5,6 if needed
+   -- Purpose: Move music to different pitch level
+   ```
+
+   ### Workspace Management (Adjust Available Range)
+   ```elm
+   -- Manually control composition workspace
+   Range: [ ⬆️ Expand Up ] [ ⬇️ Expand Down ] [ ⬆️ Shrink Up ] [ ⬇️ Shrink Down ]
+   Display: "Octaves 3-5" -- Clear current range indicator
+
+   -- Example: Expand Down
+   -- Range: 3,4,5 → 2,3,4,5
+   -- Notes: Stay exactly where they are
+   -- Purpose: Add workspace below existing music for bass/harmony
+   ```
+
+   ## Implementation Requirements
+
+   ### 1. Transpose Functions
+   ```elm
+   transposeOctaveUp : Model -> (Model, Cmd Msg)
+   transposeOctaveDown : Model -> (Model, Cmd Msg)
+
+   -- Auto-expand range to fit transposed notes
+   autoExpandRange : PitchGrid -> OctaveRange -> OctaveRange
+   ```
+
+   ### 2. Range Management Functions
+   ```elm
+   expandRangeUp : Model -> Model      -- Add octave above
+   expandRangeDown : Model -> Model    -- Add octave below
+   shrinkRangeUp : Model -> Model      -- Remove top octave (if empty)
+   shrinkRangeDown : Model -> Model    -- Remove bottom octave (if empty)
+   ```
+
+   ### 3. Destructive Operation Warnings
+   ```elm
+   type OperationWarning
+       = WillLoseNotes Int  -- "This will remove N notes"
+       | SafeOperation
+
+   checkRangeShrink : OctaveRange -> PitchGrid -> OperationWarning
+
+   -- UI shows warning dialog before destructive operations:
+   -- "Shrinking will remove 3 notes. Continue? [Shrink Anyway] [Cancel]"
+   ```
+
+   ### 4. Updated Message Types
+   ```elm
+   type Msg
+       = -- ... existing messages
+       | TransposeOctaveUp
+       | TransposeOctaveDown
+       | ExpandRangeUp
+       | ExpandRangeDown
+       | ShrinkRangeUp
+       | ShrinkRangeDown
+       | ConfirmDestructiveOperation (Model -> Model) -- For warning dialogs
+   ```
+
+   ### 5. Better UI Components
+   ```elm
+   viewTransposeControls : Html Msg
+   viewRangeControls : Model -> Html Msg  -- Show warnings if needed
+   viewOctaveRangeDisplay : OctaveRange -> Html Msg  -- "Octaves 2-6"
+   ```
+
+   ## User Experience Improvements
+
+   ### Clear Separation of Concerns
+   - **"I want to move my music"** → Use Transpose controls
+   - **"I need more room to compose"** → Use Range controls
+   - **"I want a different key"** → Use Root note selector
+
+   ### Non-Destructive by Default
+   - Transpose: Auto-expands range to prevent note loss
+   - Expand: Never loses notes (always safe)
+   - Shrink: Only allowed if no notes in removed octave, or with user confirmation
+
+   ### Progressive Disclosure
+   - Simple operations (transpose, expand) work immediately
+   - Destructive operations show warnings with alternatives
+   - Power users can override warnings if needed
+
+   ## Benefits
+
+   - **Intuitive**: Operations match how musicians think
+   - **Safe**: Destructive actions require confirmation
+   - **Flexible**: Separates musical intent from workspace management
+   - **Professional**: Matches behavior of modern DAWs and music software
+   - **Discoverable**: Clear button labels show what each operation does
+
+   ## Implementation Priority
+
+   1. **High**: Transpose controls (most commonly needed)
+   2. **Medium**: Range expand controls (composition workflow)
+   3. **Medium**: Destructive operation warnings (safety)
+   4. **Low**: Range shrink controls (nice-to-have cleanup)
+
+-}
+
+
+{-| TODO: Undo/Redo System Implementation
+
+## Overview
+Add undo/redo functionality to preserve user work and enable experimentation.
+Simple history stack approach storing snapshots of undoable state.
+
+## Core Design
+
+### History State Structure
+```elm
+type alias HistoryState =
+    { pitchGrid : PitchGrid
+    , percGrid : PercGrid
+    , scaleType : ScaleType
+    , rootNote : RootNote
+    , octaveRange : { start : Int, count : Int }
+    , sequenceConfig : SequenceConfig
+    }
+```
+
+### Model Changes
+```elm
+type alias Model =
+    { -- existing fields...
+    , undoStack : List HistoryState
+    , redoStack : List HistoryState
+    , maxHistorySize : Int  -- Optional: limit memory usage (e.g. 50 states)
+    }
+```
+
+### Message Types
+```elm
+type Msg
+    = -- existing messages...
+    | Undo
+    | Redo
+```
+
+## State Classification
+
+### Undoable Operations (Musical State)
+- Grid modifications (drawing notes, clearing)
+- Scale/key changes (ChangeScaleType, ChangeRootNote)
+- Range changes (ChangeOctaveStart, ChangeOctaveCount, transpose operations)
+- Sequence structure (ChangeBars, ChangeBeatsPerBar, ChangeSubdivisions)
+
+### Non-Undoable Operations (UI/Temporary State)
+- Drawing state (StartDrawing, ContinueDrawing, StopDrawing)
+- Playback state (Play, Stop, TimeSync)
+- Audio context time updates
+- Instrument/kit selection (instrument changes don't affect composition)
+- BPM changes (performance setting, not composition structure)
+
+## Implementation Functions
+
+### History Management
+```elm
+pushToHistory : Model -> Model
+pushToHistory model =
+    let
+        currentState = modelToHistoryState model
+        newUndoStack = currentState :: model.undoStack
+                      |> List.take model.maxHistorySize
+    in
+    { model
+    | undoStack = newUndoStack
+    , redoStack = []  -- Clear redo stack on new operation
+    }
+
+modelToHistoryState : Model -> HistoryState
+modelToHistoryState model =
+    { pitchGrid = model.pitchGrid
+    , percGrid = model.percGrid
+    , scaleType = model.scaleType
+    , rootNote = model.rootNote
+    , octaveRange = model.octaveRange
+    , sequenceConfig = model.sequenceConfig
+    , bpm = model.bpm
+    }
+
+historyStateToModel : HistoryState -> Model -> Model
+historyStateToModel historyState model =
+    { model
+    | pitchGrid = historyState.pitchGrid
+    , percGrid = historyState.percGrid
+    , scaleType = historyState.scaleType
+    , rootNote = historyState.rootNote
+    , octaveRange = historyState.octaveRange
+    , sequenceConfig = historyState.sequenceConfig
+    , bpm = historyState.bpm
+    }
+```
+
+### Update Logic Integration
+```elm
+update : Msg -> Model -> ( Model, Cmd Msg )
+update msg model =
+    case msg of
+        -- Undoable operations - push history first
+        StartDrawingPitch pos ->
+            pushToHistory model
+                |> updateStartDrawingPitch pos
+
+        ChangeRootNote newRoot ->
+            pushToHistory model
+                |> updateChangeRootNote newRoot
+
+        -- Non-undoable operations - no history push
+        Play ->
+            updatePlay model
+
+        -- Undo/Redo operations
+        Undo ->
+            case model.undoStack of
+                [] -> (model, Cmd.none)
+                head :: tail ->
+                    let
+                        currentState = modelToHistoryState model
+                        restoredModel = historyStateToModel head model
+                    in
+                    ( { restoredModel
+                      | undoStack = tail
+                      , redoStack = currentState :: model.redoStack
+                      }
+                    , Cmd.none
+                    )
+
+        Redo ->
+            case model.redoStack of
+                [] -> (model, Cmd.none)
+                head :: tail ->
+                    let
+                        currentState = modelToHistoryState model
+                        restoredModel = historyStateToModel head model
+                    in
+                    ( { restoredModel
+                      | redoStack = tail
+                      , undoStack = currentState :: model.undoStack
+                      }
+                    , Cmd.none
+                    )
+```
+
+## UI Integration
+
+### Keyboard Shortcuts
+- Ctrl+Z / Cmd+Z → Undo
+- Ctrl+Y / Cmd+Shift+Z → Redo
+
+### Button States
+```elm
+viewUndoRedoControls : Model -> Html Msg
+viewUndoRedoControls model =
+    div [ class "undo-redo-controls" ]
+        [ button
+            [ onClick Undo
+            , disabled (List.isEmpty model.undoStack)
+            ]
+            [ text "↶ Undo" ]
+        , button
+            [ onClick Redo
+            , disabled (List.isEmpty model.redoStack)
+            ]
+            [ text "↷ Redo" ]
+        ]
+```
+
+## Memory Considerations
+- Limit history size (e.g., 50 operations) to prevent memory issues
+- Consider storing diffs instead of full state for large grids (optimization for later)
+- Clear redo stack on new operations (standard behavior)
+
+## Implementation Priority
+1. **High**: Core undo/redo for grid drawing operations
+2. **Medium**: Undo for configuration changes (scale, BPM, etc.)
+3. **Low**: Keyboard shortcuts and advanced UI
+
+-}
+
+
 {- TODO:
    currently when changing root note the resize grid function chops off notes.
    Ideally it should preserve notes, since changing root note doesn't change the number of pitches
