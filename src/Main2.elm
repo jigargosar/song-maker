@@ -197,10 +197,10 @@ pitchIdxToNoteName pitchIdx model =
 pitchInstrumentName : PitchInstrument -> String
 pitchInstrumentName instrument =
     case instrument of
-        Piano ->
+        GrandPianoSBLive ->
             "_tone_0000_SBLive_sf2"
 
-        MarimbaSB ->
+        MarimbaSBLLive ->
             "_tone_0120_SBLive_sf2"
 
 
@@ -253,8 +253,8 @@ type alias PitchGrid =
 
 
 type PitchInstrument
-    = Piano
-    | MarimbaSB
+    = GrandPianoSBLive
+    | MarimbaSBLLive
 
 
 type DrumKit
@@ -326,7 +326,7 @@ init _ =
       , playState = Stopped
       , audioContextTime = 0.0
       , bpm = 120
-      , currentPitchInstrument = Piano
+      , currentPitchInstrument = GrandPianoSBLive
       , currentDrumKit = StandardKit
       }
         |> applySong twinkleSong
@@ -1480,7 +1480,7 @@ viewDrumKitOption currentDrumKit drumKit =
 
 allPitchInstruments : List PitchInstrument
 allPitchInstruments =
-    [ Piano, MarimbaSB ]
+    [ GrandPianoSBLive, MarimbaSBLLive ]
 
 
 allDrumKits : List DrumKit
@@ -1491,10 +1491,10 @@ allDrumKits =
 pitchInstrumentToString : PitchInstrument -> String
 pitchInstrumentToString instrument =
     case instrument of
-        Piano ->
+        GrandPianoSBLive ->
             "Piano"
 
-        MarimbaSB ->
+        MarimbaSBLLive ->
             "Marimba"
 
 
@@ -1512,13 +1512,13 @@ parsePitchInstrument : String -> PitchInstrument
 parsePitchInstrument str =
     case str of
         "Piano" ->
-            Piano
+            GrandPianoSBLive
 
         "Marimba" ->
-            MarimbaSB
+            MarimbaSBLLive
 
         _ ->
-            Piano
+            GrandPianoSBLive
 
 
 parseDrumKit : String -> DrumKit
