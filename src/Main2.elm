@@ -1752,8 +1752,6 @@ times fn i =
      - **Instruments.elm**: Sound source definitions and instrument-related functions
 
 -}
-
-
 {- TODO: Simplify SequenceConfig to Single Steps Input
 
    ## Current Problem
@@ -1803,5 +1801,7 @@ times fn i =
    This gives maximum user flexibility with minimum UI complexity.
 
 -}
-
-
+{- TODO:
+   currently when changing root note the resize grid function chops off notes.
+   Ideally it should preserve notes, since changing root note doesn't change the number of pitches
+-}
