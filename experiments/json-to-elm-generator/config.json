@@ -1,0 +1,10 @@
+{
+  "playerName": "Jigar",
+  "level": 42,
+  "active": true,
+  "inventory": ["sword", "shield", "potion"],
+  "stats": {
+    "health": 100,
+    "mana": 75
+  }
+}

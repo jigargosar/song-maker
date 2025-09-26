@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <title>JSON to Elm Config</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            display: flex;
+            flex-direction: column;
+            padding: 20px;
+        }
+        textarea {
+            width: 48%;
+            height: 300px;
+            font-family: monospace;
+            font-size: 14px;
+            padding: 10px;
+            margin: 10px 1%;
+        }
+        .container {
+            display: flex;
+            justify-content: space-between;
+        }
+        button {
+            margin: 10px;
+            padding: 10px 20px;
+            font-size: 16px;
+        }
+    </style>
+</head>
+<body>
+<h2>JSON to Elm Config Generator</h2>
+<div class="container">
+    <textarea id="jsonInput" placeholder="Paste JSON here..."></textarea>
+    <textarea id="elmOutput" placeholder="Elm code will appear here..." readonly></textarea>
+</div>
+<button onclick="generateElm()">Convert to Elm</button>
+
+<script>
+    function toElm(value, indent = '    ') {
+        if (Array.isArray(value)) {
+            return '[ ' + value.map(v => toElm(v, indent)).join(', ') + ' ]';
+        } else if (typeof value === 'object' && value !== null) {
+            const fields = Object.entries(value)
+                .map(([k, v]) => `${k} = ${toElm(v, indent + '    ')}`)
+                .join(',\n' + indent);
+            return '{\n' + indent + fields + '\n' + indent.slice(4) + '}';
+        } else if (typeof value === 'string') {
+            return `"${value}"`;
+        } else if (typeof value === 'boolean') {
+            return value ? 'True' : 'False';
+        } else {
+            return value;
+        }
+    }
+
+    function generateElm() {
+        const input = document.getElementById('jsonInput').value;
+        try {
+            const json = JSON.parse(input);
+            const elm = `topLevel : TopLevel\ntopLevel =\n${toElm(json)}`;
+            document.getElementById('elmOutput').value = elm;
+        } catch (e) {
+            document.getElementById('elmOutput').value = 'Invalid JSON!';
+        }
+    }
+</script>
+</body>
+</html>
