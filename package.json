@@ -18,8 +18,10 @@
     }
   },
   "devDependencies": {
+    "@parcel/macros": "^2.16.0",
     "@parcel/transformer-elm": "2.16.0",
     "@tailwindcss/postcss": "^4.1.13",
+    "@types/node": "^24.5.2",
     "elm": "0.19.1-6",
     "parcel": "2.16.0",
     "postcss": "^8.5.6",

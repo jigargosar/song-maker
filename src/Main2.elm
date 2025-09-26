@@ -276,6 +276,10 @@ type alias Flags =
 
 main : Program Flags Model Msg
 main =
+    --let
+    --    _ =
+    --        Debug.log "foo" Configuration.PlayerConfig.cfg
+    --in
     Browser.element
         { init = init
         , update = update
@@ -416,6 +420,7 @@ subscriptions _ =
     timeSync TimeSync
 
 
+
 -- History management functions
 
 
@@ -456,7 +461,8 @@ update msg model =
             case model.drawState of
                 NotDrawing ->
                     let
-                        modelWithHistory = pushToHistory model
+                        modelWithHistory =
+                            pushToHistory model
 
                         currentlyActive =
                             isPitchCellActive position model.pitchGrid
@@ -498,7 +504,8 @@ update msg model =
             case model.drawState of
                 NotDrawing ->
                     let
-                        modelWithHistory = pushToHistory model
+                        modelWithHistory =
+                            pushToHistory model
 
                         currentlyActive =
                             isPercCellActive position model.percGrid
@@ -615,7 +622,9 @@ update msg model =
 
         ChangeScaleType newScaleType ->
             let
-                modelWithHistory = pushToHistory model
+                modelWithHistory =
+                    pushToHistory model
+
                 newModel =
                     { modelWithHistory | scaleType = newScaleType }
 
@@ -628,7 +637,9 @@ update msg model =
 
         ChangeRootNote newRootNote ->
             let
-                modelWithHistory = pushToHistory model
+                modelWithHistory =
+                    pushToHistory model
+
                 newModel =
                     { modelWithHistory | rootNote = newRootNote }
 
@@ -641,7 +652,9 @@ update msg model =
 
         ChangeOctaveStart newStart ->
             let
-                modelWithHistory = pushToHistory model
+                modelWithHistory =
+                    pushToHistory model
+
                 clampedStart =
                     max 1 newStart
 
@@ -657,7 +670,9 @@ update msg model =
 
         ChangeOctaveCount newCount ->
             let
-                modelWithHistory = pushToHistory model
+                modelWithHistory =
+                    pushToHistory model
+
                 clampedCount =
                     max 1 newCount
 
@@ -688,7 +703,9 @@ update msg model =
 
         ChangeBars newBars ->
             let
-                modelWithHistory = pushToHistory model
+                modelWithHistory =
+                    pushToHistory model
+
                 clampedBars =
                     max 1 newBars
 
@@ -704,7 +721,9 @@ update msg model =
 
         ChangeBeatsPerBar newBeatsPerBar ->
             let
-                modelWithHistory = pushToHistory model
+                modelWithHistory =
+                    pushToHistory model
+
                 clampedBeatsPerBar =
                     max 1 newBeatsPerBar
 
@@ -720,7 +739,9 @@ update msg model =
 
         ChangeSubdivisions newSubdivisions ->
             let
-                modelWithHistory = pushToHistory model
+                modelWithHistory =
+                    pushToHistory model
+
                 clampedSubdivisions =
                     max 1 newSubdivisions
 
@@ -936,6 +957,7 @@ viewPercRow percType totalSteps percGrid currentStep =
                 _ ->
                     if percType == Instruments.percSnare then
                         "sticky bottom-12 h-12 z-10 border-t-3"
+
                     else
                         "sticky bottom-0 h-12 z-10"
     in
@@ -963,6 +985,7 @@ viewPercCell percType percGrid currentStep stepIdx =
                 _ ->
                     if percType == Instruments.percSnare then
                         "sticky bottom-12 h-12 z-10  border-t-3"
+
                     else
                         "sticky bottom-0 h-12 z-10"
 
@@ -1092,6 +1115,7 @@ getActiveNotesForStep stepIdx model =
                                     _ ->
                                         if percType == Instruments.percKick then
                                             ( drumConfig.kickWebAudioFont, drumConfig.kickMidi )
+
                                         else
                                             ( drumConfig.snareWebAudioFont, drumConfig.snareMidi )
                         in
@@ -1140,6 +1164,7 @@ playPercCmdIf shouldPlay percType model =
                     _ ->
                         if percType == Instruments.percKick then
                             ( drumConfig.kickWebAudioFont, drumConfig.kickMidi )
+
                         else
                             ( drumConfig.snareWebAudioFont, drumConfig.snareMidi )
         in
@@ -1482,6 +1507,7 @@ viewPercSymbol isActive percType =
                 if percType == Instruments.percKick then
                     -- Circle symbol
                     div [ class "w-6 h-6 rounded-full", class accentBgColor ] []
+
                 else
                     -- Triangle symbol
                     div [ class "w-6 h-6", class accentBgColor, style "clip-path" "polygon(50% 0%, 0% 100%, 100% 100%)" ] []
@@ -1822,6 +1848,3 @@ format templateString replacements =
 
 times fn i =
     List.range 0 (i - 1) |> List.map fn
-
-
-
