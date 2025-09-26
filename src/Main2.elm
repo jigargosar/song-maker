@@ -416,6 +416,36 @@ subscriptions _ =
     timeSync TimeSync
 
 
+-- History management functions
+
+
+{-| Push the current state to the undo stack and clear the redo stack
+-}
+pushToHistory : Model -> Model
+pushToHistory model =
+    let
+        currentHistoryState =
+            { pitchGrid = model.pitchGrid
+            , percGrid = model.percGrid
+            , scaleType = model.scaleType
+            , rootNote = model.rootNote
+            , octaveRange = model.octaveRange
+            , sequenceConfig = model.sequenceConfig
+            }
+
+        newUndoStack =
+            currentHistoryState :: model.undoStack
+
+        -- Clear redo stack when new operation is performed
+        newRedoStack =
+            []
+    in
+    { model
+        | undoStack = newUndoStack
+        , redoStack = newRedoStack
+    }
+
+
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
@@ -426,6 +456,8 @@ update msg model =
             case model.drawState of
                 NotDrawing ->
                     let
+                        modelWithHistory = pushToHistory model
+
                         currentlyActive =
                             isPitchCellActive position model.pitchGrid
 
@@ -436,11 +468,11 @@ update msg model =
                             else
                                 DrawingPitch
                     in
-                    ( { model
+                    ( { modelWithHistory
                         | drawState = newDrawState
-                        , pitchGrid = updatePitchCell position (not currentlyActive) model.pitchGrid
+                        , pitchGrid = updatePitchCell position (not currentlyActive) modelWithHistory.pitchGrid
                       }
-                    , playPitchCmdIf (not currentlyActive) position.pitchIdx model
+                    , playPitchCmdIf (not currentlyActive) position.pitchIdx modelWithHistory
                     )
 
                 _ ->
@@ -466,6 +498,8 @@ update msg model =
             case model.drawState of
                 NotDrawing ->
                     let
+                        modelWithHistory = pushToHistory model
+
                         currentlyActive =
                             isPercCellActive position model.percGrid
 
@@ -476,11 +510,11 @@ update msg model =
                             else
                                 DrawingPerc
                     in
-                    ( { model
+                    ( { modelWithHistory
                         | drawState = newDrawState
-                        , percGrid = updatePercCell position (not currentlyActive) model.percGrid
+                        , percGrid = updatePercCell position (not currentlyActive) modelWithHistory.percGrid
                       }
-                    , playPercCmdIf (not currentlyActive) position.percType model
+                    , playPercCmdIf (not currentlyActive) position.percType modelWithHistory
                     )
 
                 _ ->
@@ -581,11 +615,12 @@ update msg model =
 
         ChangeScaleType newScaleType ->
             let
+                modelWithHistory = pushToHistory model
                 newModel =
-                    { model | scaleType = newScaleType }
+                    { modelWithHistory | scaleType = newScaleType }
 
                 newPitchGrid =
-                    resizePitchGrid model newModel model.pitchGrid
+                    resizePitchGrid modelWithHistory newModel modelWithHistory.pitchGrid
             in
             ( { newModel | pitchGrid = newPitchGrid }
             , Cmd.none
@@ -593,11 +628,12 @@ update msg model =
 
         ChangeRootNote newRootNote ->
             let
+                modelWithHistory = pushToHistory model
                 newModel =
-                    { model | rootNote = newRootNote }
+                    { modelWithHistory | rootNote = newRootNote }
 
                 newPitchGrid =
-                    transposePitchGrid model newModel model.pitchGrid
+                    transposePitchGrid modelWithHistory newModel modelWithHistory.pitchGrid
             in
             ( { newModel | pitchGrid = newPitchGrid }
             , Cmd.none
@@ -605,14 +641,15 @@ update msg model =
 
         ChangeOctaveStart newStart ->
             let
+                modelWithHistory = pushToHistory model
                 clampedStart =
                     max 1 newStart
 
                 newModel =
-                    { model | octaveRange = { start = clampedStart, count = model.octaveRange.count } }
+                    { modelWithHistory | octaveRange = { start = clampedStart, count = modelWithHistory.octaveRange.count } }
 
                 newPitchGrid =
-                    resizePitchGrid model newModel model.pitchGrid
+                    resizePitchGrid modelWithHistory newModel modelWithHistory.pitchGrid
             in
             ( { newModel | pitchGrid = newPitchGrid }
             , Cmd.none
@@ -620,14 +657,15 @@ update msg model =
 
         ChangeOctaveCount newCount ->
             let
+                modelWithHistory = pushToHistory model
                 clampedCount =
                     max 1 newCount
 
                 newModel =
-                    { model | octaveRange = { start = model.octaveRange.start, count = clampedCount } }
+                    { modelWithHistory | octaveRange = { start = modelWithHistory.octaveRange.start, count = clampedCount } }
 
                 newPitchGrid =
-                    resizePitchGrid model newModel model.pitchGrid
+                    resizePitchGrid modelWithHistory newModel modelWithHistory.pitchGrid
             in
             ( { newModel | pitchGrid = newPitchGrid }
             , Cmd.none
@@ -650,46 +688,49 @@ update msg model =
 
         ChangeBars newBars ->
             let
+                modelWithHistory = pushToHistory model
                 clampedBars =
                     max 1 newBars
 
                 oldConfig =
-                    model.sequenceConfig
+                    modelWithHistory.sequenceConfig
 
                 newConfig =
                     { oldConfig | bars = clampedBars }
             in
-            ( { model | sequenceConfig = newConfig }
+            ( { modelWithHistory | sequenceConfig = newConfig }
             , Cmd.none
             )
 
         ChangeBeatsPerBar newBeatsPerBar ->
             let
+                modelWithHistory = pushToHistory model
                 clampedBeatsPerBar =
                     max 1 newBeatsPerBar
 
                 oldConfig =
-                    model.sequenceConfig
+                    modelWithHistory.sequenceConfig
 
                 newConfig =
                     { oldConfig | beatsPerBar = clampedBeatsPerBar }
             in
-            ( { model | sequenceConfig = newConfig }
+            ( { modelWithHistory | sequenceConfig = newConfig }
             , Cmd.none
             )
 
         ChangeSubdivisions newSubdivisions ->
             let
+                modelWithHistory = pushToHistory model
                 clampedSubdivisions =
                     max 1 newSubdivisions
 
                 oldConfig =
-                    model.sequenceConfig
+                    modelWithHistory.sequenceConfig
 
                 newConfig =
                     { oldConfig | subdivisions = clampedSubdivisions }
             in
-            ( { model | sequenceConfig = newConfig }
+            ( { modelWithHistory | sequenceConfig = newConfig }
             , Cmd.none
             )
 
