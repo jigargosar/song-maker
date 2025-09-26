@@ -19,6 +19,7 @@ module Instruments exposing
 type TonalInstrument
     = GrandPianoSBLive
     | MarimbaSBLLive
+    | StringsSBLive
 
 
 type DrumKit
@@ -39,6 +40,9 @@ tonalWebAudioFont instrument =
 
         MarimbaSBLLive ->
             "_tone_0120_SBLive_sf2"
+
+        StringsSBLive ->
+            "_tone_0400_SBLive_sf2"
 
 
 drumKitConfig : DrumKit -> { kickWebAudioFont : String, kickMidi : Int, snareWebAudioFont : String, snareMidi : Int }
@@ -61,7 +65,7 @@ drumKitConfig kit =
 
 allTonal : List TonalInstrument
 allTonal =
-    [ GrandPianoSBLive, MarimbaSBLLive ]
+    [ GrandPianoSBLive, MarimbaSBLLive, StringsSBLive ]
 
 
 allDrumKits : List DrumKit
@@ -77,6 +81,9 @@ tonalLabel instrument =
 
         MarimbaSBLLive ->
             "Marimba"
+
+        StringsSBLive ->
+            "Strings"
 
 
 drumKitLabel : DrumKit -> String
@@ -97,6 +104,9 @@ parseTonal str =
 
         "Marimba" ->
             MarimbaSBLLive
+
+        "Strings" ->
+            StringsSBLive
 
         _ ->
             GrandPianoSBLive

@@ -18,6 +18,9 @@
 
 <!-- marimba pitch/tone -->
 <script src='https://surikov.github.io/webaudiofontdata/sound/0120_SBLive_sf2.js'></script>
+<!-- strings -->
+<script src='https://surikov.github.io/webaudiofontdata/sound/0400_SBLive_sf2.js'></script>
+
 
 <!-- Load WebAudioFont player from CDN -->
 <script src='https://surikov.github.io/webaudiofont/npm/dist/WebAudioFontPlayer.js'></script>
@@ -38,6 +41,7 @@
     player.loader.decodeAfterLoading(audioContext, '_drum_36_0_SBLive_sf2'); // kick
     player.loader.decodeAfterLoading(audioContext, '_drum_38_0_SBLive_sf2'); // snare
     player.loader.decodeAfterLoading(audioContext, '_tone_0120_SBLive_sf2'); // marimba 1
+    player.loader.decodeAfterLoading(audioContext, '_tone_0400_SBLive_sf2'); // strings
 
 
     // Handle unified note playback
