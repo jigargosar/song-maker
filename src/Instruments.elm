@@ -5,20 +5,19 @@ module Instruments exposing
     , allDrumKits
     , allPercTypes
     , allTonal
+    , defaultDrumKit
+    , defaultTonalInstrument
     , drumKitConfig
     , drumKitLabel
     , parseDrumKit
     , parseTonal
+    , percKick
     , percLabel
     , percRowIdx
-    , tonalWebAudioFont
-    , tonalLabel
-
-    -- Constructors
-    , defaultTonalInstrument
-    , defaultDrumKit
-    , percKick
     , percSnare
+    , tonalLabel
+      -- Constructors
+    , tonalWebAudioFont
     )
 
 
@@ -26,6 +25,7 @@ type TonalInstrument
     = GrandPianoSBLive
     | MarimbaSBLLive
     | StringsSBLive
+    | FluteSBLive
 
 
 type DrumKit
@@ -48,7 +48,12 @@ tonalWebAudioFont instrument =
             "_tone_0120_SBLive_sf2"
 
         StringsSBLive ->
-            "_tone_0400_SBLive_sf2"
+            --"_tone_0400_SBLive_sf2"
+            "_tone_0450_SBLive_sf2"
+
+        FluteSBLive ->
+            --"_tone_0730_SBLive_sf2"
+            "_tone_0730_Aspirin_sf2_file"
 
 
 drumKitConfig : DrumKit -> { kickWebAudioFont : String, kickMidi : Int, snareWebAudioFont : String, snareMidi : Int }
@@ -71,7 +76,7 @@ drumKitConfig kit =
 
 allTonal : List TonalInstrument
 allTonal =
-    [ GrandPianoSBLive, MarimbaSBLLive, StringsSBLive ]
+    [ GrandPianoSBLive, MarimbaSBLLive, StringsSBLive, FluteSBLive ]
 
 
 allDrumKits : List DrumKit
@@ -90,6 +95,9 @@ tonalLabel instrument =
 
         StringsSBLive ->
             "Strings"
+
+        FluteSBLive ->
+            "Flute"
 
 
 drumKitLabel : DrumKit -> String
@@ -114,8 +122,11 @@ parseTonal str =
         "Strings" ->
             StringsSBLive
 
+        "Flute" ->
+            FluteSBLive
+
         _ ->
-            GrandPianoSBLive
+            Debug.todo "unable to parse"
 
 
 parseDrumKit : String -> DrumKit
@@ -156,15 +167,25 @@ percRowIdx percType =
             1
 
 
+
 -- Constructor functions
+
+
 defaultTonalInstrument : TonalInstrument
-defaultTonalInstrument = GrandPianoSBLive
+defaultTonalInstrument =
+    GrandPianoSBLive
+
 
 defaultDrumKit : DrumKit
-defaultDrumKit = ElectronicKit
+defaultDrumKit =
+    ElectronicKit
+
 
 percKick : PercType
-percKick = Kick
+percKick =
+    Kick
+
 
 percSnare : PercType
-percSnare = Snare
+percSnare =
+    Snare
