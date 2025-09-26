@@ -1,7 +1,7 @@
 module Instruments exposing
-    ( DrumKit(..)
-    , PercType(..)
-    , TonalInstrument(..)
+    ( DrumKit
+    , PercType
+    , TonalInstrument
     , allDrumKits
     , allPercTypes
     , allTonal
@@ -13,6 +13,12 @@ module Instruments exposing
     , percRowIdx
     , tonalWebAudioFont
     , tonalLabel
+
+    -- Constructors
+    , defaultTonalInstrument
+    , defaultDrumKit
+    , percKick
+    , percSnare
     )
 
 
@@ -148,3 +154,17 @@ percRowIdx percType =
 
         Kick ->
             1
+
+
+-- Constructor functions
+defaultTonalInstrument : TonalInstrument
+defaultTonalInstrument = GrandPianoSBLive
+
+defaultDrumKit : DrumKit
+defaultDrumKit = ElectronicKit
+
+percKick : PercType
+percKick = Kick
+
+percSnare : PercType
+percSnare = Snare

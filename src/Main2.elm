@@ -371,8 +371,8 @@ init _ =
       , playState = Stopped
       , audioContextTime = 0.0
       , bpm = 120
-      , currentTonalInstrument = Instruments.GrandPianoSBLive
-      , currentDrumKit = Instruments.ElectronicKit
+      , currentTonalInstrument = Instruments.defaultTonalInstrument
+      , currentDrumKit = Instruments.defaultDrumKit
       , undoStack = []
       , redoStack = []
       }
@@ -857,8 +857,8 @@ viewGrid model =
         ([ {- Empty corner cell -} div [ class labelBgColorAndClass, class "border-b border-gray-600" ] [] ]
             ++ {- Step Labels row -} times (\stepIdx -> viewStepLabel currentStep stepIdx) (getTotalSteps model)
             ++ {- Pitch rows -} (times (\pitchIdx -> viewPitchRow model model.pitchGrid currentStep pitchIdx) (getTotalPitches model) |> List.concat)
-            ++ {- Perc Snare row -} viewPercRow Instruments.Snare (getTotalSteps model) model.percGrid currentStep
-            ++ {- Perc Kick row -} viewPercRow Instruments.Kick (getTotalSteps model) model.percGrid currentStep
+            ++ {- Perc Snare row -} viewPercRow Instruments.percSnare (getTotalSteps model) model.percGrid currentStep
+            ++ {- Perc Kick row -} viewPercRow Instruments.percKick (getTotalSteps model) model.percGrid currentStep
         )
 
 
@@ -933,11 +933,11 @@ viewPercRow percType totalSteps percGrid currentStep =
 
         stickyClass =
             case percType of
-                Instruments.Snare ->
-                    "sticky bottom-12 h-12 z-10 border-t-3"
-
-                Instruments.Kick ->
-                    "sticky bottom-0 h-12 z-10"
+                _ ->
+                    if percType == Instruments.percSnare then
+                        "sticky bottom-12 h-12 z-10 border-t-3"
+                    else
+                        "sticky bottom-0 h-12 z-10"
     in
     div [ class labelBgColorAndClass, class stickyClass ] [ text percTypeName ]
         :: times (\stepIdx -> viewPercCell percType percGrid currentStep stepIdx) totalSteps
@@ -960,11 +960,11 @@ viewPercCell percType percGrid currentStep stepIdx =
 
         stickyClass =
             case percType of
-                Instruments.Snare ->
-                    "sticky bottom-12 h-12 z-10  border-t-3"
-
-                Instruments.Kick ->
-                    "sticky bottom-0 h-12 z-10"
+                _ ->
+                    if percType == Instruments.percSnare then
+                        "sticky bottom-12 h-12 z-10  border-t-3"
+                    else
+                        "sticky bottom-0 h-12 z-10"
 
         cellClass =
             if isCurrentStep then
@@ -1089,11 +1089,11 @@ getActiveNotesForStep stepIdx model =
 
                             ( webAudioFontName, midiNote ) =
                                 case percType of
-                                    Instruments.Kick ->
-                                        ( drumConfig.kickWebAudioFont, drumConfig.kickMidi )
-
-                                    Instruments.Snare ->
-                                        ( drumConfig.snareWebAudioFont, drumConfig.snareMidi )
+                                    _ ->
+                                        if percType == Instruments.percKick then
+                                            ( drumConfig.kickWebAudioFont, drumConfig.kickMidi )
+                                        else
+                                            ( drumConfig.snareWebAudioFont, drumConfig.snareMidi )
                         in
                         if isPercCellActive position model.percGrid then
                             Just
@@ -1137,11 +1137,11 @@ playPercCmdIf shouldPlay percType model =
 
             ( webAudioFontName, midiNote ) =
                 case percType of
-                    Instruments.Kick ->
-                        ( drumConfig.kickWebAudioFont, drumConfig.kickMidi )
-
-                    Instruments.Snare ->
-                        ( drumConfig.snareWebAudioFont, drumConfig.snareMidi )
+                    _ ->
+                        if percType == Instruments.percKick then
+                            ( drumConfig.kickWebAudioFont, drumConfig.kickMidi )
+                        else
+                            ( drumConfig.snareWebAudioFont, drumConfig.snareMidi )
         in
         playNote
             { webAudioFont = webAudioFontName
@@ -1278,10 +1278,10 @@ twinkleSong : SongConfig
 twinkleSong =
     let
         kick =
-            Instruments.Kick
+            Instruments.percKick
 
         snare =
-            Instruments.Snare
+            Instruments.percSnare
     in
     { melody =
         -- "Twinkle twinkle little star"
@@ -1478,13 +1478,13 @@ viewPercSymbol : Bool -> PercType -> Html Msg
 viewPercSymbol isActive percType =
     if isActive then
         case percType of
-            Instruments.Kick ->
-                -- Circle symbol
-                div [ class "w-6 h-6 rounded-full", class accentBgColor ] []
-
-            Instruments.Snare ->
-                -- Triangle symbol
-                div [ class "w-6 h-6", class accentBgColor, style "clip-path" "polygon(50% 0%, 0% 100%, 100% 100%)" ] []
+            _ ->
+                if percType == Instruments.percKick then
+                    -- Circle symbol
+                    div [ class "w-6 h-6 rounded-full", class accentBgColor ] []
+                else
+                    -- Triangle symbol
+                    div [ class "w-6 h-6", class accentBgColor, style "clip-path" "polygon(50% 0%, 0% 100%, 100% 100%)" ] []
 
     else
         -- Small dim dot for inactive
