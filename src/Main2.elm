@@ -990,9 +990,12 @@ footerView model =
     div [ class "bg-gray-800 border-t border-gray-700 px-6 py-3" ]
         [ div [ class "flex items-center gap-6" ]
             [ viewPlayStopButton model.playState
-            , viewControlGroup "Instrument" (viewTonalInstrumentSelector model.currentTonalInstrument)
-            , viewControlGroup "Drums" (viewDrumKitSelector model.currentDrumKit)
-            , viewControlGroup "BPM" (viewBPMInput model.bpm)
+            , viewTonalInstrumentSelector model.currentTonalInstrument
+            , viewDrumKitSelector model.currentDrumKit
+            , div [ class "flex items-center gap-2" ]
+                [ H.label [ class "text-xs text-gray-400 font-medium" ] [ text "BPM" ]
+                , viewBPMInput model.bpm
+                ]
             , H.button
                 [ class "bg-gray-700 text-white px-3 py-1 rounded disabled:opacity-50"
                 , HE.onClick Undo
