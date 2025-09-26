@@ -817,10 +817,7 @@ viewHeader model =
             [ div [ class "flex flex-wrap items-center gap-6" ]
                 [ div [ class "text-2xl font-bold text-white" ] [ text "Song Maker V2" ]
                 , viewScaleControls model
-                , viewInstrumentControls model
                 , viewSequenceControls model
-                , viewControlGroup "BPM" (viewBPMInput model.bpm)
-                , viewPlayStopButton model.playState
                 ]
             ]
         ]
@@ -991,23 +988,23 @@ viewPercCell percType percGrid currentStep stepIdx =
 footerView : Model -> Html Msg
 footerView model =
     div [ class "bg-gray-800 border-t border-gray-700 px-6 py-3" ]
-        [ div [ class "flex items-center justify-between text-sm text-gray-400" ]
-            [ div [] [ text "Ready to rock 🎸" ]
-            , div [ class "flex gap-2" ]
-                [ H.button
-                    [ class "bg-gray-700 text-white px-3 py-1 rounded disabled:opacity-50"
-                    , HE.onClick Undo
-                    , HA.disabled (List.isEmpty model.undoStack)
-                    ]
-                    [ text "↶ Undo" ]
-                , H.button
-                    [ class "bg-gray-700 text-white px-3 py-1 rounded disabled:opacity-50"
-                    , HE.onClick Redo
-                    , HA.disabled (List.isEmpty model.redoStack)
-                    ]
-                    [ text "↷ Redo" ]
+        [ div [ class "flex items-center gap-6" ]
+            [ viewPlayStopButton model.playState
+            , viewControlGroup "Instrument" (viewTonalInstrumentSelector model.currentTonalInstrument)
+            , viewControlGroup "Drums" (viewDrumKitSelector model.currentDrumKit)
+            , viewControlGroup "BPM" (viewBPMInput model.bpm)
+            , H.button
+                [ class "bg-gray-700 text-white px-3 py-1 rounded disabled:opacity-50"
+                , HE.onClick Undo
+                , HA.disabled (List.isEmpty model.undoStack)
                 ]
-            , div [] [ text "V2 - Clean Architecture" ]
+                [ text "↶ Undo" ]
+            , H.button
+                [ class "bg-gray-700 text-white px-3 py-1 rounded disabled:opacity-50"
+                , HE.onClick Redo
+                , HA.disabled (List.isEmpty model.redoStack)
+                ]
+                [ text "↷ Redo" ]
             ]
         ]
 
