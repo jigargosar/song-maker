@@ -327,6 +327,16 @@ type alias SongConfig =
     }
 
 
+type alias HistoryState =
+    { pitchGrid : PitchGrid
+    , percGrid : PercGrid
+    , scaleType : ScaleType
+    , rootNote : RootNote
+    , octaveRange : { start : Int, count : Int }
+    , sequenceConfig : SequenceConfig
+    }
+
+
 type alias Model =
     { scaleType : ScaleType
     , rootNote : RootNote
@@ -340,6 +350,8 @@ type alias Model =
     , bpm : Int
     , currentTonalInstrument : TonalInstrument
     , currentDrumKit : DrumKit
+    , undoStack : List HistoryState
+    , redoStack : List HistoryState
     }
 
 
@@ -361,6 +373,8 @@ init _ =
       , bpm = 120
       , currentTonalInstrument = Instruments.GrandPianoSBLive
       , currentDrumKit = Instruments.StandardKit
+      , undoStack = []
+      , redoStack = []
       }
         |> applySong twinkleSong
     , Cmd.none
@@ -393,6 +407,8 @@ type Msg
     | ChangeBars Int
     | ChangeBeatsPerBar Int
     | ChangeSubdivisions Int
+    | Undo
+    | Redo
 
 
 subscriptions : Model -> Sub Msg
@@ -677,6 +693,68 @@ update msg model =
             , Cmd.none
             )
 
+        Undo ->
+            case model.undoStack of
+                [] ->
+                    ( model, Cmd.none )
+
+                lastState :: remainingUndoStack ->
+                    let
+                        newRedoStack =
+                            { pitchGrid = model.pitchGrid
+                            , percGrid = model.percGrid
+                            , scaleType = model.scaleType
+                            , rootNote = model.rootNote
+                            , octaveRange = model.octaveRange
+                            , sequenceConfig = model.sequenceConfig
+                            }
+                                :: model.redoStack
+
+                        newModel =
+                            { model
+                                | pitchGrid = lastState.pitchGrid
+                                , percGrid = lastState.percGrid
+                                , scaleType = lastState.scaleType
+                                , rootNote = lastState.rootNote
+                                , octaveRange = lastState.octaveRange
+                                , sequenceConfig = lastState.sequenceConfig
+                                , undoStack = remainingUndoStack
+                                , redoStack = newRedoStack
+                            }
+                    in
+                    ( newModel, Cmd.none )
+
+        Redo ->
+            case model.redoStack of
+                [] ->
+                    ( model, Cmd.none )
+
+                lastState :: remainingRedoStack ->
+                    let
+                        newUndoStack =
+                            { pitchGrid = model.pitchGrid
+                            , percGrid = model.percGrid
+                            , scaleType = model.scaleType
+                            , rootNote = model.rootNote
+                            , octaveRange = model.octaveRange
+                            , sequenceConfig = model.sequenceConfig
+                            }
+                                :: model.undoStack
+
+                        newModel =
+                            { model
+                                | pitchGrid = lastState.pitchGrid
+                                , percGrid = lastState.percGrid
+                                , scaleType = lastState.scaleType
+                                , rootNote = lastState.rootNote
+                                , octaveRange = lastState.octaveRange
+                                , sequenceConfig = lastState.sequenceConfig
+                                , undoStack = newUndoStack
+                                , redoStack = remainingRedoStack
+                            }
+                    in
+                    ( newModel, Cmd.none )
+
 
 
 -- View
@@ -687,7 +765,7 @@ view model =
     div [ class "h-screen bg-gray-900 text-white flex flex-col select-none" ]
         [ viewHeader model
         , centerView model
-        , footerView
+        , footerView model
         ]
 
 
@@ -869,12 +947,25 @@ viewPercCell percType percGrid currentStep stepIdx =
         [ symbol ]
 
 
-footerView : Html Msg
-footerView =
+footerView : Model -> Html Msg
+footerView model =
     div [ class "bg-gray-800 border-t border-gray-700 px-6 py-3" ]
         [ div [ class "flex items-center justify-between text-sm text-gray-400" ]
             [ div [] [ text "Ready to rock 🎸" ]
-            , div [] [ text "Time: 0.0s" ]
+            , div [ class "flex gap-2" ]
+                [ H.button
+                    [ class "bg-gray-700 text-white px-3 py-1 rounded disabled:opacity-50"
+                    , HE.onClick Undo
+                    , HA.disabled (List.isEmpty model.undoStack)
+                    ]
+                    [ text "↶ Undo" ]
+                , H.button
+                    [ class "bg-gray-700 text-white px-3 py-1 rounded disabled:opacity-50"
+                    , HE.onClick Redo
+                    , HA.disabled (List.isEmpty model.redoStack)
+                    ]
+                    [ text "↷ Redo" ]
+                ]
             , div [] [ text "V2 - Clean Architecture" ]
             ]
         ]
@@ -1026,7 +1117,8 @@ playPercCmdIf shouldPlay percType model =
 -- Grid Transpose Functions
 
 
-{-| Convert pitch index to scale degree and octave relative to current root/scale -}
+{-| Convert pitch index to scale degree and octave relative to current root/scale
+-}
 pitchIdxToScaleDegree : Int -> Model -> { scaleDegree : Int, octave : Int }
 pitchIdxToScaleDegree pitchIdx model =
     let
@@ -1045,7 +1137,8 @@ pitchIdxToScaleDegree pitchIdx model =
     { scaleDegree = noteIdx, octave = absoluteOctave }
 
 
-{-| Convert scale degree and octave to pitch index in target model -}
+{-| Convert scale degree and octave to pitch index in target model
+-}
 scaleDegreeToPitchIdx : { scaleDegree : Int, octave : Int } -> Model -> Int
 scaleDegreeToPitchIdx { scaleDegree, octave } model =
     let
@@ -1057,11 +1150,17 @@ scaleDegreeToPitchIdx { scaleDegree, octave } model =
     in
     if octaveIdx >= 0 && octaveIdx < model.octaveRange.count && scaleDegree >= 0 && scaleDegree < notesInScale then
         octaveIdx * notesInScale + scaleDegree
+
     else
-        -1  -- Invalid pitch
+        -1
 
 
-{-| Transpose pitch grid preserving scale degree relationships -}
+
+-- Invalid pitch
+
+
+{-| Transpose pitch grid preserving scale degree relationships
+-}
 transposePitchGrid : Model -> Model -> PitchGrid -> PitchGrid
 transposePitchGrid oldModel newModel existingGrid =
     existingGrid
@@ -1077,10 +1176,12 @@ transposePitchGrid oldModel newModel existingGrid =
                 in
                 if newPitchIdx >= 0 then
                     Just ( newPitchIdx, stepIdx )
+
                 else
                     Nothing
             )
         |> Set.fromList
+
 
 
 -- Grid Resize Functions
@@ -1861,8 +1962,6 @@ times fn i =
    This gives maximum user flexibility with minimum UI complexity.
 
 -}
-
-
 {- TODO: Improve Octave Controls - Musical Operations vs Workspace Management
 
    ## Current Problems
@@ -1976,233 +2075,280 @@ times fn i =
 
    ## Implementation Priority
 
-   1. **High**: Transpose controls (most commonly needed)
-   2. **Medium**: Range expand controls (composition workflow)
-   3. **Medium**: Destructive operation warnings (safety)
-   4. **Low**: Range shrink controls (nice-to-have cleanup)
+   1.  **High**: Transpose controls (most commonly needed)
+   2.  **Medium**: Range expand controls (composition workflow)
+   3.  **Medium**: Destructive operation warnings (safety)
+   4.  **Low**: Range shrink controls (nice-to-have cleanup)
 
 -}
+{- TODO: Undo/Redo System Implementation
 
 
-{-| TODO: Undo/Redo System Implementation
+   ## Overview
 
-## Overview
-Add undo/redo functionality to preserve user work and enable experimentation.
-Simple history stack approach storing snapshots of undoable state.
+   Add undo/redo functionality to preserve user work and enable experimentation.
+   Simple history stack approach storing snapshots of undoable state.
 
-## Core Design
 
-### History State Structure
-```elm
-type alias HistoryState =
-    { pitchGrid : PitchGrid
-    , percGrid : PercGrid
-    , scaleType : ScaleType
-    , rootNote : RootNote
-    , octaveRange : { start : Int, count : Int }
-    , sequenceConfig : SequenceConfig
-    }
-```
+   ## Core Design
 
-### Model Changes
-```elm
-type alias Model =
-    { -- existing fields...
-    , undoStack : List HistoryState
-    , redoStack : List HistoryState
-    , maxHistorySize : Int  -- Optional: limit memory usage (e.g. 50 states)
-    }
-```
 
-### Message Types
-```elm
-type Msg
-    = -- existing messages...
-    | Undo
-    | Redo
-```
+   ### History State Structure
 
-## State Classification
+       type alias HistoryState =
+           { pitchGrid : PitchGrid
+           , percGrid : PercGrid
+           , scaleType : ScaleType
+           , rootNote : RootNote
+           , octaveRange : { start : Int, count : Int }
+           , sequenceConfig : SequenceConfig
+           }
 
-### Undoable Operations (Musical State)
-- Grid modifications (drawing notes, clearing)
-- Scale/key changes (ChangeScaleType, ChangeRootNote)
-- Range changes (ChangeOctaveStart, ChangeOctaveCount, transpose operations)
-- Sequence structure (ChangeBars, ChangeBeatsPerBar, ChangeSubdivisions)
 
-### Non-Undoable Operations (UI/Temporary State)
-- Drawing state (StartDrawing, ContinueDrawing, StopDrawing)
-- Playback state (Play, Stop, TimeSync)
-- Audio context time updates
-- Instrument/kit selection (instrument changes don't affect composition)
-- BPM changes (performance setting, not composition structure)
+   ### Model Changes
 
-## Implementation Functions
+       type alias Model =
+           { -- existing fields...
+           , undoStack : List HistoryState
+           , redoStack : List HistoryState
+           , maxHistorySize : Int  -- Optional: limit memory usage (e.g. 50 states)
+           }
 
-### History Management
-```elm
-pushToHistory : Model -> Model
-pushToHistory model =
-    let
-        currentState = modelToHistoryState model
-        newUndoStack = currentState :: model.undoStack
-                      |> List.take model.maxHistorySize
-    in
-    { model
-    | undoStack = newUndoStack
-    , redoStack = []  -- Clear redo stack on new operation
-    }
 
-modelToHistoryState : Model -> HistoryState
-modelToHistoryState model =
-    { pitchGrid = model.pitchGrid
-    , percGrid = model.percGrid
-    , scaleType = model.scaleType
-    , rootNote = model.rootNote
-    , octaveRange = model.octaveRange
-    , sequenceConfig = model.sequenceConfig
-    , bpm = model.bpm
-    }
+   ### Message Types
 
-historyStateToModel : HistoryState -> Model -> Model
-historyStateToModel historyState model =
-    { model
-    | pitchGrid = historyState.pitchGrid
-    , percGrid = historyState.percGrid
-    , scaleType = historyState.scaleType
-    , rootNote = historyState.rootNote
-    , octaveRange = historyState.octaveRange
-    , sequenceConfig = historyState.sequenceConfig
-    , bpm = historyState.bpm
-    }
-```
+       type Msg
+           = -- existing messages...
+           | Undo
+           | Redo
 
-### Update Logic Integration
-```elm
-update : Msg -> Model -> ( Model, Cmd Msg )
-update msg model =
-    case msg of
-        -- Grid Modifications (capture history at start of drawing)
-        StartDrawingPitch pos ->
-            pushToHistory model
-                |> updateStartDrawingPitch pos
 
-        StartDrawingPerc pos ->
-            pushToHistory model
-                |> updateStartDrawingPerc pos
+   ## State Classification
 
-        -- Configuration Changes (capture before each change)
-        ChangeScaleType newScale ->
-            pushToHistory model
-                |> updateChangeScaleType newScale
 
-        ChangeRootNote newRoot ->
-            pushToHistory model
-                |> updateChangeRootNote newRoot
+   ### Undoable Operations (Musical State)
 
-        ChangeOctaveStart newStart ->
-            pushToHistory model
-                |> updateChangeOctaveStart newStart
+     - Grid modifications (drawing notes, clearing)
+     - Scale/key changes (ChangeScaleType, ChangeRootNote)
+     - Range changes (ChangeOctaveStart, ChangeOctaveCount, transpose operations)
+     - Sequence structure (ChangeBars, ChangeBeatsPerBar, ChangeSubdivisions)
 
-        ChangeOctaveCount newCount ->
-            pushToHistory model
-                |> updateChangeOctaveCount newCount
 
-        -- Sequence Structure Changes (can truncate/lose notes)
-        ChangeBars newBars ->
-            pushToHistory model
-                |> updateChangeBars newBars
+   ### Non-Undoable Operations (UI/Temporary State)
 
-        ChangeBeatsPerBar newBeats ->
-            pushToHistory model
-                |> updateChangeBeatsPerBar newBeats
+     - Drawing state (StartDrawing, ContinueDrawing, StopDrawing)
+     - Playback state (Play, Stop, TimeSync)
+     - Audio context time updates
+     - Instrument/kit selection (instrument changes don't affect composition)
+     - BPM changes (performance setting, not composition structure)
 
-        ChangeSubdivisions newSubdivs ->
-            pushToHistory model
-                |> updateChangeSubdivisions newSubdivs
 
-        -- Non-undoable operations - no history push
-        ContinueDrawingPitch pos -> updateContinueDrawingPitch pos model
-        ContinueDrawingPerc pos -> updateContinueDrawingPerc pos model
-        StopDrawing -> updateStopDrawing model
-        Play -> updatePlay model
-        Stop -> updateStop model
-        TimeSync time -> updateTimeSync time model
-        PlayPitchNote idx -> updatePlayPitchNote idx model
-        PlayPercNote perc -> updatePlayPercNote perc model
-        ChangeBPM newBPM -> updateChangeBPM newBPM model
-        ChangeTonalInstrument inst -> updateChangeTonalInstrument inst model
-        ChangeDrumKit kit -> updateChangeDrumKit kit model
+   ## Implementation Functions
 
-        -- Undo/Redo operations
-        Undo ->
-            case model.undoStack of
-                [] -> (model, Cmd.none)
-                head :: tail ->
-                    let
-                        currentState = modelToHistoryState model
-                        restoredModel = historyStateToModel head model
-                    in
-                    ( { restoredModel
-                      | undoStack = tail
-                      , redoStack = currentState :: model.redoStack
-                      }
-                    , Cmd.none
-                    )
 
-        Redo ->
-            case model.redoStack of
-                [] -> (model, Cmd.none)
-                head :: tail ->
-                    let
-                        currentState = modelToHistoryState model
-                        restoredModel = historyStateToModel head model
-                    in
-                    ( { restoredModel
-                      | redoStack = tail
-                      , undoStack = currentState :: model.undoStack
-                      }
-                    , Cmd.none
-                    )
-```
+   ### History Management
 
-## UI Integration
+       pushToHistory : Model -> Model
+       pushToHistory model =
+           let
+               currentState =
+                   modelToHistoryState model
 
-### Keyboard Shortcuts
-- Ctrl+Z / Cmd+Z → Undo
-- Ctrl+Y / Cmd+Shift+Z → Redo
+               newUndoStack =
+                   currentState
+                       :: model.undoStack
+                       |> List.take model.maxHistorySize
+           in
+           { model
+               | undoStack = newUndoStack
+               , redoStack = [] -- Clear redo stack on new operation
+           }
 
-### Button States
-```elm
-viewUndoRedoControls : Model -> Html Msg
-viewUndoRedoControls model =
-    div [ class "undo-redo-controls" ]
-        [ button
-            [ onClick Undo
-            , disabled (List.isEmpty model.undoStack)
-            ]
-            [ text "↶ Undo" ]
-        , button
-            [ onClick Redo
-            , disabled (List.isEmpty model.redoStack)
-            ]
-            [ text "↷ Redo" ]
-        ]
-```
+       modelToHistoryState : Model -> HistoryState
+       modelToHistoryState model =
+           { pitchGrid = model.pitchGrid
+           , percGrid = model.percGrid
+           , scaleType = model.scaleType
+           , rootNote = model.rootNote
+           , octaveRange = model.octaveRange
+           , sequenceConfig = model.sequenceConfig
+           , bpm = model.bpm
+           }
 
-## Memory Considerations
-- Limit history size (e.g., 50 operations) to prevent memory issues
-- Consider storing diffs instead of full state for large grids (optimization for later)
-- Clear redo stack on new operations (standard behavior)
+       historyStateToModel : HistoryState -> Model -> Model
+       historyStateToModel historyState model =
+           { model
+               | pitchGrid = historyState.pitchGrid
+               , percGrid = historyState.percGrid
+               , scaleType = historyState.scaleType
+               , rootNote = historyState.rootNote
+               , octaveRange = historyState.octaveRange
+               , sequenceConfig = historyState.sequenceConfig
+               , bpm = historyState.bpm
+           }
 
-## Implementation Priority
-1. **High**: Core undo/redo for grid drawing operations
-2. **Medium**: Undo for configuration changes (scale, BPM, etc.)
-3. **Low**: Keyboard shortcuts and advanced UI
+
+   ### Update Logic Integration
+
+       update : Msg -> Model -> ( Model, Cmd Msg )
+       update msg model =
+           case msg of
+               -- Grid Modifications (capture history at start of drawing)
+               StartDrawingPitch pos ->
+                   pushToHistory model
+                       |> updateStartDrawingPitch pos
+
+               StartDrawingPerc pos ->
+                   pushToHistory model
+                       |> updateStartDrawingPerc pos
+
+               -- Configuration Changes (capture before each change)
+               ChangeScaleType newScale ->
+                   pushToHistory model
+                       |> updateChangeScaleType newScale
+
+               ChangeRootNote newRoot ->
+                   pushToHistory model
+                       |> updateChangeRootNote newRoot
+
+               ChangeOctaveStart newStart ->
+                   pushToHistory model
+                       |> updateChangeOctaveStart newStart
+
+               ChangeOctaveCount newCount ->
+                   pushToHistory model
+                       |> updateChangeOctaveCount newCount
+
+               -- Sequence Structure Changes (can truncate/lose notes)
+               ChangeBars newBars ->
+                   pushToHistory model
+                       |> updateChangeBars newBars
+
+               ChangeBeatsPerBar newBeats ->
+                   pushToHistory model
+                       |> updateChangeBeatsPerBar newBeats
+
+               ChangeSubdivisions newSubdivs ->
+                   pushToHistory model
+                       |> updateChangeSubdivisions newSubdivs
+
+               -- Non-undoable operations - no history push
+               ContinueDrawingPitch pos ->
+                   updateContinueDrawingPitch pos model
+
+               ContinueDrawingPerc pos ->
+                   updateContinueDrawingPerc pos model
+
+               StopDrawing ->
+                   updateStopDrawing model
+
+               Play ->
+                   updatePlay model
+
+               Stop ->
+                   updateStop model
+
+               TimeSync time ->
+                   updateTimeSync time model
+
+               PlayPitchNote idx ->
+                   updatePlayPitchNote idx model
+
+               PlayPercNote perc ->
+                   updatePlayPercNote perc model
+
+               ChangeBPM newBPM ->
+                   updateChangeBPM newBPM model
+
+               ChangeTonalInstrument inst ->
+                   updateChangeTonalInstrument inst model
+
+               ChangeDrumKit kit ->
+                   updateChangeDrumKit kit model
+
+               -- Undo/Redo operations
+               Undo ->
+                   case model.undoStack of
+                       [] ->
+                           ( model, Cmd.none )
+
+                       head :: tail ->
+                           let
+                               currentState =
+                                   modelToHistoryState model
+
+                               restoredModel =
+                                   historyStateToModel head model
+                           in
+                           ( { restoredModel
+                               | undoStack = tail
+                               , redoStack = currentState :: model.redoStack
+                             }
+                           , Cmd.none
+                           )
+
+               Redo ->
+                   case model.redoStack of
+                       [] ->
+                           ( model, Cmd.none )
+
+                       head :: tail ->
+                           let
+                               currentState =
+                                   modelToHistoryState model
+
+                               restoredModel =
+                                   historyStateToModel head model
+                           in
+                           ( { restoredModel
+                               | redoStack = tail
+                               , undoStack = currentState :: model.undoStack
+                             }
+                           , Cmd.none
+                           )
+
+
+   ## UI Integration
+
+
+   ### Keyboard Shortcuts
+
+     - Ctrl+Z / Cmd+Z → Undo
+     - Ctrl+Y / Cmd+Shift+Z → Redo
+
+
+   ### Button States
+
+       viewUndoRedoControls : Model -> Html Msg
+       viewUndoRedoControls model =
+           div [ class "undo-redo-controls" ]
+               [ button
+                   [ onClick Undo
+                   , disabled (List.isEmpty model.undoStack)
+                   ]
+                   [ text "↶ Undo" ]
+               , button
+                   [ onClick Redo
+                   , disabled (List.isEmpty model.redoStack)
+                   ]
+                   [ text "↷ Redo" ]
+               ]
+
+
+   ## Memory Considerations
+
+     - Limit history size (e.g., 50 operations) to prevent memory issues
+     - Consider storing diffs instead of full state for large grids (optimization for later)
+     - Clear redo stack on new operations (standard behavior)
+
+
+   ## Implementation Priority
+
+   1.  **High**: Core undo/redo for grid drawing operations
+   2.  **Medium**: Undo for configuration changes (scale, BPM, etc.)
+   3.  **Low**: Keyboard shortcuts and advanced UI
 
 -}
-
-
 {- TODO:
    currently when changing root note the resize grid function chops off notes.
    Ideally it should preserve notes, since changing root note doesn't change the number of pitches
