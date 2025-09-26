@@ -372,7 +372,7 @@ init _ =
       , audioContextTime = 0.0
       , bpm = 120
       , currentTonalInstrument = Instruments.GrandPianoSBLive
-      , currentDrumKit = Instruments.StandardKit
+      , currentDrumKit = Instruments.ElectronicKit
       , undoStack = []
       , redoStack = []
       }

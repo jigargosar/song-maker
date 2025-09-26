@@ -22,7 +22,7 @@ type TonalInstrument
 
 
 type DrumKit
-    = StandardKit
+    = ElectronicKit
     | RockKit
 
 
@@ -44,7 +44,7 @@ tonalWebAudioFont instrument =
 drumKitConfig : DrumKit -> { kickWebAudioFont : String, kickMidi : Int, snareWebAudioFont : String, snareMidi : Int }
 drumKitConfig kit =
     case kit of
-        StandardKit ->
+        ElectronicKit ->
             { kickWebAudioFont = "_drum_36_0_SBLive_sf2"
             , kickMidi = 36
             , snareWebAudioFont = "_drum_38_0_SBLive_sf2"
@@ -66,7 +66,7 @@ allTonal =
 
 allDrumKits : List DrumKit
 allDrumKits =
-    [ StandardKit, RockKit ]
+    [ ElectronicKit, RockKit ]
 
 
 tonalLabel : TonalInstrument -> String
@@ -82,8 +82,8 @@ tonalLabel instrument =
 drumKitLabel : DrumKit -> String
 drumKitLabel drumKit =
     case drumKit of
-        StandardKit ->
-            "Standard"
+        ElectronicKit ->
+            "Electronic"
 
         RockKit ->
             "Rock"
@@ -105,14 +105,14 @@ parseTonal str =
 parseDrumKit : String -> DrumKit
 parseDrumKit str =
     case str of
-        "Standard" ->
-            StandardKit
+        "Electronic" ->
+            ElectronicKit
 
         "Rock" ->
             RockKit
 
         _ ->
-            StandardKit
+            ElectronicKit
 
 
 allPercTypes : List PercType
