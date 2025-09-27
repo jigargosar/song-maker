@@ -290,61 +290,39 @@ octaveCountQueryParser =
     Query.int "octaveCount"
 
 
+
+-- Query parameter record for pipeline parsing
+
+
+type alias QueryParams =
+    { bpm : Maybe Int
+    , octaveStart : Maybe Int
+    , octaveCount : Maybe Int
+    }
+
+
+queryParser : Query.Parser (Maybe QueryParams)
+queryParser =
+    Pipeline.succeed QueryParams
+        |> Pipeline.optional (Query.int "bpm")
+        |> Pipeline.optional (Query.int "octaveStart")
+        |> Pipeline.optional (Query.int "octaveCount")
+
+
 applyUrlParams : Url -> Model -> Model
 applyUrlParams url model =
-    let
-        bpmMaybe =
-            case Parser.parse (Parser.top <?> bpmQueryParser) url of
-                Just bpmVal ->
-                    bpmVal
+    case Parser.parse (Parser.top <?> queryParser) url of
+        Just (Just params) ->
+            { model
+                | bpm = Maybe.withDefault model.bpm params.bpm
+                , octaveRange =
+                    { start = Maybe.withDefault model.octaveRange.start params.octaveStart
+                    , count = Maybe.withDefault model.octaveRange.count params.octaveCount
+                    }
+            }
 
-                Nothing ->
-                    Nothing
-
-        octaveStartMaybe =
-            case Parser.parse (Parser.top <?> octaveStartQueryParser) url of
-                Just val ->
-                    val
-
-                Nothing ->
-                    Nothing
-
-        octaveCountMaybe =
-            case Parser.parse (Parser.top <?> octaveCountQueryParser) url of
-                Just val ->
-                    val
-
-                Nothing ->
-                    Nothing
-
-        newBpm =
-            case bpmMaybe of
-                Just bpm ->
-                    max 1 bpm
-
-                Nothing ->
-                    model.bpm
-
-        newOctaveStart =
-            case octaveStartMaybe of
-                Just start ->
-                    max 1 start
-
-                Nothing ->
-                    model.octaveRange.start
-
-        newOctaveCount =
-            case octaveCountMaybe of
-                Just count ->
-                    max 1 count
-
-                Nothing ->
-                    model.octaveRange.count
-    in
-    { model
-        | bpm = newBpm
-        , octaveRange = { start = newOctaveStart, count = newOctaveCount }
-    }
+        _ ->
+            model
 
 
 
