@@ -52,56 +52,6 @@ totalStepsFromSequence config =
     config.bars * config.beatsPerBar * config.subdivisions
 
 
-stepToPosition : Int -> SequenceConfig -> { bar : Int, beat : Int, subdivision : Int }
-stepToPosition stepIdx config =
-    let
-        stepsPerBar =
-            config.beatsPerBar * config.subdivisions
-
-        stepsPerBeat =
-            config.subdivisions
-
-        bar =
-            stepIdx // stepsPerBar
-
-        remainingAfterBars =
-            modBy stepsPerBar stepIdx
-
-        beat =
-            remainingAfterBars // stepsPerBeat
-
-        subdivision =
-            modBy stepsPerBeat remainingAfterBars
-    in
-    { bar = bar, beat = beat, subdivision = subdivision }
-
-
-positionToStep : { bar : Int, beat : Int, subdivision : Int } -> SequenceConfig -> Int
-positionToStep position config =
-    let
-        stepsPerBar =
-            config.beatsPerBar * config.subdivisions
-
-        stepsPerBeat =
-            config.subdivisions
-    in
-    position.bar * stepsPerBar + position.beat * stepsPerBeat + position.subdivision
-
-
-isOnBeat : Int -> SequenceConfig -> Bool
-isOnBeat stepIdx config =
-    modBy config.subdivisions stepIdx == 0
-
-
-isOnBar : Int -> SequenceConfig -> Bool
-isOnBar stepIdx config =
-    let
-        stepsPerBar =
-            config.beatsPerBar * config.subdivisions
-    in
-    modBy stepsPerBar stepIdx == 0
-
-
 
 -- SCALE SYSTEM
 
@@ -272,25 +222,6 @@ pitchIdxToNoteName pitchIdx model =
 
 
 
--- URL QUERY PARSER - BPM Only
-
-
-bpmQueryParser : Query.Parser (Maybe Int)
-bpmQueryParser =
-    Query.int "bpm"
-
-
-octaveStartQueryParser : Query.Parser (Maybe Int)
-octaveStartQueryParser =
-    Query.int "octaveStart"
-
-
-octaveCountQueryParser : Query.Parser (Maybe Int)
-octaveCountQueryParser =
-    Query.int "octaveCount"
-
-
-
 -- Query parameter record for pipeline parsing
 
 
@@ -417,7 +348,7 @@ type alias Model =
 
 
 init : Flags -> Url -> Nav.Key -> ( Model, Cmd Msg )
-init _ url key =
+init _ url _ =
     let
         initialModel =
             { scaleType = Major
@@ -881,7 +812,7 @@ update msg model =
                     in
                     ( newModel, Cmd.none )
 
-        LinkClicked urlRequest ->
+        LinkClicked _ ->
             ( model, Cmd.none )
 
         UrlChanged url ->
@@ -1640,20 +1571,12 @@ viewScaleControls model =
         ]
 
 
-viewInstrumentControls : Model -> Html Msg
-viewInstrumentControls model =
-    div [ class "flex items-center gap-4" ]
-        [ viewControlGroup "Instrument" (viewTonalInstrumentSelector model.currentTonalInstrument)
-        , viewControlGroup "Drums" (viewDrumKitSelector model.currentDrumKit)
-        ]
-
-
 viewSequenceControls : Model -> Html Msg
 viewSequenceControls model =
     div [ class "flex items-center gap-4" ]
         [ viewControlGroup "Bars" (viewBarsInput model.sequenceConfig.bars)
         , viewControlGroup "Beats" (viewBeatsPerBarInput model.sequenceConfig.beatsPerBar)
-        , viewControlGroup "Subdivs" (viewSubdivisionsInput model.sequenceConfig.subdivisions)
+        , viewControlGroup "Sub-div" (viewSubdivisionsInput model.sequenceConfig.subdivisions)
         ]
 
 
