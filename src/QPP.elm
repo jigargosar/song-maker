@@ -27,7 +27,7 @@ type alias QueryParams =
     , name : Maybe String
     }
 
--- Query parser using elm-url-query-pipeline
+-- Query parser using elm-url-query-pipeline (all optional)
 queryParser : Query.Parser (Maybe QueryParams)
 queryParser =
     Pipeline.succeed QueryParams
@@ -47,12 +47,49 @@ queryParser =
         |> Pipeline.optional (Query.int "bpm")
         |> Pipeline.optional (Query.string "name")
 
+-- Alternative: Query parser with required parameters
+type alias RequiredQueryParams =
+    { instrument : Instrument
+    , bpm : Int
+    , drums : Maybe DrumType
+    , name : Maybe String
+    }
+
+requiredQueryParser : Query.Parser (Maybe RequiredQueryParams)
+requiredQueryParser =
+    Pipeline.succeed RequiredQueryParams
+        |> Pipeline.required (Query.enum "instrument"
+            (Dict.fromList
+                [ ( "piano", Piano )
+                , ( "guitar", Guitar )
+                , ( "flute", Flute )
+                ]
+            ))
+        |> Pipeline.required (Query.int "bpm")
+        |> Pipeline.optional (Query.enum "drums"
+            (Dict.fromList
+                [ ( "acoustic", Acoustic )
+                , ( "electronic", Electronic )
+                ]
+            ))
+        |> Pipeline.optional (Query.string "name")
+
 -- Helper function to parse from query string
 parseQueryString : String -> Maybe QueryParams
 parseQueryString queryString =
     case Url.fromString ("http://example.com" ++ queryString) of
         Just url ->
             Parser.parse (Parser.top <?> queryParser) url
+                |> Maybe.withDefault Nothing
+        Nothing ->
+            Nothing
+
+-- Helper function for required parser
+parseRequiredQueryString : String -> Maybe RequiredQueryParams
+parseRequiredQueryString queryString =
+    case Url.fromString ("http://example.com" ++ queryString) of
+        Just url ->
+            Parser.parse (Parser.top <?> requiredQueryParser) url
                 |> Maybe.withDefault Nothing
         Nothing ->
             Nothing
@@ -70,11 +107,13 @@ main =
 
         parseExample query =
             let
-                parsed = parseQueryString query
+                optionalParsed = parseQueryString query
+                requiredParsed = parseRequiredQueryString query
             in
             div [ style "margin" "10px", style "padding" "10px", style "border" "1px solid #ccc" ]
                 [ div [] [ text ("Query: " ++ query) ]
-                , div [] [ text ("Parsed: " ++ Debug.toString parsed) ]
+                , div [] [ text ("Optional Parser: " ++ Debug.toString optionalParsed) ]
+                , div [] [ text ("Required Parser: " ++ Debug.toString requiredParsed) ]
                 ]
     in
     div [ style "padding" "20px", style "font-family" "monospace" ]
@@ -82,11 +121,20 @@ main =
             [ text "elm-url-query-pipeline Demo" ]
         , div [] (List.map parseExample exampleQueries)
         , div [ style "margin-top" "20px", style "background" "#f0f0f0", style "padding" "15px" ]
-            [ text "Usage Pattern:"
-            , pre [ style "margin" "10px 0" ]
-                [ text """Pipeline.succeed RecordConstructor
-    |> Pipeline.optional (Query.enum "param" [(\"value\", Type)])
-    |> Pipeline.optional (Query.int "number")
-    |> Pipeline.optional (Query.string "text")""" ]
+            [ text "Usage Patterns:"
+            , div [ style "margin" "10px 0" ]
+                [ text "Optional Parameters:"
+                , pre [ style "margin" "5px 0", style "font-size" "12px" ]
+                    [ text """Pipeline.succeed RecordConstructor
+    |> Pipeline.optional (Query.enum "param" (Dict.fromList [...]))
+    |> Pipeline.optional (Query.int "number")""" ]
+                ]
+            , div [ style "margin" "10px 0" ]
+                [ text "Required Parameters:"
+                , pre [ style "margin" "5px 0", style "font-size" "12px" ]
+                    [ text """Pipeline.succeed RecordConstructor
+    |> Pipeline.required (Query.enum "param" (Dict.fromList [...]))
+    |> Pipeline.required (Query.int "number")""" ]
+                ]
             ]
         ]
