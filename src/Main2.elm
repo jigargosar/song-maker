@@ -1,11 +1,16 @@
 port module Main2 exposing (main)
 
-import Browser
+import Browser exposing (Document)
+import Browser.Navigation as Nav
 import Html as H exposing (Html, div, text)
 import Html.Attributes as HA exposing (class, style)
 import Html.Events as HE
 import Instruments exposing (DrumKit, PercType, TonalInstrument)
 import Set exposing (Set)
+import Url exposing (Url)
+import Url.Parser as Parser exposing ((<?>), Parser)
+import Url.Parser.Query as Query
+import Url.Query.Pipeline as Pipeline
 
 
 {-| <https://surikov.github.io/webaudiofont/>
@@ -267,6 +272,30 @@ pitchIdxToNoteName pitchIdx model =
 
 
 
+-- URL QUERY PARSER - BPM Only
+
+
+bpmQueryParser : Query.Parser (Maybe Int)
+bpmQueryParser =
+    Query.int "bpm"
+
+
+applyUrlParams : Url -> Model -> Model
+applyUrlParams url model =
+    case Parser.parse (Parser.top <?> bpmQueryParser) url of
+        Just bpmMaybe ->
+            case bpmMaybe of
+                Just bpm ->
+                    { model | bpm = max 1 bpm }
+
+                Nothing ->
+                    model
+
+        Nothing ->
+            model
+
+
+
 -- Standard snare perc MIDI note
 
 
@@ -276,15 +305,13 @@ type alias Flags =
 
 main : Program Flags Model Msg
 main =
-    --let
-    --    _ =
-    --        Debug.log "foo" Configuration.PlayerConfig.cfg
-    --in
-    Browser.element
+    Browser.application
         { init = init
         , update = update
         , subscriptions = subscriptions
         , view = view
+        , onUrlRequest = LinkClicked
+        , onUrlChange = UrlChanged
         }
 
 
@@ -359,30 +386,35 @@ type alias Model =
     }
 
 
-init : Flags -> ( Model, Cmd Msg )
-init _ =
-    ( { scaleType = Major
-      , rootNote = C
-      , octaveRange = { start = 3, count = 3 }
-      , sequenceConfig =
-            { bars = 8
-            , beatsPerBar = 4
-            , subdivisions = 2
+init : Flags -> Url -> Nav.Key -> ( Model, Cmd Msg )
+init _ url _ =
+    let
+        initialModel =
+            { scaleType = Major
+            , rootNote = C
+            , octaveRange = { start = 3, count = 3 }
+            , sequenceConfig =
+                { bars = 8
+                , beatsPerBar = 4
+                , subdivisions = 2
+                }
+            , pitchGrid = Set.empty
+            , percGrid = Set.empty
+            , drawState = NotDrawing
+            , playState = Stopped
+            , audioContextTime = 0.0
+            , bpm = 120
+            , currentTonalInstrument = Instruments.defaultTonalInstrument
+            , currentDrumKit = Instruments.defaultDrumKit
+            , undoStack = []
+            , redoStack = []
             }
-      , pitchGrid = Set.empty
-      , percGrid = Set.empty
-      , drawState = NotDrawing
-      , playState = Stopped
-      , audioContextTime = 0.0
-      , bpm = 120
-      , currentTonalInstrument = Instruments.defaultTonalInstrument
-      , currentDrumKit = Instruments.defaultDrumKit
-      , undoStack = []
-      , redoStack = []
-      }
-        |> applySong twinkleSong
-    , Cmd.none
-    )
+                |> applySong twinkleSong
+
+        modelWithUrlParams =
+            applyUrlParams url initialModel
+    in
+    ( modelWithUrlParams, Cmd.none )
 
 
 
@@ -413,6 +445,8 @@ type Msg
     | ChangeSubdivisions Int
     | Undo
     | Redo
+    | LinkClicked Browser.UrlRequest
+    | UrlChanged Url
 
 
 subscriptions : Model -> Sub Msg
@@ -817,18 +851,28 @@ update msg model =
                     in
                     ( newModel, Cmd.none )
 
+        LinkClicked urlRequest ->
+            ( model, Cmd.none )
+
+        UrlChanged url ->
+            ( applyUrlParams url model, Cmd.none )
+
 
 
 -- View
 
 
-view : Model -> Html Msg
+view : Model -> Document Msg
 view model =
-    div [ class "h-screen bg-gray-900 text-white flex flex-col select-none" ]
-        [ viewHeader model
-        , centerView model
-        , footerView model
+    { title = "SM"
+    , body =
+        [ div [ class "h-screen bg-gray-900 text-white flex flex-col select-none" ]
+            [ viewHeader model
+            , centerView model
+            , footerView model
+            ]
         ]
+    }
 
 
 viewHeader : Model -> Html Msg
