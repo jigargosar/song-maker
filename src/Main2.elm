@@ -270,8 +270,11 @@ applyQueryParams url model =
                     }
             }
 
-        _ ->
-            model
+        Nothing ->
+            { model
+                | bpm = 120
+                , octaveRange = { start = 3, count = 3 }
+            }
 
 
 {-
@@ -876,7 +879,7 @@ update msg model =
             ( model, Cmd.none )
 
         UrlChanged url ->
-            ( applyQueryParams url model, Cmd.none )
+            ( applyQueryParams url { model | url = url }, Cmd.none )
 
         Save ->
             ( model
