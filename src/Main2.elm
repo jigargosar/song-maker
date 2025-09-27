@@ -885,10 +885,10 @@ update msg model =
                     buildQuery model
               in
               if model.url.query == Just query then
-                Nav.pushUrl model.key query
+                Cmd.none
 
               else
-                Cmd.none
+                Nav.pushUrl model.key query
             )
 
 
@@ -1109,6 +1109,11 @@ footerView model =
                 , HA.disabled (List.isEmpty model.redoStack)
                 ]
                 [ text "↷ Redo" ]
+            , H.button
+                [ class "bg-gray-700 text-white px-3 py-1 rounded hover:bg-gray-600 transition-colors"
+                , HE.onClick Save
+                ]
+                [ text "Save" ]
             ]
         ]
 
