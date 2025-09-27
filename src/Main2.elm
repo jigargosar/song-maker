@@ -6,6 +6,8 @@ import Dict exposing (Dict)
 import Html as H exposing (Html, div, text)
 import Html.Attributes as HA exposing (class, style)
 import Html.Events as HE
+import Json.Decode as JD
+import Json.Encode as JE
 import Instruments exposing (DrumKit, PercType, TonalInstrument)
 import Set exposing (Set)
 import Url exposing (Url)
@@ -1025,9 +1027,9 @@ viewPitchCell pitchIdx pitchGrid currentStep stepIdx =
     div
         [ class noteClass
         , class "border-[0.5px] border-gray-600 cursor-pointer "
-        , HE.onMouseDown (StartDrawingPitch position)
-        , HE.onMouseEnter (ContinueDrawingPitch position)
-        , HE.onMouseUp StopDrawing
+        , HE.on "pointerdown" (JD.succeed (StartDrawingPitch position))
+        , HE.on "pointerenter" (JD.succeed (ContinueDrawingPitch position))
+        , HE.on "pointerup" (JD.succeed StopDrawing)
         ]
         []
 
@@ -1087,9 +1089,9 @@ viewPercCell percType percGrid currentStep stepIdx =
         [ class " border-gray-600 cursor-pointer  flex items-center justify-center"
         , class cellClass
         , class stickyClass
-        , HE.onMouseDown (StartDrawingPerc position)
-        , HE.onMouseEnter (ContinueDrawingPerc position)
-        , HE.onMouseUp StopDrawing
+        , HE.on "pointerdown" (JD.succeed (StartDrawingPerc position))
+        , HE.on "pointerenter" (JD.succeed (ContinueDrawingPerc position))
+        , HE.on "pointerup" (JD.succeed StopDrawing)
         ]
         [ symbol ]
 
