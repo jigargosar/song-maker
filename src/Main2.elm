@@ -240,10 +240,16 @@ queryParser =
         |> Pipeline.optional (Query.int "octaveCount")
 
 
-applyUrlParams : Url -> Model -> Model
-applyUrlParams url model =
-    case Parser.parse (Parser.top <?> queryParser) url of
-        Just (Just params) ->
+parseQueryParams : Url -> Maybe QueryParams
+parseQueryParams url =
+    Parser.parse (Parser.top <?> queryParser) url
+        |> Maybe.andThen identity
+
+
+applyQueryParams : Url -> Model -> Model
+applyQueryParams url model =
+    case parseQueryParams url of
+        Just params ->
             { model
                 | bpm = Maybe.withDefault model.bpm params.bpm
                 , octaveRange =
@@ -344,12 +350,15 @@ type alias Model =
     , currentDrumKit : DrumKit
     , undoStack : List HistoryState
     , redoStack : List HistoryState
+    , url : Url
+    , key : Nav.Key
     }
 
 
 init : Flags -> Url -> Nav.Key -> ( Model, Cmd Msg )
-init _ url _ =
+init _ url key =
     let
+        initialModel : Model
         initialModel =
             { scaleType = Major
             , rootNote = C
@@ -369,13 +378,16 @@ init _ url _ =
             , currentDrumKit = Instruments.defaultDrumKit
             , undoStack = []
             , redoStack = []
+            , url = url
+            , key = key
             }
                 |> applySong twinkleSong
-
-        modelWithUrlParams =
-            applyUrlParams url initialModel
     in
-    ( modelWithUrlParams, Cmd.none )
+    ( initialModel
+        |> applySong twinkleSong
+        |> applyQueryParams url
+    , Cmd.none
+    )
 
 
 
@@ -408,6 +420,7 @@ type Msg
     | Redo
     | LinkClicked Browser.UrlRequest
     | UrlChanged Url
+    | Save
 
 
 subscriptions : Model -> Sub Msg
@@ -816,7 +829,10 @@ update msg model =
             ( model, Cmd.none )
 
         UrlChanged url ->
-            ( applyUrlParams url model, Cmd.none )
+            ( applyQueryParams url model, Cmd.none )
+
+        Save ->
+            ( model, Cmd.none )
 
 
 
