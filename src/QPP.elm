@@ -74,6 +74,28 @@ requiredQueryParser =
             ))
         |> Pipeline.optional (Query.string "name")
 
+-- Example with list parameters (multiple same-named params)
+type alias ListQueryParams =
+    { posts : List String
+    , tags : List String
+    , ids : List Int
+    , mainInstrument : Maybe Instrument
+    }
+
+listQueryParser : Query.Parser (Maybe ListQueryParams)
+listQueryParser =
+    Pipeline.succeed ListQueryParams
+        |> Pipeline.with (Query.custom "post[]" identity)
+        |> Pipeline.with (Query.custom "tag" identity)
+        |> Pipeline.with (Query.custom "id" (List.filterMap String.toInt))
+        |> Pipeline.optional (Query.enum "main"
+            (Dict.fromList
+                [ ( "piano", Piano )
+                , ( "guitar", Guitar )
+                , ( "flute", Flute )
+                ]
+            ))
+
 -- Helper function to parse from query string
 parseQueryString : String -> Maybe QueryParams
 parseQueryString queryString =
@@ -94,6 +116,16 @@ parseRequiredQueryString queryString =
         Nothing ->
             Nothing
 
+-- Helper function for list parser
+parseListQueryString : String -> Maybe ListQueryParams
+parseListQueryString queryString =
+    case Url.fromString ("http://example.com" ++ queryString) of
+        Just url ->
+            Parser.parse (Parser.top <?> listQueryParser) url
+                |> Maybe.withDefault Nothing
+        Nothing ->
+            Nothing
+
 -- Example usage
 main : Html msg
 main =
@@ -103,6 +135,13 @@ main =
             , "?instrument=guitar&drums=acoustic"
             , "?drums=electronic&bpm=140"
             , "?name=TestSong&instrument=flute&bpm=90"
+            ]
+
+        listExampleQueries =
+            [ "?post[]=foo&post[]=bar&tag=music&tag=rock&id=1&id=2&main=piano"
+            , "?post[]=hello&post[]=world&tag=test"
+            , "?id=10&id=20&id=30&main=guitar"
+            , "?post[]=single&main=flute"
             ]
 
         parseExample query =
@@ -115,11 +154,23 @@ main =
                 , div [] [ text ("Optional Parser: " ++ Debug.toString optionalParsed) ]
                 , div [] [ text ("Required Parser: " ++ Debug.toString requiredParsed) ]
                 ]
+
+        parseListExample query =
+            let
+                listParsed = parseListQueryString query
+            in
+            div [ style "margin" "10px", style "padding" "10px", style "border" "1px solid #orange" ]
+                [ div [] [ text ("Query: " ++ query) ]
+                , div [] [ text ("List Parser: " ++ Debug.toString listParsed) ]
+                ]
     in
     div [ style "padding" "20px", style "font-family" "monospace" ]
         [ div [ style "font-size" "18px", style "font-weight" "bold", style "margin-bottom" "20px" ]
             [ text "elm-url-query-pipeline Demo" ]
         , div [] (List.map parseExample exampleQueries)
+        , div [ style "margin-top" "30px", style "font-size" "16px", style "font-weight" "bold" ]
+            [ text "List Parameters Examples:" ]
+        , div [] (List.map parseListExample listExampleQueries)
         , div [ style "margin-top" "20px", style "background" "#f0f0f0", style "padding" "15px" ]
             [ text "Usage Patterns:"
             , div [ style "margin" "10px 0" ]
@@ -135,6 +186,14 @@ main =
                     [ text """Pipeline.succeed RecordConstructor
     |> Pipeline.required (Query.enum "param" (Dict.fromList [...]))
     |> Pipeline.required (Query.int "number")""" ]
+                ]
+            , div [ style "margin" "10px 0" ]
+                [ text "List Parameters (multiple same names):"
+                , pre [ style "margin" "5px 0", style "font-size" "12px" ]
+                    [ text """Pipeline.succeed RecordConstructor
+    |> Pipeline.with (Query.custom "post[]" identity)
+    |> Pipeline.with (Query.custom "tag" identity)
+    |> Pipeline.with (Query.custom "id" (List.filterMap String.toInt))""" ]
                 ]
             ]
         ]
