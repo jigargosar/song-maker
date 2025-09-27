@@ -8,6 +8,7 @@ import Html.Events as HE
 import Instruments exposing (DrumKit, PercType, TonalInstrument)
 import Set exposing (Set)
 import Url exposing (Url)
+import Url.Builder as UB
 import Url.Parser as Parser exposing ((<?>), Parser)
 import Url.Parser.Query as Query
 import Url.Query.Pipeline as Pipeline
@@ -238,6 +239,16 @@ queryParser =
         |> Pipeline.optional (Query.int "bpm")
         |> Pipeline.optional (Query.int "octaveStart")
         |> Pipeline.optional (Query.int "octaveCount")
+
+
+buildQuery : Model -> String
+buildQuery model =
+    UB.absolute
+        []
+        [ UB.int "bpm" model.bpm
+        , UB.int "octaveStart" model.octaveRange.start
+        , UB.int "octaveCount" model.octaveRange.count
+        ]
 
 
 parseQueryParams : Url -> Maybe QueryParams
@@ -832,7 +843,17 @@ update msg model =
             ( applyQueryParams url model, Cmd.none )
 
         Save ->
-            ( model, Cmd.none )
+            ( model
+            , let
+                query =
+                    buildQuery model
+              in
+              if model.url.query == Just query then
+                Nav.pushUrl model.key query
+
+              else
+                Cmd.none
+            )
 
 
 
