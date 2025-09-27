@@ -258,6 +258,14 @@ parseQueryParams url =
         |> Maybe.andThen identity
 
 
+applyQueryDefaults : Model -> Model
+applyQueryDefaults model =
+    { model
+        | bpm = 120
+        , octaveRange = { start = 3, count = 3 }
+    }
+
+
 applyQueryParams : Url -> Model -> Model
 applyQueryParams url model =
     case parseQueryParams url of
@@ -271,10 +279,7 @@ applyQueryParams url model =
             }
 
         Nothing ->
-            { model
-                | bpm = 120
-                , octaveRange = { start = 3, count = 3 }
-            }
+            applyQueryDefaults model
 
 
 {-
