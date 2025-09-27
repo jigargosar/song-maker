@@ -280,19 +280,71 @@ bpmQueryParser =
     Query.int "bpm"
 
 
+octaveStartQueryParser : Query.Parser (Maybe Int)
+octaveStartQueryParser =
+    Query.int "octaveStart"
+
+
+octaveCountQueryParser : Query.Parser (Maybe Int)
+octaveCountQueryParser =
+    Query.int "octaveCount"
+
+
 applyUrlParams : Url -> Model -> Model
 applyUrlParams url model =
-    case Parser.parse (Parser.top <?> bpmQueryParser) url of
-        Just bpmMaybe ->
-            case bpmMaybe of
-                Just bpm ->
-                    { model | bpm = max 1 bpm }
+    let
+        bpmMaybe =
+            case Parser.parse (Parser.top <?> bpmQueryParser) url of
+                Just bpmVal ->
+                    bpmVal
 
                 Nothing ->
-                    model
+                    Nothing
 
-        Nothing ->
-            model
+        octaveStartMaybe =
+            case Parser.parse (Parser.top <?> octaveStartQueryParser) url of
+                Just val ->
+                    val
+
+                Nothing ->
+                    Nothing
+
+        octaveCountMaybe =
+            case Parser.parse (Parser.top <?> octaveCountQueryParser) url of
+                Just val ->
+                    val
+
+                Nothing ->
+                    Nothing
+
+        newBpm =
+            case bpmMaybe of
+                Just bpm ->
+                    max 1 bpm
+
+                Nothing ->
+                    model.bpm
+
+        newOctaveStart =
+            case octaveStartMaybe of
+                Just start ->
+                    max 1 start
+
+                Nothing ->
+                    model.octaveRange.start
+
+        newOctaveCount =
+            case octaveCountMaybe of
+                Just count ->
+                    max 1 count
+
+                Nothing ->
+                    model.octaveRange.count
+    in
+    { model
+        | bpm = newBpm
+        , octaveRange = { start = newOctaveStart, count = newOctaveCount }
+    }
 
 
 
@@ -387,7 +439,7 @@ type alias Model =
 
 
 init : Flags -> Url -> Nav.Key -> ( Model, Cmd Msg )
-init _ url _ =
+init _ url key =
     let
         initialModel =
             { scaleType = Major
