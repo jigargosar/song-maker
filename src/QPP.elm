@@ -142,6 +142,7 @@ main =
             , "?post[]=hello&post[]=world&tag=test"
             , "?id=10&id=20&id=30&main=guitar"
             , "?post[]=single&main=flute"
+            , "?post[1]=foo&post[2]=bar&tag=indexed"
             ]
 
         parseExample query =
