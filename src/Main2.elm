@@ -2,6 +2,7 @@ port module Main2 exposing (main)
 
 import Browser exposing (Document)
 import Browser.Navigation as Nav
+import Dict exposing (Dict)
 import Html as H exposing (Html, div, text)
 import Html.Attributes as HA exposing (class, style)
 import Html.Events as HE
@@ -271,6 +272,41 @@ applyQueryParams url model =
 
         _ ->
             model
+
+
+{-
+parseQueryStringToDict : String -> Dict String String
+parseQueryStringToDict queryString =
+    if String.isEmpty queryString then
+        Dict.empty
+    else
+        queryString
+            |> String.split "&"
+            |> List.filterMap
+                (\param ->
+                    case String.split "=" param of
+                        [ key, value ] ->
+                            Maybe.map2 (\k v -> ( k, v ))
+                                (Url.percentDecode key)
+                                (Url.percentDecode value)
+                        [ key ] ->
+                            Maybe.map (\k -> ( k, "" )) (Url.percentDecode key)
+                        _ ->
+                            Nothing
+                )
+            |> Dict.fromList
+
+
+areQueryStringsEqual : String -> String -> Bool
+areQueryStringsEqual queryString1 queryString2 =
+    let
+        normalizeQuery query =
+            query
+                |> String.dropLeft (if String.startsWith "?" query then 1 else 0)
+                |> parseQueryStringToDict
+    in
+    normalizeQuery queryString1 == normalizeQuery queryString2
+-}
 
 
 
