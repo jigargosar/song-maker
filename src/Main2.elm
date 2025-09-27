@@ -1027,7 +1027,15 @@ viewPitchCell pitchIdx pitchGrid currentStep stepIdx =
     div
         [ class noteClass
         , class "border-[0.5px] border-gray-600 cursor-pointer "
-        , HE.on "pointerdown" (JD.succeed (StartDrawingPitch position))
+        , HE.custom "pointerdown"
+            (JD.map2 (\button isPrimary ->
+                if button == 0 && isPrimary then
+                    { message = StartDrawingPitch position, stopPropagation = False, preventDefault = False }
+                else
+                    { message = NoOp, stopPropagation = True, preventDefault = True }
+            )
+            (JD.field "button" JD.int)
+            (JD.field "isPrimary" JD.bool))
         , HE.on "pointerenter" (JD.succeed (ContinueDrawingPitch position))
         , HE.on "pointerup" (JD.succeed StopDrawing)
         ]
@@ -1089,7 +1097,15 @@ viewPercCell percType percGrid currentStep stepIdx =
         [ class " border-gray-600 cursor-pointer  flex items-center justify-center"
         , class cellClass
         , class stickyClass
-        , HE.on "pointerdown" (JD.succeed (StartDrawingPerc position))
+        , HE.custom "pointerdown"
+            (JD.map2 (\button isPrimary ->
+                if button == 0 && isPrimary then
+                    { message = StartDrawingPerc position, stopPropagation = False, preventDefault = False }
+                else
+                    { message = NoOp, stopPropagation = True, preventDefault = True }
+            )
+            (JD.field "button" JD.int)
+            (JD.field "isPrimary" JD.bool))
         , HE.on "pointerenter" (JD.succeed (ContinueDrawingPerc position))
         , HE.on "pointerup" (JD.succeed StopDrawing)
         ]
