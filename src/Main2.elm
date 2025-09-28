@@ -49,7 +49,7 @@ type alias SequenceConfig =
     }
 
 
-totalStepsFromSequence : SequenceConfig -> Int
+totalStepsFromSequence : Model -> Int
 totalStepsFromSequence config =
     config.bars * config.beatsPerBar * config.subdivisions
 
@@ -149,7 +149,7 @@ getTotalPitches model =
 
 getTotalSteps : Model -> Int
 getTotalSteps model =
-    totalStepsFromSequence model.sequenceConfig
+    totalStepsFromSequence model
 
 
 pitchIdxToMidi : Int -> Model -> Int
@@ -377,10 +377,12 @@ type DrawState
 type alias SongConfig =
     { melody : List (List String) -- Each step can have multiple notes
     , percussion : List (List PercType) -- Each step can have multiple drums
-    , sequenceConfig : SequenceConfig
     , bpm : Int
     , octaveStart : Int
     , octaveCount : Int
+    , bars : Int
+    , beatsPerBar : Int
+    , subdivisions : Int
     }
 
 
@@ -391,7 +393,9 @@ type alias HistoryState =
     , rootNote : RootNote
     , octaveStart : Int
     , octaveCount : Int
-    , sequenceConfig : SequenceConfig
+    , bars : Int
+    , beatsPerBar : Int
+    , subdivisions : Int
     }
 
 
@@ -402,13 +406,9 @@ type alias Model =
     , rootNote : RootNote
     , octaveStart : Int
     , octaveCount : Int
-    , sequenceConfig : SequenceConfig
     , bars : Int
     , beatsPerBar : Int
     , subdivisions : Int
-    , bars : Int
-    , beatsPerBar : Int
-    , beatSubdivisions : Int
     , bpm : Int
     , currentTonalInstrument : TonalInstrument
     , currentDrumKit : DrumKit
@@ -431,14 +431,9 @@ init _ url key =
             , rootNote = C
             , octaveStart = 3
             , octaveCount = 3
-            , sequenceConfig =
-                { bars = 8
-                , beatsPerBar = 4
-                , subdivisions = 2
-                }
             , bars = 8
             , beatsPerBar = 4
-            , beatSubdivisions = 2
+            , subdivisions = 2
             , pitchGrid = Set.empty
             , percGrid = Set.empty
             , drawState = NotDrawing
@@ -454,8 +449,8 @@ init _ url key =
             }
     in
     ( initialModel
-        |> applySong twinkleSong
         |> applyQueryParams url
+        |> applySong twinkleSong
     , Cmd.none
     )
 
@@ -507,6 +502,7 @@ subscriptions _ =
 pushToHistory : Model -> Model
 pushToHistory model =
     let
+        currentHistoryState : HistoryState
         currentHistoryState =
             { pitchGrid = model.pitchGrid
             , percGrid = model.percGrid
@@ -514,7 +510,9 @@ pushToHistory model =
             , rootNote = model.rootNote
             , octaveStart = model.octaveStart
             , octaveCount = model.octaveCount
-            , sequenceConfig = model.sequenceConfig
+            , bars = model.bars
+            , beatsPerBar = model.beatsPerBar
+            , subdivisions = model.subdivisions
             }
 
         newUndoStack =
@@ -780,21 +778,12 @@ update msg model =
             , Cmd.none
             )
 
-        ChangeBars newBars ->
+        ChangeBars bars ->
             let
                 modelWithHistory =
                     pushToHistory model
-
-                clampedBars =
-                    max 1 newBars
-
-                oldConfig =
-                    modelWithHistory.sequenceConfig
-
-                newConfig =
-                    { oldConfig | bars = clampedBars }
             in
-            ( { modelWithHistory | sequenceConfig = newConfig }
+            ( { modelWithHistory | bars = atLeast 1 bars }
             , Cmd.none
             )
 
@@ -802,35 +791,17 @@ update msg model =
             let
                 modelWithHistory =
                     pushToHistory model
-
-                clampedBeatsPerBar =
-                    max 1 newBeatsPerBar
-
-                oldConfig =
-                    modelWithHistory.sequenceConfig
-
-                newConfig =
-                    { oldConfig | beatsPerBar = clampedBeatsPerBar }
             in
-            ( { modelWithHistory | sequenceConfig = newConfig }
+            ( { modelWithHistory | beatsPerBar = atLeast 1 newBeatsPerBar }
             , Cmd.none
             )
 
-        ChangeSubdivisions newSubdivisions ->
+        ChangeSubdivisions subDivisions ->
             let
                 modelWithHistory =
                     pushToHistory model
-
-                clampedSubdivisions =
-                    max 1 newSubdivisions
-
-                oldConfig =
-                    modelWithHistory.sequenceConfig
-
-                newConfig =
-                    { oldConfig | subdivisions = clampedSubdivisions }
             in
-            ( { modelWithHistory | sequenceConfig = newConfig }
+            ( { modelWithHistory | subdivisions = atLeast 1 subDivisions }
             , Cmd.none
             )
 
@@ -841,6 +812,7 @@ update msg model =
 
                 lastState :: remainingUndoStack ->
                     let
+                        newRedoStack : List HistoryState
                         newRedoStack =
                             { pitchGrid = model.pitchGrid
                             , percGrid = model.percGrid
@@ -848,7 +820,9 @@ update msg model =
                             , rootNote = model.rootNote
                             , octaveStart = model.octaveStart
                             , octaveCount = model.octaveCount
-                            , sequenceConfig = model.sequenceConfig
+                            , bars = model.bars
+                            , beatsPerBar = model.beatsPerBar
+                            , subdivisions = model.subdivisions
                             }
                                 :: model.redoStack
 
@@ -860,7 +834,9 @@ update msg model =
                                 , rootNote = lastState.rootNote
                                 , octaveStart = lastState.octaveStart
                                 , octaveCount = lastState.octaveCount
-                                , sequenceConfig = lastState.sequenceConfig
+                                , bars = lastState.bars
+                                , beatsPerBar = lastState.beatsPerBar
+                                , subdivisions = lastState.subdivisions
                                 , undoStack = remainingUndoStack
                                 , redoStack = newRedoStack
                             }
@@ -881,7 +857,9 @@ update msg model =
                             , rootNote = model.rootNote
                             , octaveStart = model.octaveStart
                             , octaveCount = model.octaveCount
-                            , sequenceConfig = model.sequenceConfig
+                            , bars = model.bars
+                            , beatsPerBar = model.beatsPerBar
+                            , subdivisions = model.subdivisions
                             }
                                 :: model.undoStack
 
@@ -893,7 +871,9 @@ update msg model =
                                 , rootNote = lastState.rootNote
                                 , octaveStart = model.octaveStart
                                 , octaveCount = model.octaveCount
-                                , sequenceConfig = lastState.sequenceConfig
+                                , bars = lastState.bars
+                                , beatsPerBar = lastState.beatsPerBar
+                                , subdivisions = lastState.subdivisions
                                 , undoStack = newUndoStack
                                 , redoStack = remainingRedoStack
                             }
@@ -1185,7 +1165,7 @@ noteDuration : Model -> Float
 noteDuration model =
     -- 60 seconds/minute ÷ BPM = seconds per beat
     -- Then divide by subdivisions = seconds per step
-    (60.0 / toFloat model.bpm) / toFloat model.sequenceConfig.subdivisions
+    (60.0 / toFloat model.bpm) / toFloat model.subdivisions
 
 
 getCurrentPlayingStep : Model -> Maybe Int
@@ -1475,11 +1455,9 @@ twinkleSong =
             ++ [ [ kick ], [], [ snare ], [] ]
             -- "sky (end)"
             ++ [ [ kick ], [], [ snare ], [] ]
-    , sequenceConfig =
-        { bars = 4
-        , beatsPerBar = 4
-        , subdivisions = 2
-        }
+    , bars = 4
+    , beatsPerBar = 4
+    , subdivisions = 2
     , bpm = 90
     , octaveStart = 3
     , octaveCount = 3
@@ -1487,14 +1465,16 @@ twinkleSong =
 
 
 applySong : SongConfig -> Model -> Model
-applySong songConfig model =
+applySong sc model =
     { model
-        | pitchGrid = convertMelodyToGrid songConfig.melody model
-        , percGrid = convertPercussionToGrid songConfig.percussion
-        , sequenceConfig = songConfig.sequenceConfig
-        , bpm = songConfig.bpm
-        , octaveStart = songConfig.octaveStart
-        , octaveCount = songConfig.octaveCount
+        | pitchGrid = convertMelodyToGrid sc.melody model
+        , percGrid = convertPercussionToGrid sc.percussion
+        , bpm = sc.bpm
+        , octaveStart = sc.octaveStart
+        , octaveCount = sc.octaveCount
+        , bars = sc.bars
+        , beatsPerBar = sc.beatsPerBar
+        , subdivisions = sc.subdivisions
     }
 
 
@@ -1697,9 +1677,9 @@ viewScaleControls model =
 viewSequenceControls : Model -> Html Msg
 viewSequenceControls model =
     div [ class "flex items-center gap-4" ]
-        [ viewControlGroup "Bars" (viewBarsInput model.sequenceConfig.bars)
-        , viewControlGroup "Beats" (viewBeatsPerBarInput model.sequenceConfig.beatsPerBar)
-        , viewControlGroup "Sub-div" (viewSubdivisionsInput model.sequenceConfig.subdivisions)
+        [ viewControlGroup "Bars" (viewBarsInput model.bars)
+        , viewControlGroup "Beats" (viewBeatsPerBarInput model.beatsPerBar)
+        , viewControlGroup "Sub-div" (viewSubdivisionsInput model.subdivisions)
         ]
 
 
@@ -1968,3 +1948,12 @@ format templateString replacements =
 
 times fn i =
     List.range 0 (i - 1) |> List.map fn
+
+
+atLeast =
+    max
+
+
+
+--atMost =
+--    min
