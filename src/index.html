@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Song Maker V2</title>
-    <link rel="stylesheet" href="./styles2.css">
+    <link rel="stylesheet" href="styles.css">
 </head>
 <body>
 <div id="root"></div>
@@ -34,13 +34,13 @@
     //import { generateElm } from '../generate-config-macro' with { type: 'macro' };
     //generateElm(); // triggers macro at build time
 
-    import { Elm } from "./Main2.elm";
+    import { Elm } from "./Main.elm";
 
 
     // Capture globals as clean constants
 
     // Initialize Elm
-    const app = Elm.Main2.init({ node: document.getElementById("root") });
+    const app = Elm.Main.init({ node: document.getElementById("root") });
 
     // Initialize WebAudioFont
     const audioContext = new AudioContext();
