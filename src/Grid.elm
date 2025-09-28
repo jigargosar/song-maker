@@ -184,7 +184,7 @@ midiToPitchIdx :
             , octaveStart : Int
             , octaveCount : Int
         }
-    -> Int
+    -> Maybe Int
 midiToPitchIdx targetMidi model =
     let
         totalPitches =
@@ -193,7 +193,6 @@ midiToPitchIdx targetMidi model =
     List.range 0 (totalPitches - 1)
         |> List.filter (\pitchIdx -> pitchIdxToMidi pitchIdx model == targetMidi)
         |> List.head
-        |> Maybe.withDefault -1
 
 
 resizePitchGrid :
@@ -223,15 +222,17 @@ resizePitchGrid oldModel newModel existingGrid =
                 let
                     midiPitch =
                         pitchIdxToMidi pitchIdx oldModel
-
-                    newPitchIdx =
-                        midiToPitchIdx midiPitch newModel
                 in
-                if newPitchIdx >= 0 && newPitchIdx < getTotalPitches newModel && stepIdx < getTotalSteps newModel then
-                    Just ( newPitchIdx, stepIdx )
+                case midiToPitchIdx midiPitch newModel of
+                    Just newPitchIdx ->
+                        if newPitchIdx < getTotalPitches newModel && stepIdx < getTotalSteps newModel then
+                            Just ( newPitchIdx, stepIdx )
 
-                else
-                    Nothing
+                        else
+                            Nothing
+
+                    Nothing ->
+                        Nothing
             )
         |> Set.fromList
 
@@ -358,15 +359,13 @@ transposePitchGrid oldModel newModel existingGrid =
                 let
                     scaleDegreeInfo =
                         pitchIdxToScaleDegree pitchIdx oldModel
-
-                    newPitchIdx =
-                        scaleDegreeToPitchIdx scaleDegreeInfo newModel
                 in
-                if newPitchIdx >= 0 then
-                    Just ( newPitchIdx, stepIdx )
+                case scaleDegreeToPitchIdx scaleDegreeInfo newModel of
+                    Just newPitchIdx ->
+                        Just ( newPitchIdx, stepIdx )
 
-                else
-                    Nothing
+                    Nothing ->
+                        Nothing
             )
         |> Set.fromList
 
@@ -408,7 +407,7 @@ scaleDegreeToPitchIdx :
             , octaveStart : Int
             , octaveCount : Int
         }
-    -> Int
+    -> Maybe Int
 scaleDegreeToPitchIdx { scaleDegree, octave } model =
     let
         notesInScale =
@@ -418,7 +417,7 @@ scaleDegreeToPitchIdx { scaleDegree, octave } model =
             octave - model.octaveStart
     in
     if octaveIdx >= 0 && octaveIdx < model.octaveCount && scaleDegree >= 0 && scaleDegree < notesInScale then
-        octaveIdx * notesInScale + scaleDegree
+        Just (octaveIdx * notesInScale + scaleDegree)
 
     else
-        -1
+        Nothing
