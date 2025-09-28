@@ -6,9 +6,9 @@ import Dict exposing (Dict)
 import Html as H exposing (Html, div, text)
 import Html.Attributes as HA exposing (class, style)
 import Html.Events as HE
+import Instruments exposing (DrumKit, PercType, TonalInstrument)
 import Json.Decode as JD
 import Json.Encode as JE
-import Instruments exposing (DrumKit, PercType, TonalInstrument)
 import Set exposing (Set)
 import Url exposing (Url)
 import Url.Builder as UB
@@ -284,42 +284,40 @@ applyQueryParams url model =
             applyQueryDefaults model
 
 
+
 {-
-parseQueryStringToDict : String -> Dict String String
-parseQueryStringToDict queryString =
-    if String.isEmpty queryString then
-        Dict.empty
-    else
-        queryString
-            |> String.split "&"
-            |> List.filterMap
-                (\param ->
-                    case String.split "=" param of
-                        [ key, value ] ->
-                            Maybe.map2 (\k v -> ( k, v ))
-                                (Url.percentDecode key)
-                                (Url.percentDecode value)
-                        [ key ] ->
-                            Maybe.map (\k -> ( k, "" )) (Url.percentDecode key)
-                        _ ->
-                            Nothing
-                )
-            |> Dict.fromList
+   parseQueryStringToDict : String -> Dict String String
+   parseQueryStringToDict queryString =
+       if String.isEmpty queryString then
+           Dict.empty
+       else
+           queryString
+               |> String.split "&"
+               |> List.filterMap
+                   (\param ->
+                       case String.split "=" param of
+                           [ key, value ] ->
+                               Maybe.map2 (\k v -> ( k, v ))
+                                   (Url.percentDecode key)
+                                   (Url.percentDecode value)
+                           [ key ] ->
+                               Maybe.map (\k -> ( k, "" )) (Url.percentDecode key)
+                           _ ->
+                               Nothing
+                   )
+               |> Dict.fromList
 
 
-areQueryStringsEqual : String -> String -> Bool
-areQueryStringsEqual queryString1 queryString2 =
-    let
-        normalizeQuery query =
-            query
-                |> String.dropLeft (if String.startsWith "?" query then 1 else 0)
-                |> parseQueryStringToDict
-    in
-    normalizeQuery queryString1 == normalizeQuery queryString2
+   areQueryStringsEqual : String -> String -> Bool
+   areQueryStringsEqual queryString1 queryString2 =
+       let
+           normalizeQuery query =
+               query
+                   |> String.dropLeft (if String.startsWith "?" query then 1 else 0)
+                   |> parseQueryStringToDict
+       in
+       normalizeQuery queryString1 == normalizeQuery queryString2
 -}
-
-
-
 -- Standard snare perc MIDI note
 
 
@@ -393,18 +391,18 @@ type alias HistoryState =
 
 
 type alias Model =
-    { scaleType : ScaleType
+    { pitchGrid : PitchGrid
+    , percGrid : PercGrid
+    , scaleType : ScaleType
     , rootNote : RootNote
     , octaveRange : { start : Int, count : Int }
     , sequenceConfig : SequenceConfig
-    , pitchGrid : PitchGrid
-    , percGrid : PercGrid
-    , drawState : DrawState
-    , playState : PlayState
-    , audioContextTime : Float
     , bpm : Int
     , currentTonalInstrument : TonalInstrument
     , currentDrumKit : DrumKit
+    , drawState : DrawState
+    , playState : PlayState
+    , audioContextTime : Float
     , undoStack : List HistoryState
     , redoStack : List HistoryState
     , url : Url
@@ -1028,14 +1026,17 @@ viewPitchCell pitchIdx pitchGrid currentStep stepIdx =
         [ class noteClass
         , class "border-[0.5px] border-gray-600 cursor-pointer "
         , HE.custom "pointerdown"
-            (JD.map2 (\button isPrimary ->
-                if button == 0 && isPrimary then
-                    { message = StartDrawingPitch position, stopPropagation = False, preventDefault = False }
-                else
-                    { message = NoOp, stopPropagation = True, preventDefault = True }
+            (JD.map2
+                (\button isPrimary ->
+                    if button == 0 && isPrimary then
+                        { message = StartDrawingPitch position, stopPropagation = False, preventDefault = False }
+
+                    else
+                        { message = NoOp, stopPropagation = True, preventDefault = True }
+                )
+                (JD.field "button" JD.int)
+                (JD.field "isPrimary" JD.bool)
             )
-            (JD.field "button" JD.int)
-            (JD.field "isPrimary" JD.bool))
         , HE.on "pointerenter" (JD.succeed (ContinueDrawingPitch position))
         , HE.on "pointerup" (JD.succeed StopDrawing)
         ]
@@ -1098,14 +1099,17 @@ viewPercCell percType percGrid currentStep stepIdx =
         , class cellClass
         , class stickyClass
         , HE.custom "pointerdown"
-            (JD.map2 (\button isPrimary ->
-                if button == 0 && isPrimary then
-                    { message = StartDrawingPerc position, stopPropagation = False, preventDefault = False }
-                else
-                    { message = NoOp, stopPropagation = True, preventDefault = True }
+            (JD.map2
+                (\button isPrimary ->
+                    if button == 0 && isPrimary then
+                        { message = StartDrawingPerc position, stopPropagation = False, preventDefault = False }
+
+                    else
+                        { message = NoOp, stopPropagation = True, preventDefault = True }
+                )
+                (JD.field "button" JD.int)
+                (JD.field "isPrimary" JD.bool)
             )
-            (JD.field "button" JD.int)
-            (JD.field "isPrimary" JD.bool))
         , HE.on "pointerenter" (JD.succeed (ContinueDrawingPerc position))
         , HE.on "pointerup" (JD.succeed StopDrawing)
         ]
