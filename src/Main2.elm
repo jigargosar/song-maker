@@ -1455,12 +1455,12 @@ twinkleSong =
             ++ [ [ kick ], [], [ snare ], [] ]
             -- "sky (end)"
             ++ [ [ kick ], [], [ snare ], [] ]
-    , bars = 4
-    , beatsPerBar = 4
-    , subdivisions = 2
     , bpm = 90
     , octaveStart = 3
     , octaveCount = 3
+    , bars = 4
+    , beatsPerBar = 4
+    , subdivisions = 2
     }
 
 
