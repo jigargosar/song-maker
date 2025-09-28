@@ -2,13 +2,13 @@ port module Main exposing (main)
 
 import Browser exposing (Document)
 import Browser.Navigation as Nav
-import Grid exposing (PercGrid, PercPos, PitchGrid, PitchPos)
 import Html as H exposing (Html, div, text)
 import Html.Attributes as HA exposing (class, style)
 import Html.Events as HE
 import Instruments exposing (DrumKit, PercType, TonalInstrument)
 import Json.Decode as JD
 import Scales exposing (RootNote, ScaleType)
+import Set exposing (Set)
 import Url exposing (Url)
 import Url.Builder as UB
 import Url.Parser as Parser exposing ((<?>))
@@ -32,20 +32,97 @@ port timeSync : (Float -> msg) -> Sub msg
 
 
 
--- HISTORY
+-- AUDIO CONSTANTS
 
 
-type alias HistoryState =
-    { pitchGrid : PitchGrid
-    , percGrid : PercGrid
-    , scaleType : ScaleType
-    , rootNote : RootNote
-    , octaveStart : Int
-    , octaveCount : Int
-    , bars : Int
-    , beatsPerBar : Int
-    , beatSubdivisions : Int
-    }
+midiC4 : Int
+midiC4 =
+    60
+
+
+
+-- SCALE SYSTEM
+
+
+getTotalPitches : Model -> Int
+getTotalPitches model =
+    Scales.notesPerOctave model.scaleType * model.octaveCount
+
+
+getTotalSteps : Model -> Int
+getTotalSteps c =
+    c.bars * c.beatsPerBar * c.subdivisions
+
+
+pitchIdxToMidi : Int -> Model -> Int
+pitchIdxToMidi pitchIdx model =
+    let
+        scalePattern =
+            Scales.getScalePattern model.scaleType
+
+        rootOffset =
+            Scales.getRootNoteOffset model.rootNote
+
+        notesInScale =
+            Scales.notesPerOctave model.scaleType
+
+        octaveIdx =
+            pitchIdx // notesInScale
+
+        noteIdx =
+            modBy notesInScale pitchIdx
+
+        octave =
+            model.octaveStart + octaveIdx
+
+        semitone =
+            Maybe.withDefault 0 (List.drop noteIdx scalePattern |> List.head)
+
+        baseC0 =
+            12
+    in
+    if octaveIdx < model.octaveCount then
+        baseC0 + (octave * 12) + rootOffset + semitone
+
+    else
+        midiC4
+
+
+pitchIdxToNoteName : Int -> Model -> String
+pitchIdxToNoteName pitchIdx model =
+    let
+        scalePattern =
+            Scales.getScalePattern model.scaleType
+
+        rootOffset =
+            Scales.getRootNoteOffset model.rootNote
+
+        notesInScale =
+            Scales.notesPerOctave model.scaleType
+
+        octaveIdx =
+            pitchIdx // notesInScale
+
+        noteIdx =
+            modBy notesInScale pitchIdx
+
+        octave =
+            model.octaveStart + octaveIdx
+
+        semitone =
+            Maybe.withDefault 0 (List.drop noteIdx scalePattern |> List.head)
+
+        chromaticIndex =
+            modBy 12 (rootOffset + semitone)
+
+        noteName =
+            Maybe.withDefault "?" (List.drop chromaticIndex Scales.chromaticNoteNames |> List.head)
+    in
+    if octaveIdx < model.octaveCount then
+        noteName ++ String.fromInt octave
+
+    else
+        "C4"
 
 
 
@@ -168,6 +245,22 @@ main =
 -- Model
 
 
+type alias PitchPos =
+    { pitchIdx : Int, stepIdx : Int }
+
+
+type alias PitchGrid =
+    Set ( Int, Int )
+
+
+type alias PercPos =
+    { percType : PercType, stepIdx : Int }
+
+
+type alias PercGrid =
+    Set ( Int, Int )
+
+
 type PlayState
     = Stopped
     | PlayingStarted { startTime : Float }
@@ -182,6 +275,19 @@ type DrawState
     | ErasingPerc
 
 
+type alias HistoryState =
+    { pitchGrid : PitchGrid
+    , percGrid : PercGrid
+    , scaleType : ScaleType
+    , rootNote : RootNote
+    , octaveStart : Int
+    , octaveCount : Int
+    , bars : Int
+    , beatsPerBar : Int
+    , subdivisions : Int
+    }
+
+
 type alias Model =
     { pitchGrid : PitchGrid
     , percGrid : PercGrid
@@ -191,7 +297,7 @@ type alias Model =
     , octaveCount : Int
     , bars : Int
     , beatsPerBar : Int
-    , beatSubdivisions : Int
+    , subdivisions : Int
     , bpm : Int
     , currentTonalInstrument : TonalInstrument
     , currentDrumKit : DrumKit
@@ -216,9 +322,9 @@ init _ url key =
             , octaveCount = 3
             , bars = 8
             , beatsPerBar = 4
-            , beatSubdivisions = 2
-            , pitchGrid = Grid.empty
-            , percGrid = Grid.empty
+            , subdivisions = 2
+            , pitchGrid = Set.empty
+            , percGrid = Set.empty
             , drawState = NotDrawing
             , playState = Stopped
             , audioContextTime = 0.0
@@ -295,7 +401,7 @@ pushToHistory model =
             , octaveCount = model.octaveCount
             , bars = model.bars
             , beatsPerBar = model.beatsPerBar
-            , beatSubdivisions = model.beatSubdivisions
+            , subdivisions = model.subdivisions
             }
 
         newUndoStack =
@@ -325,7 +431,7 @@ update msg model =
                             pushToHistory model
 
                         currentlyActive =
-                            Grid.isPitchCellActive position model.pitchGrid
+                            isPitchCellActive position model.pitchGrid
 
                         newDrawState =
                             if currentlyActive then
@@ -336,7 +442,7 @@ update msg model =
                     in
                     ( { modelWithHistory
                         | drawState = newDrawState
-                        , pitchGrid = Grid.updatePitchCell position (not currentlyActive) modelWithHistory.pitchGrid
+                        , pitchGrid = updatePitchCell position (not currentlyActive) modelWithHistory.pitchGrid
                       }
                     , playPitchCmdIf (not currentlyActive) position.pitchIdx modelWithHistory
                     )
@@ -347,12 +453,12 @@ update msg model =
         ContinueDrawingPitch position ->
             case model.drawState of
                 DrawingPitch ->
-                    ( { model | pitchGrid = Grid.updatePitchCell position True model.pitchGrid }
+                    ( { model | pitchGrid = updatePitchCell position True model.pitchGrid }
                     , playPitchCmdIf True position.pitchIdx model
                     )
 
                 ErasingPitch ->
-                    ( { model | pitchGrid = Grid.updatePitchCell position False model.pitchGrid }, Cmd.none )
+                    ( { model | pitchGrid = updatePitchCell position False model.pitchGrid }, Cmd.none )
 
                 _ ->
                     ( model, Cmd.none )
@@ -368,7 +474,7 @@ update msg model =
                             pushToHistory model
 
                         currentlyActive =
-                            Grid.isPercCellActive position model.percGrid
+                            isPercCellActive position model.percGrid
 
                         newDrawState =
                             if currentlyActive then
@@ -379,7 +485,7 @@ update msg model =
                     in
                     ( { modelWithHistory
                         | drawState = newDrawState
-                        , percGrid = Grid.updatePercCell position (not currentlyActive) modelWithHistory.percGrid
+                        , percGrid = updatePercCell position (not currentlyActive) modelWithHistory.percGrid
                       }
                     , playPercCmdIf (not currentlyActive) position.percType modelWithHistory
                     )
@@ -390,12 +496,12 @@ update msg model =
         ContinueDrawingPerc position ->
             case model.drawState of
                 DrawingPerc ->
-                    ( { model | percGrid = Grid.updatePercCell position True model.percGrid }
+                    ( { model | percGrid = updatePercCell position True model.percGrid }
                     , playPercCmdIf True position.percType model
                     )
 
                 ErasingPerc ->
-                    ( { model | percGrid = Grid.updatePercCell position False model.percGrid }, Cmd.none )
+                    ( { model | percGrid = updatePercCell position False model.percGrid }, Cmd.none )
 
                 _ ->
                     ( model, Cmd.none )
@@ -461,7 +567,7 @@ update msg model =
                     if currentStep >= nextStep then
                         let
                             stepToSchedule =
-                                modBy (Grid.getTotalSteps model) nextStep
+                                modBy (getTotalSteps model) nextStep
 
                             activeNotes =
                                 getActiveNotesForStep stepToSchedule updatedModel
@@ -489,7 +595,7 @@ update msg model =
                     { modelWithHistory | scaleType = newScaleType }
 
                 newPitchGrid =
-                    Grid.resizePitchGrid modelWithHistory newModel modelWithHistory.pitchGrid
+                    resizePitchGrid modelWithHistory newModel modelWithHistory.pitchGrid
             in
             ( { newModel | pitchGrid = newPitchGrid }
             , Cmd.none
@@ -504,7 +610,7 @@ update msg model =
                     { modelWithHistory | rootNote = newRootNote }
 
                 newPitchGrid =
-                    Grid.transposePitchGrid modelWithHistory newModel modelWithHistory.pitchGrid
+                    transposePitchGrid modelWithHistory newModel modelWithHistory.pitchGrid
             in
             ( { newModel | pitchGrid = newPitchGrid }
             , Cmd.none
@@ -522,7 +628,7 @@ update msg model =
                     { modelWithHistory | octaveStart = clampedStart }
 
                 newPitchGrid =
-                    Grid.resizePitchGrid modelWithHistory newModel modelWithHistory.pitchGrid
+                    resizePitchGrid modelWithHistory newModel modelWithHistory.pitchGrid
             in
             ( { newModel | pitchGrid = newPitchGrid }
             , Cmd.none
@@ -540,7 +646,7 @@ update msg model =
                     { modelWithHistory | octaveCount = clampedCount }
 
                 newPitchGrid =
-                    Grid.resizePitchGrid modelWithHistory newModel modelWithHistory.pitchGrid
+                    resizePitchGrid modelWithHistory newModel modelWithHistory.pitchGrid
             in
             ( { newModel | pitchGrid = newPitchGrid }
             , Cmd.none
@@ -584,7 +690,7 @@ update msg model =
                 modelWithHistory =
                     pushToHistory model
             in
-            ( { modelWithHistory | beatSubdivisions = atLeast 1 subDivisions }
+            ( { modelWithHistory | subdivisions = atLeast 1 subDivisions }
             , Cmd.none
             )
 
@@ -605,7 +711,7 @@ update msg model =
                             , octaveCount = model.octaveCount
                             , bars = model.bars
                             , beatsPerBar = model.beatsPerBar
-                            , beatSubdivisions = model.beatSubdivisions
+                            , subdivisions = model.subdivisions
                             }
                                 :: model.redoStack
 
@@ -619,7 +725,7 @@ update msg model =
                                 , octaveCount = lastState.octaveCount
                                 , bars = lastState.bars
                                 , beatsPerBar = lastState.beatsPerBar
-                                , beatSubdivisions = lastState.beatSubdivisions
+                                , subdivisions = lastState.subdivisions
                                 , undoStack = remainingUndoStack
                                 , redoStack = newRedoStack
                             }
@@ -642,7 +748,7 @@ update msg model =
                             , octaveCount = model.octaveCount
                             , bars = model.bars
                             , beatsPerBar = model.beatsPerBar
-                            , beatSubdivisions = model.beatSubdivisions
+                            , subdivisions = model.subdivisions
                             }
                                 :: model.undoStack
 
@@ -656,7 +762,7 @@ update msg model =
                                 , octaveCount = model.octaveCount
                                 , bars = lastState.bars
                                 , beatsPerBar = lastState.beatsPerBar
-                                , beatSubdivisions = lastState.beatSubdivisions
+                                , subdivisions = lastState.subdivisions
                                 , undoStack = newUndoStack
                                 , redoStack = remainingRedoStack
                             }
@@ -725,10 +831,7 @@ viewGrid model =
             getCurrentPlayingStep model
 
         totalSteps =
-            Grid.getTotalSteps model
-
-        totalPitches =
-            Grid.getTotalPitches model
+            getTotalSteps model
 
         gridTemplateCols =
             format "minmax($pitchLabelColMinWidth, auto) repeat($totalSteps, minmax($stepColMinWidth, 1fr))"
@@ -740,7 +843,7 @@ viewGrid model =
         gridTemplateRows =
             format "minmax($stepLabelRowMinHeight, auto) repeat($totalPitches, minmax($pitchRowMinHeight, 1fr)) repeat(2, $percRowHeight)"
                 [ ( "$stepLabelRowMinHeight", px 32 )
-                , ( "$totalPitches", String.fromInt totalPitches )
+                , ( "$totalPitches", String.fromInt (getTotalPitches model) )
                 , ( "$pitchRowMinHeight", px 32 )
                 , ( "$percRowHeight", px 48 )
                 ]
@@ -752,7 +855,7 @@ viewGrid model =
         ]
         ([ {- Empty corner cell -} div [ class labelBgColorAndClass, class "border-b border-gray-600" ] [] ]
             ++ {- Step Labels row -} times (\stepIdx -> viewStepLabel currentStep stepIdx) totalSteps
-            ++ {- Pitch rows -} (times (\pitchIdx -> viewPitchRow model model.pitchGrid currentStep pitchIdx) totalPitches |> List.concat)
+            ++ {- Pitch rows -} (times (\pitchIdx -> viewPitchRow model model.pitchGrid currentStep pitchIdx) (getTotalPitches model) |> List.concat)
             ++ {- Perc Snare row -} viewPercRow Instruments.percSnare totalSteps model.percGrid currentStep
             ++ {- Perc Kick row -} viewPercRow Instruments.percKick totalSteps model.percGrid currentStep
         )
@@ -782,10 +885,10 @@ viewPitchRow model pitchGrid currentStep pitchIdx =
         viewPitchLabel =
             div
                 [ class labelBgColorAndClass, class "border-[0.5px]" ]
-                [ text (Grid.pitchIdxToNoteName pitchIdx model) ]
+                [ text (pitchIdxToNoteName pitchIdx model) ]
     in
     -- TODO: Should we fix function parameters?
-    viewPitchLabel :: times (\stepIdx -> viewPitchCell pitchIdx pitchGrid currentStep stepIdx) (Grid.getTotalSteps model)
+    viewPitchLabel :: times (\stepIdx -> viewPitchCell pitchIdx pitchGrid currentStep stepIdx) (getTotalSteps model)
 
 
 viewPitchCell : Int -> PitchGrid -> Maybe Int -> Int -> Html Msg
@@ -795,7 +898,7 @@ viewPitchCell pitchIdx pitchGrid currentStep stepIdx =
             { pitchIdx = pitchIdx, stepIdx = stepIdx }
 
         isActive =
-            Grid.isPitchCellActive position pitchGrid
+            isPitchCellActive position pitchGrid
 
         isCurrentStep =
             currentStep == Just stepIdx
@@ -858,7 +961,7 @@ viewPercCell percType percGrid currentStep stepIdx =
             { percType = percType, stepIdx = stepIdx }
 
         isActive =
-            Grid.isPercCellActive position percGrid
+            isPercCellActive position percGrid
 
         isCurrentStep =
             currentStep == Just stepIdx
@@ -938,14 +1041,23 @@ footerView model =
 
 
 
+-- Conversion Functions
+
+
+percPositionToTuple : PercPos -> ( Int, Int )
+percPositionToTuple { percType, stepIdx } =
+    ( Instruments.percRowIdx percType, stepIdx )
+
+
+
 -- Sequencer Functions
 
 
 noteDuration : Model -> Float
 noteDuration model =
     -- 60 seconds/minute ÷ BPM = seconds per beat
-    -- Then divide by beatSubdivisions = seconds per step
-    (60.0 / toFloat model.bpm) / toFloat model.beatSubdivisions
+    -- Then divide by subdivisions = seconds per step
+    (60.0 / toFloat model.bpm) / toFloat model.subdivisions
 
 
 getCurrentPlayingStep : Model -> Maybe Int
@@ -955,7 +1067,7 @@ getCurrentPlayingStep model =
             Just 0
 
         Playing { nextStep } ->
-            Just (modBy (Grid.getTotalSteps model) (nextStep - 1))
+            Just (modBy (getTotalSteps model) (nextStep - 1))
 
         Stopped ->
             Nothing
@@ -972,16 +1084,16 @@ getActiveNotesForStep stepIdx model =
             noteDuration model
 
         pitchNotes =
-            Utils.times
+            times
                 (\pitchIdx ->
                     let
                         position =
                             { pitchIdx = pitchIdx, stepIdx = stepIdx }
                     in
-                    if Grid.isPitchCellActive position model.pitchGrid then
+                    if isPitchCellActive position model.pitchGrid then
                         Just
                             { webAudioFont = Instruments.tonalWebAudioFont model.currentTonalInstrument
-                            , midi = Grid.pitchIdxToMidi pitchIdx model
+                            , midi = pitchIdxToMidi pitchIdx model
                             , duration = duration
                             , volume = 0.7
                             }
@@ -989,7 +1101,7 @@ getActiveNotesForStep stepIdx model =
                     else
                         Nothing
                 )
-                (Grid.getTotalPitches model)
+                (getTotalPitches model)
                 |> List.filterMap identity
 
         drumConfig =
@@ -1012,7 +1124,7 @@ getActiveNotesForStep stepIdx model =
                                         else
                                             ( drumConfig.snareWebAudioFont, drumConfig.snareMidi )
                         in
-                        if Grid.isPercCellActive position model.percGrid then
+                        if isPercCellActive position model.percGrid then
                             Just
                                 { webAudioFont = webAudioFontName
                                 , midi = midiNote
@@ -1036,7 +1148,7 @@ playPitchCmdIf shouldPlay pitchIdx model =
     if shouldPlay then
         playNote
             { webAudioFont = Instruments.tonalWebAudioFont model.currentTonalInstrument
-            , midi = Grid.pitchIdxToMidi pitchIdx model
+            , midi = pitchIdxToMidi pitchIdx model
             , duration = 0.5
             , volume = 0.7
             }
@@ -1074,8 +1186,122 @@ playPercCmdIf shouldPlay percType model =
 
 
 -- Grid Transpose Functions
+
+
+{-| Convert pitch index to scale degree and octave relative to current root/scale
+-}
+pitchIdxToScaleDegree : Int -> Model -> { scaleDegree : Int, octave : Int }
+pitchIdxToScaleDegree pitchIdx model =
+    let
+        notesInScale =
+            Scales.notesPerOctave model.scaleType
+
+        octaveIdx =
+            pitchIdx // notesInScale
+
+        noteIdx =
+            modBy notesInScale pitchIdx
+
+        absoluteOctave =
+            model.octaveStart + octaveIdx
+    in
+    { scaleDegree = noteIdx, octave = absoluteOctave }
+
+
+{-| Convert scale degree and octave to pitch index in target model
+-}
+scaleDegreeToPitchIdx : { scaleDegree : Int, octave : Int } -> Model -> Int
+scaleDegreeToPitchIdx { scaleDegree, octave } model =
+    let
+        notesInScale =
+            Scales.notesPerOctave model.scaleType
+
+        octaveIdx =
+            octave - model.octaveStart
+    in
+    if octaveIdx >= 0 && octaveIdx < model.octaveCount && scaleDegree >= 0 && scaleDegree < notesInScale then
+        octaveIdx * notesInScale + scaleDegree
+
+    else
+        -1
+
+
+
 -- Invalid pitch
+
+
+{-| Transpose pitch grid preserving scale degree relationships
+-}
+transposePitchGrid : Model -> Model -> PitchGrid -> PitchGrid
+transposePitchGrid oldModel newModel existingGrid =
+    existingGrid
+        |> Set.toList
+        |> List.filterMap
+            (\( pitchIdx, stepIdx ) ->
+                let
+                    scaleDegreeInfo =
+                        pitchIdxToScaleDegree pitchIdx oldModel
+
+                    newPitchIdx =
+                        scaleDegreeToPitchIdx scaleDegreeInfo newModel
+                in
+                if newPitchIdx >= 0 then
+                    Just ( newPitchIdx, stepIdx )
+
+                else
+                    Nothing
+            )
+        |> Set.fromList
+
+
+
 -- Grid Resize Functions
+
+
+resizePitchGrid : Model -> Model -> PitchGrid -> PitchGrid
+resizePitchGrid oldModel newModel existingGrid =
+    existingGrid
+        |> Set.toList
+        |> List.filterMap
+            (\( pitchIdx, stepIdx ) ->
+                let
+                    midiPitch =
+                        pitchIdxToMidi pitchIdx oldModel
+
+                    newPitchIdx =
+                        midiToPitchIdx midiPitch newModel
+                in
+                if newPitchIdx >= 0 && newPitchIdx < getTotalPitches newModel && stepIdx < getTotalSteps newModel then
+                    Just ( newPitchIdx, stepIdx )
+
+                else
+                    Nothing
+            )
+        |> Set.fromList
+
+
+midiToPitchIdx : Int -> Model -> Int
+midiToPitchIdx targetMidi model =
+    let
+        totalPitches =
+            getTotalPitches model
+    in
+    List.range 0 (totalPitches - 1)
+        |> List.filter (\pitchIdx -> pitchIdxToMidi pitchIdx model == targetMidi)
+        |> List.head
+        |> Maybe.withDefault -1
+
+
+noteNameToPitchIdx : String -> Model -> Int
+noteNameToPitchIdx noteName model =
+    let
+        totalPitches =
+            getTotalPitches model
+    in
+    List.range 0 (totalPitches - 1)
+        |> List.filter (\pitchIdx -> pitchIdxToNoteName pitchIdx model == noteName)
+        |> List.head
+        |> Maybe.withDefault -1
 
 
 type alias SongConfig =
@@ -1086,7 +1312,7 @@ type alias SongConfig =
     , octaveCount : Int
     , bars : Int
     , beatsPerBar : Int
-    , beatSubdivisions : Int
+    , subdivisions : Int
     }
 
 
@@ -1138,22 +1364,96 @@ twinkleSong =
     , octaveCount = 3
     , bars = 4
     , beatsPerBar = 4
-    , beatSubdivisions = 2
+    , subdivisions = 2
     }
 
 
 applySong : SongConfig -> Model -> Model
 applySong sc model =
     { model
-        | pitchGrid = Grid.convertMelodyToGrid sc.melody model
-        , percGrid = Grid.convertPercussionToGrid sc.percussion
+        | pitchGrid = convertMelodyToGrid sc.melody model
+        , percGrid = convertPercussionToGrid sc.percussion
         , bpm = sc.bpm
         , octaveStart = sc.octaveStart
         , octaveCount = sc.octaveCount
         , bars = sc.bars
         , beatsPerBar = sc.beatsPerBar
-        , beatSubdivisions = sc.beatSubdivisions
+        , subdivisions = sc.subdivisions
     }
+
+
+convertMelodyToGrid : List (List String) -> Model -> PitchGrid
+convertMelodyToGrid stepMelodies model =
+    stepMelodies
+        |> List.indexedMap
+            (\stepIdx noteNames ->
+                List.filterMap
+                    (\noteName ->
+                        let
+                            pitchIdx =
+                                noteNameToPitchIdx noteName model
+                        in
+                        if pitchIdx >= 0 then
+                            Just ( pitchIdx, stepIdx )
+
+                        else
+                            Nothing
+                    )
+                    noteNames
+            )
+        |> List.concat
+        |> Set.fromList
+
+
+convertPercussionToGrid : List (List PercType) -> PercGrid
+convertPercussionToGrid stepPercussion =
+    stepPercussion
+        |> List.indexedMap
+            (\stepIdx percTypes ->
+                List.map
+                    (\percType ->
+                        ( Instruments.percRowIdx percType, stepIdx )
+                    )
+                    percTypes
+            )
+        |> List.concat
+        |> Set.fromList
+
+
+
+-- Cell State Management
+
+
+isPitchCellActive : PitchPos -> PitchGrid -> Bool
+isPitchCellActive { pitchIdx, stepIdx } pitchGrid =
+    Set.member ( pitchIdx, stepIdx ) pitchGrid
+
+
+updatePitchCell : PitchPos -> Bool -> PitchGrid -> PitchGrid
+updatePitchCell { pitchIdx, stepIdx } isActive pitchGrid =
+    if isActive then
+        Set.insert ( pitchIdx, stepIdx ) pitchGrid
+
+    else
+        Set.remove ( pitchIdx, stepIdx ) pitchGrid
+
+
+isPercCellActive : PercPos -> PercGrid -> Bool
+isPercCellActive position grid =
+    Set.member (percPositionToTuple position) grid
+
+
+updatePercCell : PercPos -> Bool -> PercGrid -> PercGrid
+updatePercCell position isActive grid =
+    let
+        tuple =
+            percPositionToTuple position
+    in
+    if isActive then
+        Set.insert tuple grid
+
+    else
+        Set.remove tuple grid
 
 
 
@@ -1285,7 +1585,7 @@ viewSequenceControls model =
     div [ class "flex items-center gap-4" ]
         [ viewControlGroup "Bars" (viewBarsInput model.bars)
         , viewControlGroup "Beats" (viewBeatsPerBarInput model.beatsPerBar)
-        , viewControlGroup "Sub-div" (viewSubdivisionsInput model.beatSubdivisions)
+        , viewControlGroup "Sub-div" (viewSubdivisionsInput model.subdivisions)
         ]
 
 
