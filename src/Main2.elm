@@ -144,7 +144,7 @@ notesPerOctave scaleType =
 
 getTotalPitches : Model -> Int
 getTotalPitches model =
-    notesPerOctave model.scaleType * model.octaveRange.count
+    notesPerOctave model.scaleType * model.octaveCount
 
 
 getTotalSteps : Model -> Int
@@ -171,7 +171,7 @@ pitchIdxToMidi pitchIdx model =
             modBy notesInScale pitchIdx
 
         octave =
-            model.octaveRange.start + octaveIdx
+            model.octaveStart + octaveIdx
 
         semitone =
             Maybe.withDefault 0 (List.drop noteIdx scalePattern |> List.head)
@@ -179,7 +179,7 @@ pitchIdxToMidi pitchIdx model =
         baseC0 =
             12
     in
-    if octaveIdx < model.octaveRange.count then
+    if octaveIdx < model.octaveCount then
         baseC0 + (octave * 12) + rootOffset + semitone
 
     else
@@ -205,7 +205,7 @@ pitchIdxToNoteName pitchIdx model =
             modBy notesInScale pitchIdx
 
         octave =
-            model.octaveRange.start + octaveIdx
+            model.octaveStart + octaveIdx
 
         semitone =
             Maybe.withDefault 0 (List.drop noteIdx scalePattern |> List.head)
@@ -216,7 +216,7 @@ pitchIdxToNoteName pitchIdx model =
         noteName =
             Maybe.withDefault "?" (List.drop chromaticIndex chromaticNoteNames |> List.head)
     in
-    if octaveIdx < model.octaveRange.count then
+    if octaveIdx < model.octaveCount then
         noteName ++ String.fromInt octave
 
     else
@@ -247,22 +247,29 @@ buildQuery model =
     UB.absolute
         []
         [ UB.int "bpm" model.bpm
-        , UB.int "octaveStart" model.octaveRange.start
-        , UB.int "octaveCount" model.octaveRange.count
+        , UB.int "octaveStart" model.octaveStart
+        , UB.int "octaveCount" model.octaveCount
         ]
 
 
 parseQueryParams : Url -> Maybe QueryParams
 parseQueryParams url =
-    Parser.parse (Parser.top <?> queryParser) url
-        |> Maybe.andThen identity
+    case url.query |> Debug.log "url.query" of
+        Nothing ->
+            -- This check is required since when there is no query params we need to apply default params
+            Nothing
+
+        _ ->
+            Parser.parse (Parser.top <?> queryParser) url
+                |> Maybe.andThen identity
 
 
 applyQueryDefaults : Model -> Model
 applyQueryDefaults model =
     { model
         | bpm = 120
-        , octaveRange = { start = 3, count = 3 }
+        , octaveStart = 3
+        , octaveCount = 3
     }
 
 
@@ -272,10 +279,8 @@ applyQueryParams url model =
         Just params ->
             { model
                 | bpm = Maybe.withDefault model.bpm params.bpm
-                , octaveRange =
-                    { start = Maybe.withDefault model.octaveRange.start params.octaveStart
-                    , count = Maybe.withDefault model.octaveRange.count params.octaveCount
-                    }
+                , octaveStart = Maybe.withDefault model.octaveStart params.octaveStart
+                , octaveCount = Maybe.withDefault model.octaveCount params.octaveCount
             }
 
         Nothing ->
@@ -374,7 +379,8 @@ type alias SongConfig =
     , percussion : List (List PercType) -- Each step can have multiple drums
     , sequenceConfig : SequenceConfig
     , bpm : Int
-    , octaveRange : { start : Int, count : Int }
+    , octaveStart : Int
+    , octaveCount : Int
     }
 
 
@@ -383,7 +389,8 @@ type alias HistoryState =
     , percGrid : PercGrid
     , scaleType : ScaleType
     , rootNote : RootNote
-    , octaveRange : { start : Int, count : Int }
+    , octaveStart : Int
+    , octaveCount : Int
     , sequenceConfig : SequenceConfig
     }
 
@@ -393,7 +400,6 @@ type alias Model =
     , percGrid : PercGrid
     , scaleType : ScaleType
     , rootNote : RootNote
-    , octaveRange : { start : Int, count : Int }
     , octaveStart : Int
     , octaveCount : Int
     , sequenceConfig : SequenceConfig
@@ -420,7 +426,6 @@ init _ url key =
         initialModel =
             { scaleType = Major
             , rootNote = C
-            , octaveRange = { start = 3, count = 3 }
             , octaveStart = 3
             , octaveCount = 3
             , sequenceConfig =
@@ -444,7 +449,6 @@ init _ url key =
             , url = url
             , key = key
             }
-                |> applySong twinkleSong
     in
     ( initialModel
         |> applySong twinkleSong
@@ -505,7 +509,8 @@ pushToHistory model =
             , percGrid = model.percGrid
             , scaleType = model.scaleType
             , rootNote = model.rootNote
-            , octaveRange = model.octaveRange
+            , octaveStart = model.octaveStart
+            , octaveCount = model.octaveCount
             , sequenceConfig = model.sequenceConfig
             }
 
@@ -730,7 +735,7 @@ update msg model =
                     max 1 newStart
 
                 newModel =
-                    { modelWithHistory | octaveRange = { start = clampedStart, count = modelWithHistory.octaveRange.count } }
+                    { modelWithHistory | octaveStart = clampedStart }
 
                 newPitchGrid =
                     resizePitchGrid modelWithHistory newModel modelWithHistory.pitchGrid
@@ -748,7 +753,7 @@ update msg model =
                     max 1 newCount
 
                 newModel =
-                    { modelWithHistory | octaveRange = { start = modelWithHistory.octaveRange.start, count = clampedCount } }
+                    { modelWithHistory | octaveCount = clampedCount }
 
                 newPitchGrid =
                     resizePitchGrid modelWithHistory newModel modelWithHistory.pitchGrid
@@ -838,7 +843,8 @@ update msg model =
                             , percGrid = model.percGrid
                             , scaleType = model.scaleType
                             , rootNote = model.rootNote
-                            , octaveRange = model.octaveRange
+                            , octaveStart = model.octaveStart
+                            , octaveCount = model.octaveCount
                             , sequenceConfig = model.sequenceConfig
                             }
                                 :: model.redoStack
@@ -849,7 +855,8 @@ update msg model =
                                 , percGrid = lastState.percGrid
                                 , scaleType = lastState.scaleType
                                 , rootNote = lastState.rootNote
-                                , octaveRange = lastState.octaveRange
+                                , octaveStart = lastState.octaveStart
+                                , octaveCount = lastState.octaveCount
                                 , sequenceConfig = lastState.sequenceConfig
                                 , undoStack = remainingUndoStack
                                 , redoStack = newRedoStack
@@ -869,7 +876,8 @@ update msg model =
                             , percGrid = model.percGrid
                             , scaleType = model.scaleType
                             , rootNote = model.rootNote
-                            , octaveRange = model.octaveRange
+                            , octaveStart = model.octaveStart
+                            , octaveCount = model.octaveCount
                             , sequenceConfig = model.sequenceConfig
                             }
                                 :: model.undoStack
@@ -880,7 +888,8 @@ update msg model =
                                 , percGrid = lastState.percGrid
                                 , scaleType = lastState.scaleType
                                 , rootNote = lastState.rootNote
-                                , octaveRange = lastState.octaveRange
+                                , octaveStart = model.octaveStart
+                                , octaveCount = model.octaveCount
                                 , sequenceConfig = lastState.sequenceConfig
                                 , undoStack = newUndoStack
                                 , redoStack = remainingRedoStack
@@ -1319,7 +1328,7 @@ pitchIdxToScaleDegree pitchIdx model =
             modBy notesInScale pitchIdx
 
         absoluteOctave =
-            model.octaveRange.start + octaveIdx
+            model.octaveStart + octaveIdx
     in
     { scaleDegree = noteIdx, octave = absoluteOctave }
 
@@ -1333,9 +1342,9 @@ scaleDegreeToPitchIdx { scaleDegree, octave } model =
             notesPerOctave model.scaleType
 
         octaveIdx =
-            octave - model.octaveRange.start
+            octave - model.octaveStart
     in
-    if octaveIdx >= 0 && octaveIdx < model.octaveRange.count && scaleDegree >= 0 && scaleDegree < notesInScale then
+    if octaveIdx >= 0 && octaveIdx < model.octaveCount && scaleDegree >= 0 && scaleDegree < notesInScale then
         octaveIdx * notesInScale + scaleDegree
 
     else
@@ -1469,25 +1478,20 @@ twinkleSong =
         , subdivisions = 2
         }
     , bpm = 90
-    , octaveRange = { start = 3, count = 3 }
+    , octaveStart = 3
+    , octaveCount = 3
     }
 
 
 applySong : SongConfig -> Model -> Model
 applySong songConfig model =
-    let
-        pitchGrid =
-            convertMelodyToGrid songConfig.melody model
-
-        percGrid =
-            convertPercussionToGrid songConfig.percussion
-    in
     { model
-        | pitchGrid = pitchGrid
-        , percGrid = percGrid
+        | pitchGrid = convertMelodyToGrid songConfig.melody model
+        , percGrid = convertPercussionToGrid songConfig.percussion
         , sequenceConfig = songConfig.sequenceConfig
         , bpm = songConfig.bpm
-        , octaveRange = songConfig.octaveRange
+        , octaveStart = songConfig.octaveStart
+        , octaveCount = songConfig.octaveCount
     }
 
 
@@ -1682,8 +1686,8 @@ viewScaleControls model =
     div [ class "flex items-center gap-4" ]
         [ viewControlGroup "Scale" (viewScaleTypeSelector model.scaleType)
         , viewControlGroup "Root" (viewRootNoteSelector model.rootNote)
-        , viewControlGroup "Start" (viewOctaveStartInput model.octaveRange.start)
-        , viewControlGroup "Count" (viewOctaveCountInput model.octaveRange.count)
+        , viewControlGroup "Start" (viewOctaveStartInput model.octaveStart)
+        , viewControlGroup "Count" (viewOctaveCountInput model.octaveCount)
         ]
 
 
