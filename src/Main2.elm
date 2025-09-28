@@ -2,13 +2,11 @@ port module Main2 exposing (main)
 
 import Browser exposing (Document)
 import Browser.Navigation as Nav
-import Dict exposing (Dict)
 import Html as H exposing (Html, div, text)
 import Html.Attributes as HA exposing (class, style)
 import Html.Events as HE
 import Instruments exposing (DrumKit, PercType, TonalInstrument)
 import Json.Decode as JD
-import Json.Encode as JE
 import Set exposing (Set)
 import Url exposing (Url)
 import Url.Builder as UB
@@ -396,7 +394,12 @@ type alias Model =
     , scaleType : ScaleType
     , rootNote : RootNote
     , octaveRange : { start : Int, count : Int }
+    , octaveStart : Int
+    , octaveCount : Int
     , sequenceConfig : SequenceConfig
+    , bars : Int
+    , beatsPerBar : Int
+    , beatSubdivisions : Int
     , bpm : Int
     , currentTonalInstrument : TonalInstrument
     , currentDrumKit : DrumKit
@@ -418,11 +421,16 @@ init _ url key =
             { scaleType = Major
             , rootNote = C
             , octaveRange = { start = 3, count = 3 }
+            , octaveStart = 3
+            , octaveCount = 3
             , sequenceConfig =
                 { bars = 8
                 , beatsPerBar = 4
                 , subdivisions = 2
                 }
+            , bars = 8
+            , beatsPerBar = 4
+            , beatSubdivisions = 2
             , pitchGrid = Set.empty
             , percGrid = Set.empty
             , drawState = NotDrawing
