@@ -1476,6 +1476,7 @@ accentBgColorWithHover =
     accentBgColor ++ " " ++ accentBgColorHover
 
 
+labelBgColorAndClass : String
 labelBgColorAndClass =
     labelClass ++ " " ++ labelBgColor
 
@@ -1485,6 +1486,7 @@ labelClass =
     "border-r border-gray-600 flex items-center justify-center text-xs font-bold text-white"
 
 
+labelBgColor : String
 labelBgColor =
     "bg-gray-900"
 
@@ -1610,6 +1612,7 @@ viewScaleTypeSelector currentScale =
         (Scales.allScales |> List.map (viewScaleOption currentScale))
 
 
+viewScaleOption : ScaleType -> ScaleType -> Html msg
 viewScaleOption currentScale scale =
     H.option [ HA.value (Scales.scaleLabel scale), HA.selected (currentScale == scale) ] [ text (Scales.scaleLabel scale) ]
 
