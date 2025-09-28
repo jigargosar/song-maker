@@ -6,7 +6,6 @@ module Grid exposing
     , convertMelodyToGrid
     , convertPercussionToGrid
     , empty
-    , getActiveNotesForStep
     , getTotalPitches
     , getTotalSteps
     , isPercCellActive
@@ -127,78 +126,6 @@ getTotalSteps c =
     c.bars * c.beatsPerBar * c.beatSubdivisions
 
 
-noteDuration : { a | bpm : Int, beatSubdivisions : Int } -> Float
-noteDuration model =
-    -- 60 seconds/minute ÷ BPM = seconds per beat
-    -- Then divide by beatSubdivisions = seconds per step
-    (60.0 / toFloat model.bpm) / toFloat model.beatSubdivisions
-
-
-type alias NoteToPlay =
-    { webAudioFont : String, midi : Int, duration : Float, volume : Float }
-
-
-getActiveNotesForStep : Int -> { a | bpm : Int, beatSubdivisions : Int, pitchGrid : PitchGrid } -> List NoteToPlay
-getActiveNotesForStep stepIdx model =
-    let
-        duration =
-            noteDuration model
-
-        pitchNotes =
-            times
-                (\pitchIdx ->
-                    let
-                        position =
-                            { pitchIdx = pitchIdx, stepIdx = stepIdx }
-                    in
-                    if isPitchCellActive position model.pitchGrid then
-                        Just
-                            { webAudioFont = Instruments.tonalWebAudioFont model.currentTonalInstrument
-                            , midi = pitchIdxToMidi pitchIdx model
-                            , duration = duration
-                            , volume = 0.7
-                            }
-
-                    else
-                        Nothing
-                )
-                (getTotalPitches model)
-                |> List.filterMap identity
-
-        drumConfig =
-            Instruments.drumKitConfig model.currentDrumKit
-
-        percNotes =
-            Instruments.allPercTypes
-                |> List.filterMap
-                    (\percType ->
-                        let
-                            position =
-                                { percType = percType, stepIdx = stepIdx }
-
-                            ( webAudioFontName, midiNote ) =
-                                case percType of
-                                    _ ->
-                                        if percType == Instruments.percKick then
-                                            ( drumConfig.kickWebAudioFont, drumConfig.kickMidi )
-
-                                        else
-                                            ( drumConfig.snareWebAudioFont, drumConfig.snareMidi )
-                        in
-                        if isPercCellActive position model.percGrid then
-                            Just
-                                { webAudioFont = webAudioFontName
-                                , midi = midiNote
-                                , duration = duration
-                                , volume = 0.8
-                                }
-
-                        else
-                            Nothing
-                    )
-    in
-    pitchNotes ++ percNotes
-
 
 pitchIdxToMidi :
     Int
@@ -282,6 +209,9 @@ resizePitchGrid :
             , rootNote : RootNote
             , octaveStart : Int
             , octaveCount : Int
+            , bars : Int
+            , beatsPerBar : Int
+            , beatSubdivisions : Int
         }
     -> PitchGrid
     -> PitchGrid

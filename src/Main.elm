@@ -437,7 +437,7 @@ update msg model =
                             0
 
                         activeNotes =
-                            Grid.getActiveNotesForStep stepToSchedule updatedModel
+                            getActiveNotesForStep stepToSchedule updatedModel
 
                         playCommands =
                             List.map playNote activeNotes |> Cmd.batch
@@ -464,7 +464,7 @@ update msg model =
                                 modBy (Grid.getTotalSteps model) nextStep
 
                             activeNotes =
-                                Grid.getActiveNotesForStep stepToSchedule updatedModel
+                                getActiveNotesForStep stepToSchedule updatedModel
 
                             playCommands =
                                 List.map playNote activeNotes |> Cmd.batch
@@ -959,6 +959,72 @@ getCurrentPlayingStep model =
 
         Stopped ->
             Nothing
+
+
+type alias NoteToPlay =
+    { webAudioFont : String, midi : Int, duration : Float, volume : Float }
+
+
+getActiveNotesForStep : Int -> Model -> List NoteToPlay
+getActiveNotesForStep stepIdx model =
+    let
+        duration =
+            noteDuration model
+
+        pitchNotes =
+            Utils.times
+                (\pitchIdx ->
+                    let
+                        position =
+                            { pitchIdx = pitchIdx, stepIdx = stepIdx }
+                    in
+                    if Grid.isPitchCellActive position model.pitchGrid then
+                        Just
+                            { webAudioFont = Instruments.tonalWebAudioFont model.currentTonalInstrument
+                            , midi = Grid.pitchIdxToMidi pitchIdx model
+                            , duration = duration
+                            , volume = 0.7
+                            }
+
+                    else
+                        Nothing
+                )
+                (Grid.getTotalPitches model)
+                |> List.filterMap identity
+
+        drumConfig =
+            Instruments.drumKitConfig model.currentDrumKit
+
+        percNotes =
+            Instruments.allPercTypes
+                |> List.filterMap
+                    (\percType ->
+                        let
+                            position =
+                                { percType = percType, stepIdx = stepIdx }
+
+                            ( webAudioFontName, midiNote ) =
+                                case percType of
+                                    _ ->
+                                        if percType == Instruments.percKick then
+                                            ( drumConfig.kickWebAudioFont, drumConfig.kickMidi )
+
+                                        else
+                                            ( drumConfig.snareWebAudioFont, drumConfig.snareMidi )
+                        in
+                        if Grid.isPercCellActive position model.percGrid then
+                            Just
+                                { webAudioFont = webAudioFontName
+                                , midi = midiNote
+                                , duration = duration
+                                , volume = 0.8
+                                }
+
+                        else
+                            Nothing
+                    )
+    in
+    pitchNotes ++ percNotes
 
 
 
