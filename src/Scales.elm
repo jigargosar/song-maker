@@ -16,10 +16,12 @@ module Scales exposing
     )
 
 
+major : ScaleType
 major =
     Major
 
 
+root : RootNote
 root =
     C
 
@@ -30,10 +32,12 @@ type ScaleType
     | Chromatic
 
 
+allScales : List ScaleType
 allScales =
     [ Major, Pentatonic, Chromatic ]
 
 
+scaleLabel : ScaleType -> String
 scaleLabel scale =
     case scale of
         Major ->
