@@ -9,7 +9,6 @@ import Html.Events as HE
 import Instruments exposing (DrumKit, PercType, TonalInstrument)
 import Json.Decode as JD
 import Scales exposing (RootNote, ScaleType)
-import Set
 import Url exposing (Url)
 import Url.Builder as UB
 import Url.Parser as Parser exposing ((<?>))
@@ -47,100 +46,6 @@ type alias HistoryState =
     , beatsPerBar : Int
     , beatSubdivisions : Int
     }
-
-
-
--- AUDIO CONSTANTS
-
-
-midiC4 : Int
-midiC4 =
-    60
-
-
-
--- SCALE SYSTEM
-
-
-getTotalPitches : Model -> Int
-getTotalPitches model =
-    Scales.notesPerOctave model.scaleType * model.octaveCount
-
-
-getTotalSteps : Model -> Int
-getTotalSteps c =
-    c.bars * c.beatsPerBar * c.beatSubdivisions
-
-
-pitchIdxToMidi : Int -> Model -> Int
-pitchIdxToMidi pitchIdx model =
-    let
-        scalePattern =
-            Scales.getScalePattern model.scaleType
-
-        rootOffset =
-            Scales.getRootNoteOffset model.rootNote
-
-        notesInScale =
-            Scales.notesPerOctave model.scaleType
-
-        octaveIdx =
-            pitchIdx // notesInScale
-
-        noteIdx =
-            modBy notesInScale pitchIdx
-
-        octave =
-            model.octaveStart + octaveIdx
-
-        semitone =
-            Maybe.withDefault 0 (List.drop noteIdx scalePattern |> List.head)
-
-        baseC0 =
-            12
-    in
-    if octaveIdx < model.octaveCount then
-        baseC0 + (octave * 12) + rootOffset + semitone
-
-    else
-        midiC4
-
-
-pitchIdxToNoteName : Int -> Model -> String
-pitchIdxToNoteName pitchIdx model =
-    let
-        scalePattern =
-            Scales.getScalePattern model.scaleType
-
-        rootOffset =
-            Scales.getRootNoteOffset model.rootNote
-
-        notesInScale =
-            Scales.notesPerOctave model.scaleType
-
-        octaveIdx =
-            pitchIdx // notesInScale
-
-        noteIdx =
-            modBy notesInScale pitchIdx
-
-        octave =
-            model.octaveStart + octaveIdx
-
-        semitone =
-            Maybe.withDefault 0 (List.drop noteIdx scalePattern |> List.head)
-
-        chromaticIndex =
-            modBy 12 (rootOffset + semitone)
-
-        noteName =
-            Maybe.withDefault "?" (List.drop chromaticIndex Scales.chromaticNoteNames |> List.head)
-    in
-    if octaveIdx < model.octaveCount then
-        noteName ++ String.fromInt octave
-
-    else
-        "C4"
 
 
 
@@ -532,7 +437,7 @@ update msg model =
                             0
 
                         activeNotes =
-                            getActiveNotesForStep stepToSchedule updatedModel
+                            Grid.getActiveNotesForStep stepToSchedule updatedModel
 
                         playCommands =
                             List.map playNote activeNotes |> Cmd.batch
@@ -556,10 +461,10 @@ update msg model =
                     if currentStep >= nextStep then
                         let
                             stepToSchedule =
-                                modBy (getTotalSteps model) nextStep
+                                modBy (Grid.getTotalSteps model) nextStep
 
                             activeNotes =
-                                getActiveNotesForStep stepToSchedule updatedModel
+                                Grid.getActiveNotesForStep stepToSchedule updatedModel
 
                             playCommands =
                                 List.map playNote activeNotes |> Cmd.batch
@@ -584,7 +489,7 @@ update msg model =
                     { modelWithHistory | scaleType = newScaleType }
 
                 newPitchGrid =
-                    resizePitchGrid modelWithHistory newModel modelWithHistory.pitchGrid
+                    Grid.resizePitchGrid modelWithHistory newModel modelWithHistory.pitchGrid
             in
             ( { newModel | pitchGrid = newPitchGrid }
             , Cmd.none
@@ -599,7 +504,7 @@ update msg model =
                     { modelWithHistory | rootNote = newRootNote }
 
                 newPitchGrid =
-                    transposePitchGrid modelWithHistory newModel modelWithHistory.pitchGrid
+                    Grid.transposePitchGrid modelWithHistory newModel modelWithHistory.pitchGrid
             in
             ( { newModel | pitchGrid = newPitchGrid }
             , Cmd.none
@@ -617,7 +522,7 @@ update msg model =
                     { modelWithHistory | octaveStart = clampedStart }
 
                 newPitchGrid =
-                    resizePitchGrid modelWithHistory newModel modelWithHistory.pitchGrid
+                    Grid.resizePitchGrid modelWithHistory newModel modelWithHistory.pitchGrid
             in
             ( { newModel | pitchGrid = newPitchGrid }
             , Cmd.none
@@ -635,7 +540,7 @@ update msg model =
                     { modelWithHistory | octaveCount = clampedCount }
 
                 newPitchGrid =
-                    resizePitchGrid modelWithHistory newModel modelWithHistory.pitchGrid
+                    Grid.resizePitchGrid modelWithHistory newModel modelWithHistory.pitchGrid
             in
             ( { newModel | pitchGrid = newPitchGrid }
             , Cmd.none
@@ -820,7 +725,10 @@ viewGrid model =
             getCurrentPlayingStep model
 
         totalSteps =
-            getTotalSteps model
+            Grid.getTotalSteps model
+
+        totalPitches =
+            Grid.getTotalPitches model
 
         gridTemplateCols =
             format "minmax($pitchLabelColMinWidth, auto) repeat($totalSteps, minmax($stepColMinWidth, 1fr))"
@@ -832,7 +740,7 @@ viewGrid model =
         gridTemplateRows =
             format "minmax($stepLabelRowMinHeight, auto) repeat($totalPitches, minmax($pitchRowMinHeight, 1fr)) repeat(2, $percRowHeight)"
                 [ ( "$stepLabelRowMinHeight", px 32 )
-                , ( "$totalPitches", String.fromInt (getTotalPitches model) )
+                , ( "$totalPitches", String.fromInt totalPitches )
                 , ( "$pitchRowMinHeight", px 32 )
                 , ( "$percRowHeight", px 48 )
                 ]
@@ -844,7 +752,7 @@ viewGrid model =
         ]
         ([ {- Empty corner cell -} div [ class labelBgColorAndClass, class "border-b border-gray-600" ] [] ]
             ++ {- Step Labels row -} times (\stepIdx -> viewStepLabel currentStep stepIdx) totalSteps
-            ++ {- Pitch rows -} (times (\pitchIdx -> viewPitchRow model model.pitchGrid currentStep pitchIdx) (getTotalPitches model) |> List.concat)
+            ++ {- Pitch rows -} (times (\pitchIdx -> viewPitchRow model model.pitchGrid currentStep pitchIdx) totalPitches |> List.concat)
             ++ {- Perc Snare row -} viewPercRow Instruments.percSnare totalSteps model.percGrid currentStep
             ++ {- Perc Kick row -} viewPercRow Instruments.percKick totalSteps model.percGrid currentStep
         )
@@ -874,10 +782,10 @@ viewPitchRow model pitchGrid currentStep pitchIdx =
         viewPitchLabel =
             div
                 [ class labelBgColorAndClass, class "border-[0.5px]" ]
-                [ text (pitchIdxToNoteName pitchIdx model) ]
+                [ text (Grid.pitchIdxToNoteName pitchIdx model) ]
     in
     -- TODO: Should we fix function parameters?
-    viewPitchLabel :: times (\stepIdx -> viewPitchCell pitchIdx pitchGrid currentStep stepIdx) (getTotalSteps model)
+    viewPitchLabel :: times (\stepIdx -> viewPitchCell pitchIdx pitchGrid currentStep stepIdx) (Grid.getTotalSteps model)
 
 
 viewPitchCell : Int -> PitchGrid -> Maybe Int -> Int -> Html Msg
@@ -1047,76 +955,10 @@ getCurrentPlayingStep model =
             Just 0
 
         Playing { nextStep } ->
-            Just (modBy (getTotalSteps model) (nextStep - 1))
+            Just (modBy (Grid.getTotalSteps model) (nextStep - 1))
 
         Stopped ->
             Nothing
-
-
-type alias NoteToPlay =
-    { webAudioFont : String, midi : Int, duration : Float, volume : Float }
-
-
-getActiveNotesForStep : Int -> Model -> List NoteToPlay
-getActiveNotesForStep stepIdx model =
-    let
-        duration =
-            noteDuration model
-
-        pitchNotes =
-            times
-                (\pitchIdx ->
-                    let
-                        position =
-                            { pitchIdx = pitchIdx, stepIdx = stepIdx }
-                    in
-                    if Grid.isPitchCellActive position model.pitchGrid then
-                        Just
-                            { webAudioFont = Instruments.tonalWebAudioFont model.currentTonalInstrument
-                            , midi = pitchIdxToMidi pitchIdx model
-                            , duration = duration
-                            , volume = 0.7
-                            }
-
-                    else
-                        Nothing
-                )
-                (getTotalPitches model)
-                |> List.filterMap identity
-
-        drumConfig =
-            Instruments.drumKitConfig model.currentDrumKit
-
-        percNotes =
-            Instruments.allPercTypes
-                |> List.filterMap
-                    (\percType ->
-                        let
-                            position =
-                                { percType = percType, stepIdx = stepIdx }
-
-                            ( webAudioFontName, midiNote ) =
-                                case percType of
-                                    _ ->
-                                        if percType == Instruments.percKick then
-                                            ( drumConfig.kickWebAudioFont, drumConfig.kickMidi )
-
-                                        else
-                                            ( drumConfig.snareWebAudioFont, drumConfig.snareMidi )
-                        in
-                        if Grid.isPercCellActive position model.percGrid then
-                            Just
-                                { webAudioFont = webAudioFontName
-                                , midi = midiNote
-                                , duration = duration
-                                , volume = 0.8
-                                }
-
-                        else
-                            Nothing
-                    )
-    in
-    pitchNotes ++ percNotes
 
 
 
@@ -1128,7 +970,7 @@ playPitchCmdIf shouldPlay pitchIdx model =
     if shouldPlay then
         playNote
             { webAudioFont = Instruments.tonalWebAudioFont model.currentTonalInstrument
-            , midi = pitchIdxToMidi pitchIdx model
+            , midi = Grid.pitchIdxToMidi pitchIdx model
             , duration = 0.5
             , volume = 0.7
             }
@@ -1166,122 +1008,8 @@ playPercCmdIf shouldPlay percType model =
 
 
 -- Grid Transpose Functions
-
-
-{-| Convert pitch index to scale degree and octave relative to current root/scale
--}
-pitchIdxToScaleDegree : Int -> Model -> { scaleDegree : Int, octave : Int }
-pitchIdxToScaleDegree pitchIdx model =
-    let
-        notesInScale =
-            Scales.notesPerOctave model.scaleType
-
-        octaveIdx =
-            pitchIdx // notesInScale
-
-        noteIdx =
-            modBy notesInScale pitchIdx
-
-        absoluteOctave =
-            model.octaveStart + octaveIdx
-    in
-    { scaleDegree = noteIdx, octave = absoluteOctave }
-
-
-{-| Convert scale degree and octave to pitch index in target model
--}
-scaleDegreeToPitchIdx : { scaleDegree : Int, octave : Int } -> Model -> Int
-scaleDegreeToPitchIdx { scaleDegree, octave } model =
-    let
-        notesInScale =
-            Scales.notesPerOctave model.scaleType
-
-        octaveIdx =
-            octave - model.octaveStart
-    in
-    if octaveIdx >= 0 && octaveIdx < model.octaveCount && scaleDegree >= 0 && scaleDegree < notesInScale then
-        octaveIdx * notesInScale + scaleDegree
-
-    else
-        -1
-
-
-
 -- Invalid pitch
-
-
-{-| Transpose pitch grid preserving scale degree relationships
--}
-transposePitchGrid : Model -> Model -> PitchGrid -> PitchGrid
-transposePitchGrid oldModel newModel existingGrid =
-    existingGrid
-        |> Set.toList
-        |> List.filterMap
-            (\( pitchIdx, stepIdx ) ->
-                let
-                    scaleDegreeInfo =
-                        pitchIdxToScaleDegree pitchIdx oldModel
-
-                    newPitchIdx =
-                        scaleDegreeToPitchIdx scaleDegreeInfo newModel
-                in
-                if newPitchIdx >= 0 then
-                    Just ( newPitchIdx, stepIdx )
-
-                else
-                    Nothing
-            )
-        |> Set.fromList
-
-
-
 -- Grid Resize Functions
-
-
-resizePitchGrid : Model -> Model -> PitchGrid -> PitchGrid
-resizePitchGrid oldModel newModel existingGrid =
-    existingGrid
-        |> Set.toList
-        |> List.filterMap
-            (\( pitchIdx, stepIdx ) ->
-                let
-                    midiPitch =
-                        pitchIdxToMidi pitchIdx oldModel
-
-                    newPitchIdx =
-                        midiToPitchIdx midiPitch newModel
-                in
-                if newPitchIdx >= 0 && newPitchIdx < getTotalPitches newModel && stepIdx < getTotalSteps newModel then
-                    Just ( newPitchIdx, stepIdx )
-
-                else
-                    Nothing
-            )
-        |> Set.fromList
-
-
-midiToPitchIdx : Int -> Model -> Int
-midiToPitchIdx targetMidi model =
-    let
-        totalPitches =
-            getTotalPitches model
-    in
-    List.range 0 (totalPitches - 1)
-        |> List.filter (\pitchIdx -> pitchIdxToMidi pitchIdx model == targetMidi)
-        |> List.head
-        |> Maybe.withDefault -1
-
-
-noteNameToPitchIdx : String -> Model -> Int
-noteNameToPitchIdx noteName model =
-    let
-        totalPitches =
-            getTotalPitches model
-    in
-    List.range 0 (totalPitches - 1)
-        |> List.filter (\pitchIdx -> pitchIdxToNoteName pitchIdx model == noteName)
-        |> List.head
-        |> Maybe.withDefault -1
 
 
 type alias SongConfig =
@@ -1351,7 +1079,7 @@ twinkleSong =
 applySong : SongConfig -> Model -> Model
 applySong sc model =
     { model
-        | pitchGrid = convertMelodyToGrid sc.melody model
+        | pitchGrid = Grid.convertMelodyToGrid sc.melody model
         , percGrid = Grid.convertPercussionToGrid sc.percussion
         , bpm = sc.bpm
         , octaveStart = sc.octaveStart
@@ -1360,29 +1088,6 @@ applySong sc model =
         , beatsPerBar = sc.beatsPerBar
         , beatSubdivisions = sc.beatSubdivisions
     }
-
-
-convertMelodyToGrid : List (List String) -> Model -> PitchGrid
-convertMelodyToGrid stepMelodies model =
-    stepMelodies
-        |> List.indexedMap
-            (\stepIdx noteNames ->
-                List.filterMap
-                    (\noteName ->
-                        let
-                            pitchIdx =
-                                noteNameToPitchIdx noteName model
-                        in
-                        if pitchIdx >= 0 then
-                            Just ( pitchIdx, stepIdx )
-
-                        else
-                            Nothing
-                    )
-                    noteNames
-            )
-        |> List.concat
-        |> Set.fromList
 
 
 
