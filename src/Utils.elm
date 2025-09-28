@@ -8,14 +8,17 @@ format templateString replacements =
     List.foldr (\( a, b ) -> String.replace a b) templateString replacements
 
 
+times : (Int -> b) -> number -> List b
 times fn i =
     List.range 0 (i - 1) |> List.map fn
 
 
+atLeast : comparable -> comparable -> comparable
 atLeast =
     max
 
 
+atMost : comparable -> comparable -> comparable
 atMost =
     min
 

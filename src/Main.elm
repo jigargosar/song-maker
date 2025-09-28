@@ -11,7 +11,7 @@ import Scales exposing (RootNote, ScaleType)
 import Set exposing (Set)
 import Url exposing (Url)
 import Url.Builder as UB
-import Url.Parser as Parser exposing ((<?>), Parser)
+import Url.Parser as Parser exposing ((<?>))
 import Url.Parser.Query as Query
 import Url.Query.Pipeline as Pipeline
 import Utils exposing (..)
@@ -156,14 +156,13 @@ buildQuery model =
 
 parseQueryParams : Url -> Maybe QueryParams
 parseQueryParams url =
-    case url.query |> Debug.log "url.query" of
-        Nothing ->
-            -- This check is required since when there is no query params we need to apply default params
-            Nothing
+    if url.query == Nothing then
+        -- This check is required since when there is no query params we need to apply default params
+        Nothing
 
-        _ ->
-            Parser.parse (Parser.top <?> queryParser) url
-                |> Maybe.andThen identity
+    else
+        Parser.parse (Parser.top <?> queryParser) url
+            |> Maybe.andThen identity
 
 
 applyQueryDefaults : Model -> Model
