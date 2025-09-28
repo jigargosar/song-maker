@@ -13,6 +13,7 @@ import Url.Builder as UB
 import Url.Parser as Parser exposing ((<?>), Parser)
 import Url.Parser.Query as Query
 import Url.Query.Pipeline as Pipeline
+import Utils exposing (..)
 
 
 {-| <https://surikov.github.io/webaudiofont/>
@@ -36,22 +37,6 @@ port timeSync : (Float -> msg) -> Sub msg
 midiC4 : Int
 midiC4 =
     60
-
-
-
--- SEQUENCE SYSTEM
-
-
-type alias SequenceConfig =
-    { bars : Int
-    , beatsPerBar : Int
-    , subdivisions : Int
-    }
-
-
-totalStepsFromSequence : Model -> Int
-totalStepsFromSequence config =
-    config.bars * config.beatsPerBar * config.subdivisions
 
 
 
@@ -148,8 +133,8 @@ getTotalPitches model =
 
 
 getTotalSteps : Model -> Int
-getTotalSteps model =
-    totalStepsFromSequence model
+getTotalSteps c =
+    c.bars * c.beatsPerBar * c.subdivisions
 
 
 pitchIdxToMidi : Int -> Model -> Int
@@ -941,10 +926,13 @@ viewGrid model =
         currentStep =
             getCurrentPlayingStep model
 
+        totalSteps =
+            getTotalSteps model
+
         gridTemplateCols =
             format "minmax($pitchLabelColMinWidth, auto) repeat($totalSteps, minmax($stepColMinWidth, 1fr))"
                 [ ( "$pitchLabelColMinWidth", px 48 )
-                , ( "$totalSteps", String.fromInt (getTotalSteps model) )
+                , ( "$totalSteps", String.fromInt totalSteps )
                 , ( "$stepColMinWidth", px 48 )
                 ]
 
@@ -962,10 +950,10 @@ viewGrid model =
         , style "grid-template-rows" gridTemplateRows
         ]
         ([ {- Empty corner cell -} div [ class labelBgColorAndClass, class "border-b border-gray-600" ] [] ]
-            ++ {- Step Labels row -} times (\stepIdx -> viewStepLabel currentStep stepIdx) (getTotalSteps model)
+            ++ {- Step Labels row -} times (\stepIdx -> viewStepLabel currentStep stepIdx) totalSteps
             ++ {- Pitch rows -} (times (\pitchIdx -> viewPitchRow model model.pitchGrid currentStep pitchIdx) (getTotalPitches model) |> List.concat)
-            ++ {- Perc Snare row -} viewPercRow Instruments.percSnare (getTotalSteps model) model.percGrid currentStep
-            ++ {- Perc Kick row -} viewPercRow Instruments.percKick (getTotalSteps model) model.percGrid currentStep
+            ++ {- Perc Snare row -} viewPercRow Instruments.percSnare totalSteps model.percGrid currentStep
+            ++ {- Perc Kick row -} viewPercRow Instruments.percKick totalSteps model.percGrid currentStep
         )
 
 
@@ -1926,34 +1914,3 @@ viewDrumKitOption currentDrumKit drumKit =
         , HA.selected (currentDrumKit == drumKit)
         ]
         [ text (Instruments.drumKitLabel drumKit) ]
-
-
-
--- BASIC VIEW UTILS
-
-
-px : Float -> String
-px f =
-    String.fromFloat f ++ "px"
-
-
-
--- BASIC UTILS
-
-
-format : String -> List ( String, String ) -> String
-format templateString replacements =
-    List.foldr (\( a, b ) -> String.replace a b) templateString replacements
-
-
-times fn i =
-    List.range 0 (i - 1) |> List.map fn
-
-
-atLeast =
-    max
-
-
-
---atMost =
---    min
