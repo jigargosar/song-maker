@@ -9,7 +9,7 @@ import Html.Events as HE
 import Instruments exposing (DrumKit, PercType, TonalInstrument)
 import Json.Decode as JD
 import Scales exposing (RootNote, ScaleType)
-import Set exposing (Set)
+import Set
 import Url exposing (Url)
 import Url.Builder as UB
 import Url.Parser as Parser exposing ((<?>))
@@ -33,6 +33,23 @@ port timeSync : (Float -> msg) -> Sub msg
 
 
 
+-- HISTORY
+
+
+type alias HistoryState =
+    { pitchGrid : PitchGrid
+    , percGrid : PercGrid
+    , scaleType : ScaleType
+    , rootNote : RootNote
+    , octaveStart : Int
+    , octaveCount : Int
+    , bars : Int
+    , beatsPerBar : Int
+    , beatSubdivisions : Int
+    }
+
+
+
 -- AUDIO CONSTANTS
 
 
@@ -52,7 +69,7 @@ getTotalPitches model =
 
 getTotalSteps : Model -> Int
 getTotalSteps c =
-    c.bars * c.beatsPerBar * c.subdivisions
+    c.bars * c.beatsPerBar * c.beatSubdivisions
 
 
 pitchIdxToMidi : Int -> Model -> Int
@@ -260,19 +277,6 @@ type DrawState
     | ErasingPerc
 
 
-type alias HistoryState =
-    { pitchGrid : PitchGrid
-    , percGrid : PercGrid
-    , scaleType : ScaleType
-    , rootNote : RootNote
-    , octaveStart : Int
-    , octaveCount : Int
-    , bars : Int
-    , beatsPerBar : Int
-    , subdivisions : Int
-    }
-
-
 type alias Model =
     { pitchGrid : PitchGrid
     , percGrid : PercGrid
@@ -282,7 +286,7 @@ type alias Model =
     , octaveCount : Int
     , bars : Int
     , beatsPerBar : Int
-    , subdivisions : Int
+    , beatSubdivisions : Int
     , bpm : Int
     , currentTonalInstrument : TonalInstrument
     , currentDrumKit : DrumKit
@@ -307,9 +311,9 @@ init _ url key =
             , octaveCount = 3
             , bars = 8
             , beatsPerBar = 4
-            , subdivisions = 2
-            , pitchGrid = Set.empty
-            , percGrid = Set.empty
+            , beatSubdivisions = 2
+            , pitchGrid = Grid.empty
+            , percGrid = Grid.empty
             , drawState = NotDrawing
             , playState = Stopped
             , audioContextTime = 0.0
@@ -386,7 +390,7 @@ pushToHistory model =
             , octaveCount = model.octaveCount
             , bars = model.bars
             , beatsPerBar = model.beatsPerBar
-            , subdivisions = model.subdivisions
+            , beatSubdivisions = model.beatSubdivisions
             }
 
         newUndoStack =
@@ -675,7 +679,7 @@ update msg model =
                 modelWithHistory =
                     pushToHistory model
             in
-            ( { modelWithHistory | subdivisions = atLeast 1 subDivisions }
+            ( { modelWithHistory | beatSubdivisions = atLeast 1 subDivisions }
             , Cmd.none
             )
 
@@ -696,7 +700,7 @@ update msg model =
                             , octaveCount = model.octaveCount
                             , bars = model.bars
                             , beatsPerBar = model.beatsPerBar
-                            , subdivisions = model.subdivisions
+                            , beatSubdivisions = model.beatSubdivisions
                             }
                                 :: model.redoStack
 
@@ -710,7 +714,7 @@ update msg model =
                                 , octaveCount = lastState.octaveCount
                                 , bars = lastState.bars
                                 , beatsPerBar = lastState.beatsPerBar
-                                , subdivisions = lastState.subdivisions
+                                , beatSubdivisions = lastState.beatSubdivisions
                                 , undoStack = remainingUndoStack
                                 , redoStack = newRedoStack
                             }
@@ -733,7 +737,7 @@ update msg model =
                             , octaveCount = model.octaveCount
                             , bars = model.bars
                             , beatsPerBar = model.beatsPerBar
-                            , subdivisions = model.subdivisions
+                            , beatSubdivisions = model.beatSubdivisions
                             }
                                 :: model.undoStack
 
@@ -747,7 +751,7 @@ update msg model =
                                 , octaveCount = model.octaveCount
                                 , bars = lastState.bars
                                 , beatsPerBar = lastState.beatsPerBar
-                                , subdivisions = lastState.subdivisions
+                                , beatSubdivisions = lastState.beatSubdivisions
                                 , undoStack = newUndoStack
                                 , redoStack = remainingRedoStack
                             }
@@ -1032,8 +1036,8 @@ footerView model =
 noteDuration : Model -> Float
 noteDuration model =
     -- 60 seconds/minute ÷ BPM = seconds per beat
-    -- Then divide by subdivisions = seconds per step
-    (60.0 / toFloat model.bpm) / toFloat model.subdivisions
+    -- Then divide by beatSubdivisions = seconds per step
+    (60.0 / toFloat model.bpm) / toFloat model.beatSubdivisions
 
 
 getCurrentPlayingStep : Model -> Maybe Int
@@ -1288,7 +1292,7 @@ type alias SongConfig =
     , octaveCount : Int
     , bars : Int
     , beatsPerBar : Int
-    , subdivisions : Int
+    , beatSubdivisions : Int
     }
 
 
@@ -1340,7 +1344,7 @@ twinkleSong =
     , octaveCount = 3
     , bars = 4
     , beatsPerBar = 4
-    , subdivisions = 2
+    , beatSubdivisions = 2
     }
 
 
@@ -1354,7 +1358,7 @@ applySong sc model =
         , octaveCount = sc.octaveCount
         , bars = sc.bars
         , beatsPerBar = sc.beatsPerBar
-        , subdivisions = sc.subdivisions
+        , beatSubdivisions = sc.beatSubdivisions
     }
 
 
@@ -1510,7 +1514,7 @@ viewSequenceControls model =
     div [ class "flex items-center gap-4" ]
         [ viewControlGroup "Bars" (viewBarsInput model.bars)
         , viewControlGroup "Beats" (viewBeatsPerBarInput model.beatsPerBar)
-        , viewControlGroup "Sub-div" (viewSubdivisionsInput model.subdivisions)
+        , viewControlGroup "Sub-div" (viewSubdivisionsInput model.beatSubdivisions)
         ]
 
 

@@ -4,6 +4,7 @@ module Grid exposing
     , PitchGrid
     , PitchPos
     , convertPercussionToGrid
+    , empty
     , isPercCellActive
     , isPitchCellActive
     , updatePercCell
@@ -32,6 +33,10 @@ type alias PercPos =
 
 type alias PercGrid =
     Set ( Int, Int )
+
+
+empty =
+    Set.empty
 
 
 
