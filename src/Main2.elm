@@ -405,6 +405,9 @@ type alias Model =
     , sequenceConfig : SequenceConfig
     , bars : Int
     , beatsPerBar : Int
+    , subdivisions : Int
+    , bars : Int
+    , beatsPerBar : Int
     , beatSubdivisions : Int
     , bpm : Int
     , currentTonalInstrument : TonalInstrument
