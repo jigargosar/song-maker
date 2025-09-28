@@ -2,6 +2,7 @@ port module Main exposing (main)
 
 import Browser exposing (Document)
 import Browser.Navigation as Nav
+import Grid exposing (PercGrid, PercPos, PitchGrid, PitchPos)
 import Html as H exposing (Html, div, text)
 import Html.Attributes as HA exposing (class, style)
 import Html.Events as HE
@@ -243,22 +244,6 @@ main =
 
 
 -- Model
-
-
-type alias PitchPos =
-    { pitchIdx : Int, stepIdx : Int }
-
-
-type alias PitchGrid =
-    Set ( Int, Int )
-
-
-type alias PercPos =
-    { percType : PercType, stepIdx : Int }
-
-
-type alias PercGrid =
-    Set ( Int, Int )
 
 
 type PlayState
