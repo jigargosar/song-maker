@@ -78,6 +78,16 @@ subscriptions _ =
     timeSync TimeSync
 
 
+playMaybeNote : Maybe NoteToPlay -> Cmd msg
+playMaybeNote maybeNote =
+    case maybeNote of
+        Just note ->
+            playNote note
+
+        Nothing ->
+            Cmd.none
+
+
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
@@ -90,12 +100,7 @@ update msg model =
                     Model.startDrawingPitch position model
 
                 cmd =
-                    case maybeNote of
-                        Just note ->
-                            playNote note
-
-                        Nothing ->
-                            Cmd.none
+                    playMaybeNote maybeNote
             in
             ( newModel, cmd )
 
@@ -105,12 +110,7 @@ update msg model =
                     Model.continueDrawingPitch position model
 
                 cmd =
-                    case maybeNote of
-                        Just note ->
-                            playNote note
-
-                        Nothing ->
-                            Cmd.none
+                    playMaybeNote maybeNote
             in
             ( newModel, cmd )
 
@@ -123,12 +123,7 @@ update msg model =
                     Model.startDrawingPerc position model
 
                 cmd =
-                    case maybeNote of
-                        Just note ->
-                            playNote note
-
-                        Nothing ->
-                            Cmd.none
+                    playMaybeNote maybeNote
             in
             ( newModel, cmd )
 
@@ -138,12 +133,7 @@ update msg model =
                     Model.continueDrawingPerc position model
 
                 cmd =
-                    case maybeNote of
-                        Just note ->
-                            playNote note
-
-                        Nothing ->
-                            Cmd.none
+                    playMaybeNote maybeNote
             in
             ( newModel, cmd )
 
