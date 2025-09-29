@@ -98,21 +98,15 @@ update msg model =
             let
                 ( newModel, maybeNote ) =
                     Model.startDrawingPitch position model
-
-                cmd =
-                    playMaybeNote maybeNote
             in
-            ( newModel, cmd )
+            ( newModel, playMaybeNote maybeNote )
 
         ContinueDrawingPitch position ->
             let
                 ( newModel, maybeNote ) =
                     Model.continueDrawingPitch position model
-
-                cmd =
-                    playMaybeNote maybeNote
             in
-            ( newModel, cmd )
+            ( newModel, playMaybeNote maybeNote )
 
         StopDrawing ->
             ( Model.stopDrawing model, Cmd.none )
@@ -121,21 +115,15 @@ update msg model =
             let
                 ( newModel, maybeNote ) =
                     Model.startDrawingPerc position model
-
-                cmd =
-                    playMaybeNote maybeNote
             in
-            ( newModel, cmd )
+            ( newModel, playMaybeNote maybeNote )
 
         ContinueDrawingPerc position ->
             let
                 ( newModel, maybeNote ) =
                     Model.continueDrawingPerc position model
-
-                cmd =
-                    playMaybeNote maybeNote
             in
-            ( newModel, cmd )
+            ( newModel, playMaybeNote maybeNote )
 
         Play ->
             ( Model.play model, Cmd.none )
@@ -798,44 +786,3 @@ viewDrumKitOption currentDrumKit drumKit =
         , HA.selected (currentDrumKit == drumKit)
         ]
         [ text (Instruments.drumKitLabel drumKit) ]
-
-
-
-{-
-   TODO: Advanced Model Extraction Refactoring (IN PROGRESS)
-
-   CURRENT STATUS:
-   ✅ PHASE 1 - EXTRACT: All 4 functions extracted successfully
-   ✅ PHASE 2 - INTEGRATE: All functions integrated into update function with clean pattern
-   ⏳ PHASE 3 - MIGRATE: Need to move functions to Model.elm and add Model. prefixes
-
-   EXTRACTED FUNCTIONS:
-   ✅ startDrawingPitch : PitchPos -> Model -> (Model, Maybe NoteToPlay)
-   ✅ continueDrawingPitch : PitchPos -> Model -> (Model, Maybe NoteToPlay)
-   ✅ startDrawingPerc : PercPos -> Model -> (Model, Maybe NoteToPlay)
-   ✅ continueDrawingPerc : PercPos -> Model -> (Model, Maybe NoteToPlay)
-
-   INTEGRATION COMPLETE:
-   Update function now uses consistent clean pattern for all drawing operations:
-       SomeDrawingMsg position ->
-           let
-               (newModel, maybeNote) = someDrawingFunction position model
-               cmd = case maybeNote of
-                   Just note -> playNote note
-                   Nothing -> Cmd.none
-           in
-           (newModel, cmd)
-
-   REMAINING TASKS:
-   1. Move all 4 functions from Main.elm to Model.elm
-   2. Add functions to Model.elm export list
-   3. Add Model. prefixes to function calls in Main.elm update function
-   4. Remove functions from Main.elm
-   5. Final test compilation
-
-   FINAL BENEFITS (when complete):
-   - Main.elm won't import Grid, Scales, Instruments modules
-   - All domain logic centralized in Model.elm
-   - Pure, testable functions with clear inputs/outputs
-   - Clean separation between model updates and command orchestration
--}
