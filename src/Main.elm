@@ -127,7 +127,7 @@ update msg model =
                     ( model, Cmd.none )
 
         StopDrawing ->
-            ( { model | drawState = NotDrawing }, Cmd.none )
+            ( stopDrawing model, Cmd.none )
 
         StartDrawingPerc position ->
             case model.drawState of
@@ -178,7 +178,7 @@ update msg model =
         Play ->
             case model.playState of
                 Stopped ->
-                    ( { model | playState = PlayingStarted { startTime = model.audioContextTime } }, Cmd.none )
+                    ( startPlaying model, Cmd.none )
 
                 _ ->
                     ( model, Cmd.none )
@@ -186,10 +186,10 @@ update msg model =
         Stop ->
             case model.playState of
                 PlayingStarted _ ->
-                    ( { model | playState = Stopped }, Cmd.none )
+                    ( stopPlaying model, Cmd.none )
 
                 Playing _ ->
-                    ( { model | playState = Stopped }, Cmd.none )
+                    ( stopPlaying model, Cmd.none )
 
                 Stopped ->
                     ( model, Cmd.none )
@@ -250,85 +250,25 @@ update msg model =
                     ( updatedModel, Cmd.none )
 
         ChangeScaleType newScaleType ->
-            let
-                modelWithHistory =
-                    Model.pushToHistory model
-
-                newModel =
-                    { modelWithHistory | scaleType = newScaleType }
-
-                newPitchGrid =
-                    Grid.resizePitchGrid (Model.scaleConfig modelWithHistory) (Model.scaleConfig newModel) (Model.timeConfig newModel) modelWithHistory.pitchGrid
-            in
-            ( { newModel | pitchGrid = newPitchGrid }
-            , Cmd.none
-            )
+            ( changeScaleType newScaleType model, Cmd.none )
 
         ChangeRootNote newRootNote ->
-            let
-                modelWithHistory =
-                    Model.pushToHistory model
-
-                newModel =
-                    { modelWithHistory | rootNote = newRootNote }
-
-                newPitchGrid =
-                    Grid.transposePitchGrid (Model.scaleConfig modelWithHistory) (Model.scaleConfig newModel) modelWithHistory.pitchGrid
-            in
-            ( { newModel | pitchGrid = newPitchGrid }
-            , Cmd.none
-            )
+            ( changeRootNote newRootNote model, Cmd.none )
 
         ChangeOctaveStart newStart ->
-            let
-                modelWithHistory =
-                    Model.pushToHistory model
-
-                clampedStart =
-                    max 1 newStart
-
-                newModel =
-                    { modelWithHistory | octaveStart = clampedStart }
-
-                newPitchGrid =
-                    Grid.resizePitchGrid (Model.scaleConfig modelWithHistory) (Model.scaleConfig newModel) (Model.timeConfig newModel) modelWithHistory.pitchGrid
-            in
-            ( { newModel | pitchGrid = newPitchGrid }
-            , Cmd.none
-            )
+            ( changeOctaveStart newStart model, Cmd.none )
 
         ChangeOctaveCount newCount ->
-            let
-                modelWithHistory =
-                    Model.pushToHistory model
-
-                clampedCount =
-                    max 1 newCount
-
-                newModel =
-                    { modelWithHistory | octaveCount = clampedCount }
-
-                newPitchGrid =
-                    Grid.resizePitchGrid (Model.scaleConfig modelWithHistory) (Model.scaleConfig newModel) (Model.timeConfig newModel) modelWithHistory.pitchGrid
-            in
-            ( { newModel | pitchGrid = newPitchGrid }
-            , Cmd.none
-            )
+            ( changeOctaveCount newCount model, Cmd.none )
 
         ChangeBPM newBPM ->
-            ( { model | bpm = max 1 newBPM }
-            , Cmd.none
-            )
+            ( setBPM newBPM model, Cmd.none )
 
         ChangeTonalInstrument newInstrument ->
-            ( { model | currentTonalInstrument = newInstrument }
-            , Cmd.none
-            )
+            ( setTonalInstrument newInstrument model, Cmd.none )
 
         ChangeDrumKit newDrumKit ->
-            ( { model | currentDrumKit = newDrumKit }
-            , Cmd.none
-            )
+            ( setDrumKit newDrumKit model, Cmd.none )
 
         ChangeBars bars ->
             let
@@ -450,6 +390,106 @@ update msg model =
               else
                 Nav.pushUrl model.key query
             )
+
+
+
+-- Model Update Helper Functions
+
+
+setBPM : Int -> Model -> Model
+setBPM newBPM model =
+    { model | bpm = max 1 newBPM }
+
+
+setTonalInstrument : TonalInstrument -> Model -> Model
+setTonalInstrument newInstrument model =
+    { model | currentTonalInstrument = newInstrument }
+
+
+setDrumKit : DrumKit -> Model -> Model
+setDrumKit newDrumKit model =
+    { model | currentDrumKit = newDrumKit }
+
+
+stopDrawing : Model -> Model
+stopDrawing model =
+    { model | drawState = NotDrawing }
+
+
+startPlaying : Model -> Model
+startPlaying model =
+    { model | playState = PlayingStarted { startTime = model.audioContextTime } }
+
+
+stopPlaying : Model -> Model
+stopPlaying model =
+    { model | playState = Stopped }
+
+
+changeScaleType : ScaleType -> Model -> Model
+changeScaleType newScaleType model =
+    let
+        modelWithHistory =
+            Model.pushToHistory model
+
+        newModel =
+            { modelWithHistory | scaleType = newScaleType }
+
+        newPitchGrid =
+            Grid.resizePitchGrid (Model.scaleConfig modelWithHistory) (Model.scaleConfig newModel) (Model.timeConfig newModel) modelWithHistory.pitchGrid
+    in
+    { newModel | pitchGrid = newPitchGrid }
+
+
+changeRootNote : RootNote -> Model -> Model
+changeRootNote newRootNote model =
+    let
+        modelWithHistory =
+            Model.pushToHistory model
+
+        newModel =
+            { modelWithHistory | rootNote = newRootNote }
+
+        newPitchGrid =
+            Grid.transposePitchGrid (Model.scaleConfig modelWithHistory) (Model.scaleConfig newModel) modelWithHistory.pitchGrid
+    in
+    { newModel | pitchGrid = newPitchGrid }
+
+
+changeOctaveStart : Int -> Model -> Model
+changeOctaveStart newStart model =
+    let
+        modelWithHistory =
+            Model.pushToHistory model
+
+        clampedStart =
+            max 1 newStart
+
+        newModel =
+            { modelWithHistory | octaveStart = clampedStart }
+
+        newPitchGrid =
+            Grid.resizePitchGrid (Model.scaleConfig modelWithHistory) (Model.scaleConfig newModel) (Model.timeConfig newModel) modelWithHistory.pitchGrid
+    in
+    { newModel | pitchGrid = newPitchGrid }
+
+
+changeOctaveCount : Int -> Model -> Model
+changeOctaveCount newCount model =
+    let
+        modelWithHistory =
+            Model.pushToHistory model
+
+        clampedCount =
+            max 1 newCount
+
+        newModel =
+            { modelWithHistory | octaveCount = clampedCount }
+
+        newPitchGrid =
+            Grid.resizePitchGrid (Model.scaleConfig modelWithHistory) (Model.scaleConfig newModel) (Model.timeConfig newModel) modelWithHistory.pitchGrid
+    in
+    { newModel | pitchGrid = newPitchGrid }
 
 
 
