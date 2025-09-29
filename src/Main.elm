@@ -85,87 +85,67 @@ update msg model =
             ( model, Cmd.none )
 
         StartDrawingPitch position ->
-            case model.drawState of
-                NotDrawing ->
-                    let
-                        modelWithHistory =
-                            Model.pushToHistory model
+            let
+                ( newModel, maybeNote ) =
+                    startDrawingPitch position model
 
-                        currentlyActive =
-                            Grid.isPitchCellActive position model.pitchGrid
+                cmd =
+                    case maybeNote of
+                        Just note ->
+                            playNote note
 
-                        newDrawState =
-                            if currentlyActive then
-                                ErasingPitch
-
-                            else
-                                DrawingPitch
-                    in
-                    ( { modelWithHistory
-                        | drawState = newDrawState
-                        , pitchGrid = Grid.updatePitchCell position (not currentlyActive) modelWithHistory.pitchGrid
-                      }
-                    , playPitchCmdIf (not currentlyActive) position.pitchIdx modelWithHistory
-                    )
-
-                _ ->
-                    ( model, Cmd.none )
+                        Nothing ->
+                            Cmd.none
+            in
+            ( newModel, cmd )
 
         ContinueDrawingPitch position ->
-            case model.drawState of
-                DrawingPitch ->
-                    ( { model | pitchGrid = Grid.updatePitchCell position True model.pitchGrid }
-                    , playPitchCmdIf True position.pitchIdx model
-                    )
+            let
+                ( newModel, maybeNote ) =
+                    continueDrawingPitch position model
 
-                ErasingPitch ->
-                    ( { model | pitchGrid = Grid.updatePitchCell position False model.pitchGrid }, Cmd.none )
+                cmd =
+                    case maybeNote of
+                        Just note ->
+                            playNote note
 
-                _ ->
-                    ( model, Cmd.none )
+                        Nothing ->
+                            Cmd.none
+            in
+            ( newModel, cmd )
 
         StopDrawing ->
             ( Model.stopDrawing model, Cmd.none )
 
         StartDrawingPerc position ->
-            case model.drawState of
-                NotDrawing ->
-                    let
-                        modelWithHistory =
-                            Model.pushToHistory model
+            let
+                ( newModel, maybeNote ) =
+                    startDrawingPerc position model
 
-                        currentlyActive =
-                            Grid.isPercCellActive position model.percGrid
+                cmd =
+                    case maybeNote of
+                        Just note ->
+                            playNote note
 
-                        newDrawState =
-                            if currentlyActive then
-                                ErasingPerc
-
-                            else
-                                DrawingPerc
-                    in
-                    ( { modelWithHistory
-                        | drawState = newDrawState
-                        , percGrid = Grid.updatePercCell position (not currentlyActive) modelWithHistory.percGrid
-                      }
-                    , playPercCmdIf (not currentlyActive) position.percType modelWithHistory
-                    )
-
-                _ ->
-                    ( model, Cmd.none )
+                        Nothing ->
+                            Cmd.none
+            in
+            ( newModel, cmd )
 
         ContinueDrawingPerc position ->
-            case model.drawState of
-                DrawingPerc ->
-                    ( { model | percGrid = Grid.updatePercCell position True model.percGrid }
-                    , playPercCmdIf True position.percType model
-                    )
+            let
+                ( newModel, maybeNote ) =
+                    continueDrawingPerc position model
 
-                ErasingPerc ->
-                    ( { model | percGrid = Grid.updatePercCell position False model.percGrid }, Cmd.none )
+                cmd =
+                    case maybeNote of
+                        Just note ->
+                            playNote note
 
-                _ ->
-                    ( model, Cmd.none )
+                        Nothing ->
+                            Cmd.none
+            in
+            ( newModel, cmd )
 
         Play ->
             ( Model.play model, Cmd.none )
@@ -348,50 +328,129 @@ startDrawingPitch position model =
             ( model, Nothing )
 
 
+continueDrawingPitch : PitchPos -> Model -> ( Model, Maybe NoteToPlay )
+continueDrawingPitch position model =
+    case model.drawState of
+        DrawingPitch ->
+            let
+                newModel =
+                    { model | pitchGrid = Grid.updatePitchCell position True model.pitchGrid }
+
+                maybeNote =
+                    Just
+                        { webAudioFont = Instruments.tonalWebAudioFont model.currentTonalInstrument
+                        , midi = Scales.pitchIdxToMidi position.pitchIdx (Model.scaleConfig model)
+                        , duration = 0.5
+                        , volume = 0.7
+                        }
+            in
+            ( newModel, maybeNote )
+
+        ErasingPitch ->
+            let
+                newModel =
+                    { model | pitchGrid = Grid.updatePitchCell position False model.pitchGrid }
+            in
+            ( newModel, Nothing )
+
+        _ ->
+            ( model, Nothing )
 
 
--- Audio Helper Functions
+startDrawingPerc : PercPos -> Model -> ( Model, Maybe NoteToPlay )
+startDrawingPerc position model =
+    case model.drawState of
+        NotDrawing ->
+            let
+                modelWithHistory =
+                    Model.pushToHistory model
+
+                currentlyActive =
+                    Grid.isPercCellActive position model.percGrid
+
+                newDrawState =
+                    if currentlyActive then
+                        ErasingPerc
+
+                    else
+                        DrawingPerc
+
+                newModel =
+                    { modelWithHistory
+                        | drawState = newDrawState
+                        , percGrid = Grid.updatePercCell position (not currentlyActive) modelWithHistory.percGrid
+                    }
+
+                maybeNote =
+                    if not currentlyActive then
+                        let
+                            drumConfig =
+                                Instruments.drumKitConfig model.currentDrumKit
+
+                            ( webAudioFontName, midiNote ) =
+                                case position.percType of
+                                    _ ->
+                                        if position.percType == Instruments.percKick then
+                                            ( drumConfig.kickWebAudioFont, drumConfig.kickMidi )
+
+                                        else
+                                            ( drumConfig.snareWebAudioFont, drumConfig.snareMidi )
+                        in
+                        Just
+                            { webAudioFont = webAudioFontName
+                            , midi = midiNote
+                            , duration = 0.5
+                            , volume = 0.8
+                            }
+
+                    else
+                        Nothing
+            in
+            ( newModel, maybeNote )
+
+        _ ->
+            ( model, Nothing )
 
 
-playPitchCmdIf : Bool -> Int -> Model -> Cmd Msg
-playPitchCmdIf shouldPlay pitchIdx model =
-    if shouldPlay then
-        playNote
-            { webAudioFont = Instruments.tonalWebAudioFont model.currentTonalInstrument
-            , midi = Scales.pitchIdxToMidi pitchIdx (Model.scaleConfig model)
-            , duration = 0.5
-            , volume = 0.7
-            }
+continueDrawingPerc : PercPos -> Model -> ( Model, Maybe NoteToPlay )
+continueDrawingPerc position model =
+    case model.drawState of
+        DrawingPerc ->
+            let
+                newModel =
+                    { model | percGrid = Grid.updatePercCell position True model.percGrid }
 
-    else
-        Cmd.none
+                drumConfig =
+                    Instruments.drumKitConfig model.currentDrumKit
 
+                ( webAudioFontName, midiNote ) =
+                    case position.percType of
+                        _ ->
+                            if position.percType == Instruments.percKick then
+                                ( drumConfig.kickWebAudioFont, drumConfig.kickMidi )
 
-playPercCmdIf : Bool -> PercType -> Model -> Cmd Msg
-playPercCmdIf shouldPlay percType model =
-    if shouldPlay then
-        let
-            drumConfig =
-                Instruments.drumKitConfig model.currentDrumKit
+                            else
+                                ( drumConfig.snareWebAudioFont, drumConfig.snareMidi )
 
-            ( webAudioFontName, midiNote ) =
-                case percType of
-                    _ ->
-                        if percType == Instruments.percKick then
-                            ( drumConfig.kickWebAudioFont, drumConfig.kickMidi )
+                maybeNote =
+                    Just
+                        { webAudioFont = webAudioFontName
+                        , midi = midiNote
+                        , duration = 0.5
+                        , volume = 0.8
+                        }
+            in
+            ( newModel, maybeNote )
 
-                        else
-                            ( drumConfig.snareWebAudioFont, drumConfig.snareMidi )
-        in
-        playNote
-            { webAudioFont = webAudioFontName
-            , midi = midiNote
-            , duration = 0.5
-            , volume = 0.8
-            }
+        ErasingPerc ->
+            let
+                newModel =
+                    { model | percGrid = Grid.updatePercCell position False model.percGrid }
+            in
+            ( newModel, Nothing )
 
-    else
-        Cmd.none
+        _ ->
+            ( model, Nothing )
 
 
 
@@ -922,48 +981,49 @@ viewDrumKitOption currentDrumKit drumKit =
         [ text (Instruments.drumKitLabel drumKit) ]
 
 
+
 {-
-TODO: Advanced Model Extraction Refactoring (IN PROGRESS)
+   TODO: Advanced Model Extraction Refactoring (IN PROGRESS)
 
-CURRENT STATUS:
-- We have extracted one function: `startDrawingPitch : PitchPos -> Model -> (Model, Maybe NoteToPlay)`
-- This function is NOT YET INTEGRATED into the update function
-- We cleaned up orphan messages (PlayPitchNote, PlayPercNote) and their handlers
+   CURRENT STATUS:
+   - We have extracted one function: `startDrawingPitch : PitchPos -> Model -> (Model, Maybe NoteToPlay)`
+   - This function is NOT YET INTEGRATED into the update function
+   - We cleaned up orphan messages (PlayPitchNote, PlayPercNote) and their handlers
 
-GOAL:
-Extract model logic from Main.elm to achieve cleaner architecture where:
-- Main.elm only handles Elm architecture (update orchestration, commands, ports)
-- Model.elm handles all domain logic (Grid, Scales, Instruments interactions)
-- Functions return (Model, Maybe NoteToPlay) pattern for command data
+   GOAL:
+   Extract model logic from Main.elm to achieve cleaner architecture where:
+   - Main.elm only handles Elm architecture (update orchestration, commands, ports)
+   - Model.elm handles all domain logic (Grid, Scales, Instruments interactions)
+   - Functions return (Model, Maybe NoteToPlay) pattern for command data
 
-APPROACH - 3 Step Process:
-1. EXTRACT: Create helper functions in Main.elm that return (Model, Maybe NoteToPlay)
-2. INTEGRATE: Update the update function to use these helpers
-3. MIGRATE: Move all helpers to Model.elm and add Model. prefixes
+   APPROACH - 3 Step Process:
+   1. EXTRACT: Create helper functions in Main.elm that return (Model, Maybe NoteToPlay)
+   2. INTEGRATE: Update the update function to use these helpers
+   3. MIGRATE: Move all helpers to Model.elm and add Model. prefixes
 
-REMAINING FUNCTIONS TO EXTRACT:
-- continueDrawingPitch : PitchPos -> Model -> (Model, Maybe NoteToPlay)
-- startDrawingPerc : PercPos -> Model -> (Model, Maybe NoteToPlay)
-- continueDrawingPerc : PercPos -> Model -> (Model, Maybe NoteToPlay)
+   REMAINING FUNCTIONS TO EXTRACT:
+   - continueDrawingPitch : PitchPos -> Model -> (Model, Maybe NoteToPlay)
+   - startDrawingPerc : PercPos -> Model -> (Model, Maybe NoteToPlay)
+   - continueDrawingPerc : PercPos -> Model -> (Model, Maybe NoteToPlay)
 
-INTEGRATION PATTERN:
-Replace current update cases like:
-    StartDrawingPitch position ->
-        [complex logic with playPitchCmdIf]
+   INTEGRATION PATTERN:
+   Replace current update cases like:
+       StartDrawingPitch position ->
+           [complex logic with playPitchCmdIf]
 
-With clean pattern:
-    StartDrawingPitch position ->
-        let
-            (newModel, maybeNote) = startDrawingPitch position model
-            cmd = case maybeNote of
-                Just note -> playNote note
-                Nothing -> Cmd.none
-        in
-        (newModel, cmd)
+   With clean pattern:
+       StartDrawingPitch position ->
+           let
+               (newModel, maybeNote) = startDrawingPitch position model
+               cmd = case maybeNote of
+                   Just note -> playNote note
+                   Nothing -> Cmd.none
+           in
+           (newModel, cmd)
 
-FINAL BENEFITS:
-- Main.elm won't import Grid, Scales, Instruments modules
-- All domain logic centralized in Model.elm
-- Pure, testable functions with clear inputs/outputs
-- Clean separation between model updates and command orchestration
+   FINAL BENEFITS:
+   - Main.elm won't import Grid, Scales, Instruments modules
+   - All domain logic centralized in Model.elm
+   - Pure, testable functions with clear inputs/outputs
+   - Clean separation between model updates and command orchestration
 -}
