@@ -127,7 +127,7 @@ update msg model =
                     ( model, Cmd.none )
 
         StopDrawing ->
-            ( stopDrawing model, Cmd.none )
+            ( Model.stopDrawing model, Cmd.none )
 
         StartDrawingPerc position ->
             case model.drawState of
@@ -176,10 +176,10 @@ update msg model =
             ( model, playPercCmdIf True percType model )
 
         Play ->
-            ( play model, Cmd.none )
+            ( Model.play model, Cmd.none )
 
         Stop ->
-            ( stop model, Cmd.none )
+            ( Model.stop model, Cmd.none )
 
         TimeSync audioContextTime ->
             let
@@ -237,25 +237,25 @@ update msg model =
                     ( updatedModel, Cmd.none )
 
         ChangeScaleType newScaleType ->
-            ( changeScaleType newScaleType model, Cmd.none )
+            ( Model.changeScaleType newScaleType model, Cmd.none )
 
         ChangeRootNote newRootNote ->
-            ( changeRootNote newRootNote model, Cmd.none )
+            ( Model.changeRootNote newRootNote model, Cmd.none )
 
         ChangeOctaveStart newStart ->
-            ( changeOctaveStart newStart model, Cmd.none )
+            ( Model.changeOctaveStart newStart model, Cmd.none )
 
         ChangeOctaveCount newCount ->
-            ( changeOctaveCount newCount model, Cmd.none )
+            ( Model.changeOctaveCount newCount model, Cmd.none )
 
         ChangeBPM newBPM ->
-            ( setBPM newBPM model, Cmd.none )
+            ( Model.setBPM newBPM model, Cmd.none )
 
         ChangeTonalInstrument newInstrument ->
-            ( setTonalInstrument newInstrument model, Cmd.none )
+            ( Model.setTonalInstrument newInstrument model, Cmd.none )
 
         ChangeDrumKit newDrumKit ->
-            ( setDrumKit newDrumKit model, Cmd.none )
+            ( Model.setDrumKit newDrumKit model, Cmd.none )
 
         ChangeBars bars ->
             let
@@ -285,16 +285,16 @@ update msg model =
             )
 
         Undo ->
-            ( undo model, Cmd.none )
+            ( Model.undo model, Cmd.none )
 
         Redo ->
-            ( redo model, Cmd.none )
+            ( Model.redo model, Cmd.none )
 
         LinkClicked _ ->
             ( model, Cmd.none )
 
         UrlChanged url ->
-            ( loadFromUrl url model, Cmd.none )
+            ( Model.loadFromUrl url model, Cmd.none )
 
         Save ->
             ( model
@@ -310,211 +310,6 @@ update msg model =
             )
 
 
-
--- Model Update Helper Functions
-
-
-setBPM : Int -> Model -> Model
-setBPM newBPM model =
-    { model | bpm = max 1 newBPM }
-
-
-setTonalInstrument : TonalInstrument -> Model -> Model
-setTonalInstrument newInstrument model =
-    { model | currentTonalInstrument = newInstrument }
-
-
-setDrumKit : DrumKit -> Model -> Model
-setDrumKit newDrumKit model =
-    { model | currentDrumKit = newDrumKit }
-
-
-stopDrawing : Model -> Model
-stopDrawing model =
-    { model | drawState = NotDrawing }
-
-
-startPlaying : Model -> Model
-startPlaying model =
-    { model | playState = PlayingStarted { startTime = model.audioContextTime } }
-
-
-stopPlaying : Model -> Model
-stopPlaying model =
-    { model | playState = Stopped }
-
-
-changeScaleType : ScaleType -> Model -> Model
-changeScaleType newScaleType model =
-    let
-        modelWithHistory =
-            Model.pushToHistory model
-
-        newModel =
-            { modelWithHistory | scaleType = newScaleType }
-
-        newPitchGrid =
-            Grid.resizePitchGrid (Model.scaleConfig modelWithHistory) (Model.scaleConfig newModel) (Model.timeConfig newModel) modelWithHistory.pitchGrid
-    in
-    { newModel | pitchGrid = newPitchGrid }
-
-
-changeRootNote : RootNote -> Model -> Model
-changeRootNote newRootNote model =
-    let
-        modelWithHistory =
-            Model.pushToHistory model
-
-        newModel =
-            { modelWithHistory | rootNote = newRootNote }
-
-        newPitchGrid =
-            Grid.transposePitchGrid (Model.scaleConfig modelWithHistory) (Model.scaleConfig newModel) modelWithHistory.pitchGrid
-    in
-    { newModel | pitchGrid = newPitchGrid }
-
-
-changeOctaveStart : Int -> Model -> Model
-changeOctaveStart newStart model =
-    let
-        modelWithHistory =
-            Model.pushToHistory model
-
-        clampedStart =
-            max 1 newStart
-
-        newModel =
-            { modelWithHistory | octaveStart = clampedStart }
-
-        newPitchGrid =
-            Grid.resizePitchGrid (Model.scaleConfig modelWithHistory) (Model.scaleConfig newModel) (Model.timeConfig newModel) modelWithHistory.pitchGrid
-    in
-    { newModel | pitchGrid = newPitchGrid }
-
-
-changeOctaveCount : Int -> Model -> Model
-changeOctaveCount newCount model =
-    let
-        modelWithHistory =
-            Model.pushToHistory model
-
-        clampedCount =
-            max 1 newCount
-
-        newModel =
-            { modelWithHistory | octaveCount = clampedCount }
-
-        newPitchGrid =
-            Grid.resizePitchGrid (Model.scaleConfig modelWithHistory) (Model.scaleConfig newModel) (Model.timeConfig newModel) modelWithHistory.pitchGrid
-    in
-    { newModel | pitchGrid = newPitchGrid }
-
-
-play : Model -> Model
-play model =
-    case model.playState of
-        Stopped ->
-            startPlaying model
-
-        _ ->
-            model
-
-
-stop : Model -> Model
-stop model =
-    case model.playState of
-        PlayingStarted _ ->
-            stopPlaying model
-
-        Playing _ ->
-            stopPlaying model
-
-        Stopped ->
-            model
-
-
-loadFromUrl : Url -> Model -> Model
-loadFromUrl url model =
-    Model.applyQueryParams url { model | url = url }
-
-
-undo : Model -> Model
-undo model =
-    case model.undoStack of
-        [] ->
-            model
-
-        lastState :: remainingUndoStack ->
-            let
-                newRedoStack : List HistoryState
-                newRedoStack =
-                    { pitchGrid = model.pitchGrid
-                    , percGrid = model.percGrid
-                    , scaleType = model.scaleType
-                    , rootNote = model.rootNote
-                    , octaveStart = model.octaveStart
-                    , octaveCount = model.octaveCount
-                    , bars = model.bars
-                    , beatsPerBar = model.beatsPerBar
-                    , subdivisions = model.subdivisions
-                    }
-                        :: model.redoStack
-
-                newModel =
-                    { model
-                        | pitchGrid = lastState.pitchGrid
-                        , percGrid = lastState.percGrid
-                        , scaleType = lastState.scaleType
-                        , rootNote = lastState.rootNote
-                        , octaveStart = lastState.octaveStart
-                        , octaveCount = lastState.octaveCount
-                        , bars = lastState.bars
-                        , beatsPerBar = lastState.beatsPerBar
-                        , subdivisions = lastState.subdivisions
-                        , undoStack = remainingUndoStack
-                        , redoStack = newRedoStack
-                    }
-            in
-            newModel
-
-
-redo : Model -> Model
-redo model =
-    case model.redoStack of
-        [] ->
-            model
-
-        lastState :: remainingRedoStack ->
-            let
-                newUndoStack =
-                    { pitchGrid = model.pitchGrid
-                    , percGrid = model.percGrid
-                    , scaleType = model.scaleType
-                    , rootNote = model.rootNote
-                    , octaveStart = model.octaveStart
-                    , octaveCount = model.octaveCount
-                    , bars = model.bars
-                    , beatsPerBar = model.beatsPerBar
-                    , subdivisions = model.subdivisions
-                    }
-                        :: model.undoStack
-
-                newModel =
-                    { model
-                        | pitchGrid = lastState.pitchGrid
-                        , percGrid = lastState.percGrid
-                        , scaleType = lastState.scaleType
-                        , rootNote = lastState.rootNote
-                        , octaveStart = model.octaveStart
-                        , octaveCount = model.octaveCount
-                        , bars = lastState.bars
-                        , beatsPerBar = lastState.beatsPerBar
-                        , subdivisions = lastState.subdivisions
-                        , undoStack = newUndoStack
-                        , redoStack = remainingRedoStack
-                    }
-            in
-            newModel
 
 
 
