@@ -2,14 +2,14 @@ port module Main exposing (main)
 
 import Browser exposing (Document)
 import Browser.Navigation as Nav
-import Grid exposing (PitchPos, PitchGrid, PercPos, PercGrid, TimeConfig)
+import Grid exposing (PercGrid, PercPos, PitchGrid, PitchPos)
 import Html as H exposing (Html, div, text)
 import Html.Attributes as HA exposing (class, style)
 import Html.Events as HE
 import Instruments exposing (DrumKit, PercType, TonalInstrument)
 import Json.Decode as JD
-import Scales exposing (RootNote, ScaleType, ScaleConfig)
-import Set exposing (Set)
+import Scales exposing (RootNote, ScaleConfig, ScaleType)
+import Timing exposing (TimeConfig)
 import Url exposing (Url)
 import Url.Builder as UB
 import Url.Parser as Parser exposing ((<?>))
@@ -30,18 +30,6 @@ port playNote : { webAudioFont : String, midi : Int, duration : Float, volume : 
 
 
 port timeSync : (Float -> msg) -> Sub msg
-
-
-
--- AUDIO CONSTANTS
-
-
-midiC4 : Int
-midiC4 =
-    60
-
-
-
 
 
 
@@ -215,6 +203,7 @@ type alias Model =
     }
 
 
+
 -- Helper functions to create Grid configs from Model
 
 
@@ -248,8 +237,8 @@ init _ url key =
             , bars = 8
             , beatsPerBar = 4
             , subdivisions = 2
-            , pitchGrid = Set.empty
-            , percGrid = Set.empty
+            , pitchGrid = Grid.emptyPitchGrid
+            , percGrid = Grid.emptyPercGrid
             , drawState = NotDrawing
             , playState = Stopped
             , audioContextTime = 0.0
@@ -484,7 +473,7 @@ update msg model =
                             audioContextTime - startTime
 
                         duration =
-                            Grid.noteDuration (timeConfig model)
+                            Timing.noteDuration (timeConfig model)
 
                         currentStep =
                             floor (elapsedTime / duration)
@@ -492,7 +481,7 @@ update msg model =
                     if currentStep >= nextStep then
                         let
                             stepToSchedule =
-                                modBy (Grid.getTotalSteps (timeConfig model)) nextStep
+                                modBy (Timing.getTotalSteps (timeConfig model)) nextStep
 
                             activeNotes =
                                 getActiveNotesForStep stepToSchedule updatedModel
@@ -756,7 +745,7 @@ viewGrid model =
             getCurrentPlayingStep model
 
         totalSteps =
-            Grid.getTotalSteps (timeConfig model)
+            Timing.getTotalSteps (timeConfig model)
 
         gridTemplateCols =
             format "minmax($pitchLabelColMinWidth, auto) repeat($totalSteps, minmax($stepColMinWidth, 1fr))"
@@ -813,7 +802,7 @@ viewPitchRow model pitchGrid currentStep pitchIdx =
                 [ text (Scales.pitchIdxToNoteName pitchIdx (scaleConfig model)) ]
     in
     -- TODO: Should we fix function parameters?
-    viewPitchLabel :: times (\stepIdx -> viewPitchCell pitchIdx pitchGrid currentStep stepIdx) (Grid.getTotalSteps (timeConfig model))
+    viewPitchLabel :: times (\stepIdx -> viewPitchCell pitchIdx pitchGrid currentStep stepIdx) (Timing.getTotalSteps (timeConfig model))
 
 
 viewPitchCell : Int -> PitchGrid -> Maybe Int -> Int -> Html Msg
@@ -966,9 +955,6 @@ footerView model =
 
 
 
-
-
-
 -- Sequencer Functions
 
 
@@ -979,7 +965,7 @@ getCurrentPlayingStep model =
             Just 0
 
         Playing { nextStep } ->
-            Just (modBy (Grid.getTotalSteps (timeConfig model)) (nextStep - 1))
+            Just (modBy (Timing.getTotalSteps (timeConfig model)) (nextStep - 1))
 
         Stopped ->
             Nothing
@@ -993,7 +979,7 @@ getActiveNotesForStep : Int -> Model -> List NoteToPlay
 getActiveNotesForStep stepIdx model =
     let
         duration =
-            Grid.noteDuration (timeConfig model)
+            Timing.noteDuration (timeConfig model)
 
         pitchNotes =
             times
@@ -1096,9 +1082,6 @@ playPercCmdIf shouldPlay percType model =
         Cmd.none
 
 
-
-
-
 type alias SongConfig =
     { melody : List (List String) -- Each step can have multiple notes
     , percussion : List (List PercType) -- Each step can have multiple drums
@@ -1178,14 +1161,7 @@ applySong sc model =
 
 
 
-
-
 -- Cell State Management
-
-
-
-
-
 -- Style Constants
 
 

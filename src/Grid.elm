@@ -1,36 +1,26 @@
 module Grid exposing
-    ( PitchPos
-    , PitchGrid
+    ( PercGrid
     , PercPos
-    , PercGrid
-    , TimeConfig
-    , getTotalSteps
-    , isPitchCellActive
-    , updatePitchCell
-    , isPercCellActive
-    , updatePercCell
-    , noteDuration
-    , resizePitchGrid
-    , transposePitchGrid
+    , PitchGrid
+    , PitchPos
     , convertMelodyToGrid
     , convertPercussionToGrid
+    , emptyPercGrid
+    , emptyPitchGrid
+    , isPercCellActive
+    , isPitchCellActive
+    , resizePitchGrid
+    , transposePitchGrid
+    , updatePercCell
+    , updatePitchCell
     )
 
 import Instruments exposing (PercType)
 import Scales exposing (RootNote, ScaleConfig, ScaleType)
 import Set exposing (Set)
+import Timing exposing (TimeConfig)
 import Utils exposing (times)
 
-
--- Config Types
-
-
-type alias TimeConfig =
-    { bars : Int
-    , beatsPerBar : Int
-    , subdivisions : Int
-    , bpm : Int
-    }
 
 
 -- Grid Types
@@ -52,19 +42,17 @@ type alias PercGrid =
     Set ( Int, Int )
 
 
--- Constants
-
-
-midiC4 : Int
-midiC4 =
-    60
-
 
 -- Basic Grid Operations
 
 
-empty : Set a
-empty =
+emptyPitchGrid : PitchGrid
+emptyPitchGrid =
+    Set.empty
+
+
+emptyPercGrid : PercGrid
+emptyPercGrid =
     Set.empty
 
 
@@ -105,20 +93,6 @@ percPositionToTuple { percType, stepIdx } =
     ( Instruments.percRowIdx percType, stepIdx )
 
 
--- Calculations
-
-
-getTotalSteps : TimeConfig -> Int
-getTotalSteps config =
-    config.bars * config.beatsPerBar * config.subdivisions
-
-
-noteDuration : TimeConfig -> Float
-noteDuration config =
-    -- 60 seconds/minute ÷ BPM = seconds per beat
-    -- Then divide by subdivisions = seconds per step
-    (60.0 / toFloat config.bpm) / toFloat config.subdivisions
-
 
 -- Grid Transformations
 
@@ -135,7 +109,7 @@ resizePitchGrid oldConfig newConfig newTimeConfig existingGrid =
                 in
                 case Scales.midiToPitchIdx midiPitch newConfig of
                     Just newPitchIdx ->
-                        if newPitchIdx < Scales.getTotalPitches newConfig && stepIdx < getTotalSteps newTimeConfig then
+                        if newPitchIdx < Scales.getTotalPitches newConfig && stepIdx < Timing.getTotalSteps newTimeConfig then
                             Just ( newPitchIdx, stepIdx )
 
                         else
@@ -165,6 +139,7 @@ transposePitchGrid oldConfig newConfig existingGrid =
                         Nothing
             )
         |> Set.fromList
+
 
 
 -- Grid Conversions
