@@ -8,7 +8,7 @@ import Html.Attributes as HA exposing (class, style)
 import Html.Events as HE
 import Instruments exposing (DrumKit, PercType, TonalInstrument)
 import Json.Decode as JD
-import Model exposing (DrawState(..), Flags, HistoryState, Model, PlayState(..))
+import Model exposing (DrawState(..), Flags, Model, NoteToPlay, PlayState(..))
 import Scales exposing (RootNote, ScaleConfig, ScaleType)
 import Timing exposing (TimeConfig)
 import Url exposing (Url)
@@ -23,7 +23,7 @@ import Utils exposing (..)
 -- PORTS
 
 
-port playNote : { webAudioFont : String, midi : Int, duration : Float, volume : Float } -> Cmd msg
+port playNote : NoteToPlay -> Cmd msg
 
 
 port timeSync : (Float -> msg) -> Sub msg
@@ -53,8 +53,6 @@ type Msg
     | StopDrawing
     | StartDrawingPerc PercPos
     | ContinueDrawingPerc PercPos
-    | PlayPitchNote Int
-    | PlayPercNote PercType
     | Play
     | Stop
     | TimeSync Float
@@ -168,12 +166,6 @@ update msg model =
 
                 _ ->
                     ( model, Cmd.none )
-
-        PlayPitchNote pitchIdx ->
-            ( model, playPitchCmdIf True pitchIdx model )
-
-        PlayPercNote percType ->
-            ( model, playPercCmdIf True percType model )
 
         Play ->
             ( Model.play model, Cmd.none )
@@ -309,6 +301,51 @@ update msg model =
                 Nav.pushUrl model.key query
             )
 
+
+
+-- Model Update Helper Functions
+
+
+startDrawingPitch : PitchPos -> Model -> ( Model, Maybe NoteToPlay )
+startDrawingPitch position model =
+    case model.drawState of
+        NotDrawing ->
+            let
+                modelWithHistory =
+                    Model.pushToHistory model
+
+                currentlyActive =
+                    Grid.isPitchCellActive position model.pitchGrid
+
+                newDrawState =
+                    if currentlyActive then
+                        ErasingPitch
+
+                    else
+                        DrawingPitch
+
+                newModel =
+                    { modelWithHistory
+                        | drawState = newDrawState
+                        , pitchGrid = Grid.updatePitchCell position (not currentlyActive) modelWithHistory.pitchGrid
+                    }
+
+                maybeNote =
+                    if not currentlyActive then
+                        Just
+                            { webAudioFont = Instruments.tonalWebAudioFont model.currentTonalInstrument
+                            , midi = Scales.pitchIdxToMidi position.pitchIdx (Model.scaleConfig model)
+                            , duration = 0.5
+                            , volume = 0.7
+                            }
+
+                    else
+                        Nothing
+            in
+            ( newModel, maybeNote )
+
+        _ ->
+            ( model, Nothing )
 
 
 
@@ -883,3 +920,50 @@ viewDrumKitOption currentDrumKit drumKit =
         , HA.selected (currentDrumKit == drumKit)
         ]
         [ text (Instruments.drumKitLabel drumKit) ]
+
+
+{-
+TODO: Advanced Model Extraction Refactoring (IN PROGRESS)
+
+CURRENT STATUS:
+- We have extracted one function: `startDrawingPitch : PitchPos -> Model -> (Model, Maybe NoteToPlay)`
+- This function is NOT YET INTEGRATED into the update function
+- We cleaned up orphan messages (PlayPitchNote, PlayPercNote) and their handlers
+
+GOAL:
+Extract model logic from Main.elm to achieve cleaner architecture where:
+- Main.elm only handles Elm architecture (update orchestration, commands, ports)
+- Model.elm handles all domain logic (Grid, Scales, Instruments interactions)
+- Functions return (Model, Maybe NoteToPlay) pattern for command data
+
+APPROACH - 3 Step Process:
+1. EXTRACT: Create helper functions in Main.elm that return (Model, Maybe NoteToPlay)
+2. INTEGRATE: Update the update function to use these helpers
+3. MIGRATE: Move all helpers to Model.elm and add Model. prefixes
+
+REMAINING FUNCTIONS TO EXTRACT:
+- continueDrawingPitch : PitchPos -> Model -> (Model, Maybe NoteToPlay)
+- startDrawingPerc : PercPos -> Model -> (Model, Maybe NoteToPlay)
+- continueDrawingPerc : PercPos -> Model -> (Model, Maybe NoteToPlay)
+
+INTEGRATION PATTERN:
+Replace current update cases like:
+    StartDrawingPitch position ->
+        [complex logic with playPitchCmdIf]
+
+With clean pattern:
+    StartDrawingPitch position ->
+        let
+            (newModel, maybeNote) = startDrawingPitch position model
+            cmd = case maybeNote of
+                Just note -> playNote note
+                Nothing -> Cmd.none
+        in
+        (newModel, cmd)
+
+FINAL BENEFITS:
+- Main.elm won't import Grid, Scales, Instruments modules
+- All domain logic centralized in Model.elm
+- Pure, testable functions with clear inputs/outputs
+- Clean separation between model updates and command orchestration
+-}

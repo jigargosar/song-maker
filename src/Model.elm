@@ -1,8 +1,8 @@
 module Model exposing
     ( DrawState(..)
     , Flags
-    , HistoryState
     , Model
+    , NoteToPlay
     , PlayState(..)
     , buildQuery
     , changeOctaveCount
@@ -395,6 +395,7 @@ getActiveNotesForStep stepIdx model =
                     )
     in
     pitchNotes ++ percNotes
+
 
 
 -- Model Update Helper Functions
