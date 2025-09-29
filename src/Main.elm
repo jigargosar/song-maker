@@ -8,7 +8,6 @@ import Html.Attributes as HA exposing (class, style)
 import Html.Events as HE
 import Instruments exposing (DrumKit, PercType, TonalInstrument)
 import Json.Decode as JD
-import Model exposing (DrawState(..), HistoryState, Model, PlayState(..))
 import Scales exposing (RootNote, ScaleConfig, ScaleType)
 import Timing exposing (TimeConfig)
 import Url exposing (Url)
@@ -154,12 +153,103 @@ main =
 -- (Note: Grid types imported from Grid module)
 
 
+type PlayState
+    = Stopped
+    | PlayingStarted { startTime : Float }
+    | Playing { startTime : Float, nextStep : Int }
+
+
+type DrawState
+    = NotDrawing
+    | DrawingPitch
+    | ErasingPitch
+    | DrawingPerc
+    | ErasingPerc
+
+
+type alias HistoryState =
+    { pitchGrid : PitchGrid
+    , percGrid : PercGrid
+    , scaleType : ScaleType
+    , rootNote : RootNote
+    , octaveStart : Int
+    , octaveCount : Int
+    , bars : Int
+    , beatsPerBar : Int
+    , subdivisions : Int
+    }
+
+
+type alias Model =
+    { pitchGrid : PitchGrid
+    , percGrid : PercGrid
+    , scaleType : ScaleType
+    , rootNote : RootNote
+    , octaveStart : Int
+    , octaveCount : Int
+    , bars : Int
+    , beatsPerBar : Int
+    , subdivisions : Int
+    , bpm : Int
+    , currentTonalInstrument : TonalInstrument
+    , currentDrumKit : DrumKit
+    , drawState : DrawState
+    , playState : PlayState
+    , audioContextTime : Float
+    , undoStack : List HistoryState
+    , redoStack : List HistoryState
+    , url : Url
+    , key : Nav.Key
+    }
+
+
+
+-- Helper functions to create Grid configs from Model
+
+
+scaleConfig : Model -> ScaleConfig
+scaleConfig model =
+    { scaleType = model.scaleType
+    , rootNote = model.rootNote
+    , octaveStart = model.octaveStart
+    , octaveCount = model.octaveCount
+    }
+
+
+timeConfig : Model -> TimeConfig
+timeConfig model =
+    { bars = model.bars
+    , beatsPerBar = model.beatsPerBar
+    , subdivisions = model.subdivisions
+    , bpm = model.bpm
+    }
+
+
 init : Flags -> Url -> Nav.Key -> ( Model, Cmd Msg )
 init _ url key =
     let
         initialModel : Model
         initialModel =
-            Model.init url key
+            { scaleType = Scales.major
+            , rootNote = Scales.root
+            , octaveStart = 3
+            , octaveCount = 3
+            , bars = 8
+            , beatsPerBar = 4
+            , subdivisions = 2
+            , pitchGrid = Grid.emptyPitchGrid
+            , percGrid = Grid.emptyPercGrid
+            , drawState = NotDrawing
+            , playState = Stopped
+            , audioContextTime = 0.0
+            , bpm = 120
+            , currentTonalInstrument = Instruments.defaultTonalInstrument
+            , currentDrumKit = Instruments.defaultDrumKit
+            , undoStack = []
+            , redoStack = []
+            , url = url
+            , key = key
+            }
     in
     ( initialModel
         |> applyQueryParams url
@@ -252,7 +342,7 @@ update msg model =
                 NotDrawing ->
                     let
                         modelWithHistory =
-                            Model.pushToHistory model
+                            pushToHistory model
 
                         currentlyActive =
                             Grid.isPitchCellActive position model.pitchGrid
@@ -295,7 +385,7 @@ update msg model =
                 NotDrawing ->
                     let
                         modelWithHistory =
-                            Model.pushToHistory model
+                            pushToHistory model
 
                         currentlyActive =
                             Grid.isPercCellActive position model.percGrid
@@ -383,7 +473,7 @@ update msg model =
                             audioContextTime - startTime
 
                         duration =
-                            Timing.noteDuration (Model.timeConfig model)
+                            Timing.noteDuration (timeConfig model)
 
                         currentStep =
                             floor (elapsedTime / duration)
@@ -391,7 +481,7 @@ update msg model =
                     if currentStep >= nextStep then
                         let
                             stepToSchedule =
-                                modBy (Timing.getTotalSteps (Model.timeConfig model)) nextStep
+                                modBy (Timing.getTotalSteps (timeConfig model)) nextStep
 
                             activeNotes =
                                 getActiveNotesForStep stepToSchedule updatedModel
@@ -413,13 +503,13 @@ update msg model =
         ChangeScaleType newScaleType ->
             let
                 modelWithHistory =
-                    Model.pushToHistory model
+                    pushToHistory model
 
                 newModel =
                     { modelWithHistory | scaleType = newScaleType }
 
                 newPitchGrid =
-                    Grid.resizePitchGrid (Model.scaleConfig modelWithHistory) (Model.scaleConfig newModel) (Model.timeConfig newModel) modelWithHistory.pitchGrid
+                    Grid.resizePitchGrid (scaleConfig modelWithHistory) (scaleConfig newModel) (timeConfig newModel) modelWithHistory.pitchGrid
             in
             ( { newModel | pitchGrid = newPitchGrid }
             , Cmd.none
@@ -428,13 +518,13 @@ update msg model =
         ChangeRootNote newRootNote ->
             let
                 modelWithHistory =
-                    Model.pushToHistory model
+                    pushToHistory model
 
                 newModel =
                     { modelWithHistory | rootNote = newRootNote }
 
                 newPitchGrid =
-                    Grid.transposePitchGrid (Model.scaleConfig modelWithHistory) (Model.scaleConfig newModel) modelWithHistory.pitchGrid
+                    Grid.transposePitchGrid (scaleConfig modelWithHistory) (scaleConfig newModel) modelWithHistory.pitchGrid
             in
             ( { newModel | pitchGrid = newPitchGrid }
             , Cmd.none
@@ -443,7 +533,7 @@ update msg model =
         ChangeOctaveStart newStart ->
             let
                 modelWithHistory =
-                    Model.pushToHistory model
+                    pushToHistory model
 
                 clampedStart =
                     max 1 newStart
@@ -452,7 +542,7 @@ update msg model =
                     { modelWithHistory | octaveStart = clampedStart }
 
                 newPitchGrid =
-                    Grid.resizePitchGrid (Model.scaleConfig modelWithHistory) (Model.scaleConfig newModel) (Model.timeConfig newModel) modelWithHistory.pitchGrid
+                    Grid.resizePitchGrid (scaleConfig modelWithHistory) (scaleConfig newModel) (timeConfig newModel) modelWithHistory.pitchGrid
             in
             ( { newModel | pitchGrid = newPitchGrid }
             , Cmd.none
@@ -461,7 +551,7 @@ update msg model =
         ChangeOctaveCount newCount ->
             let
                 modelWithHistory =
-                    Model.pushToHistory model
+                    pushToHistory model
 
                 clampedCount =
                     max 1 newCount
@@ -470,7 +560,7 @@ update msg model =
                     { modelWithHistory | octaveCount = clampedCount }
 
                 newPitchGrid =
-                    Grid.resizePitchGrid (Model.scaleConfig modelWithHistory) (Model.scaleConfig newModel) (Model.timeConfig newModel) modelWithHistory.pitchGrid
+                    Grid.resizePitchGrid (scaleConfig modelWithHistory) (scaleConfig newModel) (timeConfig newModel) modelWithHistory.pitchGrid
             in
             ( { newModel | pitchGrid = newPitchGrid }
             , Cmd.none
@@ -494,7 +584,7 @@ update msg model =
         ChangeBars bars ->
             let
                 modelWithHistory =
-                    Model.pushToHistory model
+                    pushToHistory model
             in
             ( { modelWithHistory | bars = atLeast 1 bars }
             , Cmd.none
@@ -503,7 +593,7 @@ update msg model =
         ChangeBeatsPerBar newBeatsPerBar ->
             let
                 modelWithHistory =
-                    Model.pushToHistory model
+                    pushToHistory model
             in
             ( { modelWithHistory | beatsPerBar = atLeast 1 newBeatsPerBar }
             , Cmd.none
@@ -512,7 +602,7 @@ update msg model =
         ChangeSubdivisions subDivisions ->
             let
                 modelWithHistory =
-                    Model.pushToHistory model
+                    pushToHistory model
             in
             ( { modelWithHistory | subdivisions = atLeast 1 subDivisions }
             , Cmd.none
@@ -655,7 +745,7 @@ viewGrid model =
             getCurrentPlayingStep model
 
         totalSteps =
-            Timing.getTotalSteps (Model.timeConfig model)
+            Timing.getTotalSteps (timeConfig model)
 
         gridTemplateCols =
             format "minmax($pitchLabelColMinWidth, auto) repeat($totalSteps, minmax($stepColMinWidth, 1fr))"
@@ -667,7 +757,7 @@ viewGrid model =
         gridTemplateRows =
             format "minmax($stepLabelRowMinHeight, auto) repeat($totalPitches, minmax($pitchRowMinHeight, 1fr)) repeat(2, $percRowHeight)"
                 [ ( "$stepLabelRowMinHeight", px 32 )
-                , ( "$totalPitches", String.fromInt (Scales.getTotalPitches (Model.scaleConfig model)) )
+                , ( "$totalPitches", String.fromInt (Scales.getTotalPitches (scaleConfig model)) )
                 , ( "$pitchRowMinHeight", px 32 )
                 , ( "$percRowHeight", px 48 )
                 ]
@@ -679,7 +769,7 @@ viewGrid model =
         ]
         ([ {- Empty corner cell -} div [ class labelBgColorAndClass, class "border-b border-gray-600" ] [] ]
             ++ {- Step Labels row -} times (\stepIdx -> viewStepLabel currentStep stepIdx) totalSteps
-            ++ {- Pitch rows -} (times (\pitchIdx -> viewPitchRow model model.pitchGrid currentStep pitchIdx) (Scales.getTotalPitches (Model.scaleConfig model)) |> List.concat)
+            ++ {- Pitch rows -} (times (\pitchIdx -> viewPitchRow model model.pitchGrid currentStep pitchIdx) (Scales.getTotalPitches (scaleConfig model)) |> List.concat)
             ++ {- Perc Snare row -} viewPercRow Instruments.percSnare totalSteps model.percGrid currentStep
             ++ {- Perc Kick row -} viewPercRow Instruments.percKick totalSteps model.percGrid currentStep
         )
@@ -709,10 +799,10 @@ viewPitchRow model pitchGrid currentStep pitchIdx =
         viewPitchLabel =
             div
                 [ class labelBgColorAndClass, class "border-[0.5px]" ]
-                [ text (Scales.pitchIdxToNoteName pitchIdx (Model.scaleConfig model)) ]
+                [ text (Scales.pitchIdxToNoteName pitchIdx (scaleConfig model)) ]
     in
     -- TODO: Should we fix function parameters?
-    viewPitchLabel :: times (\stepIdx -> viewPitchCell pitchIdx pitchGrid currentStep stepIdx) (Timing.getTotalSteps (Model.timeConfig model))
+    viewPitchLabel :: times (\stepIdx -> viewPitchCell pitchIdx pitchGrid currentStep stepIdx) (Timing.getTotalSteps (timeConfig model))
 
 
 viewPitchCell : Int -> PitchGrid -> Maybe Int -> Int -> Html Msg
@@ -875,7 +965,7 @@ getCurrentPlayingStep model =
             Just 0
 
         Playing { nextStep } ->
-            Just (modBy (Timing.getTotalSteps (Model.timeConfig model)) (nextStep - 1))
+            Just (modBy (Timing.getTotalSteps (timeConfig model)) (nextStep - 1))
 
         Stopped ->
             Nothing
@@ -889,7 +979,7 @@ getActiveNotesForStep : Int -> Model -> List NoteToPlay
 getActiveNotesForStep stepIdx model =
     let
         duration =
-            Timing.noteDuration (Model.timeConfig model)
+            Timing.noteDuration (timeConfig model)
 
         pitchNotes =
             times
@@ -901,7 +991,7 @@ getActiveNotesForStep stepIdx model =
                     if Grid.isPitchCellActive position model.pitchGrid then
                         Just
                             { webAudioFont = Instruments.tonalWebAudioFont model.currentTonalInstrument
-                            , midi = Scales.pitchIdxToMidi pitchIdx (Model.scaleConfig model)
+                            , midi = Scales.pitchIdxToMidi pitchIdx (scaleConfig model)
                             , duration = duration
                             , volume = 0.7
                             }
@@ -909,7 +999,7 @@ getActiveNotesForStep stepIdx model =
                     else
                         Nothing
                 )
-                (Scales.getTotalPitches (Model.scaleConfig model))
+                (Scales.getTotalPitches (scaleConfig model))
                 |> List.filterMap identity
 
         drumConfig =
@@ -956,7 +1046,7 @@ playPitchCmdIf shouldPlay pitchIdx model =
     if shouldPlay then
         playNote
             { webAudioFont = Instruments.tonalWebAudioFont model.currentTonalInstrument
-            , midi = Scales.pitchIdxToMidi pitchIdx (Model.scaleConfig model)
+            , midi = Scales.pitchIdxToMidi pitchIdx (scaleConfig model)
             , duration = 0.5
             , volume = 0.7
             }
@@ -1059,7 +1149,7 @@ twinkleSong =
 applySong : SongConfig -> Model -> Model
 applySong sc model =
     { model
-        | pitchGrid = Grid.convertMelodyToGrid sc.melody (Model.scaleConfig model)
+        | pitchGrid = Grid.convertMelodyToGrid sc.melody (scaleConfig model)
         , percGrid = Grid.convertPercussionToGrid sc.percussion
         , bpm = sc.bpm
         , octaveStart = sc.octaveStart
