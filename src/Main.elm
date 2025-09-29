@@ -8,7 +8,7 @@ import Html.Attributes as HA exposing (class, style)
 import Html.Events as HE
 import Instruments exposing (DrumKit, PercType, TonalInstrument)
 import Json.Decode as JD
-import Model exposing (..)
+import Model exposing (DrawState(..), Flags, HistoryState, Model, PlayState(..))
 import Scales exposing (RootNote, ScaleConfig, ScaleType)
 import Timing exposing (TimeConfig)
 import Url exposing (Url)
@@ -91,7 +91,7 @@ update msg model =
                 NotDrawing ->
                     let
                         modelWithHistory =
-                            pushToHistory model
+                            Model.pushToHistory model
 
                         currentlyActive =
                             Grid.isPitchCellActive position model.pitchGrid
@@ -134,7 +134,7 @@ update msg model =
                 NotDrawing ->
                     let
                         modelWithHistory =
-                            pushToHistory model
+                            Model.pushToHistory model
 
                         currentlyActive =
                             Grid.isPercCellActive position model.percGrid
@@ -206,7 +206,7 @@ update msg model =
                             0
 
                         activeNotes =
-                            getActiveNotesForStep stepToSchedule updatedModel
+                            Model.getActiveNotesForStep stepToSchedule updatedModel
 
                         playCommands =
                             List.map playNote activeNotes |> Cmd.batch
@@ -222,7 +222,7 @@ update msg model =
                             audioContextTime - startTime
 
                         duration =
-                            Timing.noteDuration (timeConfig model)
+                            Timing.noteDuration (Model.timeConfig model)
 
                         currentStep =
                             floor (elapsedTime / duration)
@@ -230,10 +230,10 @@ update msg model =
                     if currentStep >= nextStep then
                         let
                             stepToSchedule =
-                                modBy (Timing.getTotalSteps (timeConfig model)) nextStep
+                                modBy (Timing.getTotalSteps (Model.timeConfig model)) nextStep
 
                             activeNotes =
-                                getActiveNotesForStep stepToSchedule updatedModel
+                                Model.getActiveNotesForStep stepToSchedule updatedModel
 
                             playCommands =
                                 List.map playNote activeNotes |> Cmd.batch
@@ -252,13 +252,13 @@ update msg model =
         ChangeScaleType newScaleType ->
             let
                 modelWithHistory =
-                    pushToHistory model
+                    Model.pushToHistory model
 
                 newModel =
                     { modelWithHistory | scaleType = newScaleType }
 
                 newPitchGrid =
-                    Grid.resizePitchGrid (scaleConfig modelWithHistory) (scaleConfig newModel) (timeConfig newModel) modelWithHistory.pitchGrid
+                    Grid.resizePitchGrid (Model.scaleConfig modelWithHistory) (Model.scaleConfig newModel) (Model.timeConfig newModel) modelWithHistory.pitchGrid
             in
             ( { newModel | pitchGrid = newPitchGrid }
             , Cmd.none
@@ -267,13 +267,13 @@ update msg model =
         ChangeRootNote newRootNote ->
             let
                 modelWithHistory =
-                    pushToHistory model
+                    Model.pushToHistory model
 
                 newModel =
                     { modelWithHistory | rootNote = newRootNote }
 
                 newPitchGrid =
-                    Grid.transposePitchGrid (scaleConfig modelWithHistory) (scaleConfig newModel) modelWithHistory.pitchGrid
+                    Grid.transposePitchGrid (Model.scaleConfig modelWithHistory) (Model.scaleConfig newModel) modelWithHistory.pitchGrid
             in
             ( { newModel | pitchGrid = newPitchGrid }
             , Cmd.none
@@ -282,7 +282,7 @@ update msg model =
         ChangeOctaveStart newStart ->
             let
                 modelWithHistory =
-                    pushToHistory model
+                    Model.pushToHistory model
 
                 clampedStart =
                     max 1 newStart
@@ -291,7 +291,7 @@ update msg model =
                     { modelWithHistory | octaveStart = clampedStart }
 
                 newPitchGrid =
-                    Grid.resizePitchGrid (scaleConfig modelWithHistory) (scaleConfig newModel) (timeConfig newModel) modelWithHistory.pitchGrid
+                    Grid.resizePitchGrid (Model.scaleConfig modelWithHistory) (Model.scaleConfig newModel) (Model.timeConfig newModel) modelWithHistory.pitchGrid
             in
             ( { newModel | pitchGrid = newPitchGrid }
             , Cmd.none
@@ -300,7 +300,7 @@ update msg model =
         ChangeOctaveCount newCount ->
             let
                 modelWithHistory =
-                    pushToHistory model
+                    Model.pushToHistory model
 
                 clampedCount =
                     max 1 newCount
@@ -309,7 +309,7 @@ update msg model =
                     { modelWithHistory | octaveCount = clampedCount }
 
                 newPitchGrid =
-                    Grid.resizePitchGrid (scaleConfig modelWithHistory) (scaleConfig newModel) (timeConfig newModel) modelWithHistory.pitchGrid
+                    Grid.resizePitchGrid (Model.scaleConfig modelWithHistory) (Model.scaleConfig newModel) (Model.timeConfig newModel) modelWithHistory.pitchGrid
             in
             ( { newModel | pitchGrid = newPitchGrid }
             , Cmd.none
@@ -333,7 +333,7 @@ update msg model =
         ChangeBars bars ->
             let
                 modelWithHistory =
-                    pushToHistory model
+                    Model.pushToHistory model
             in
             ( { modelWithHistory | bars = atLeast 1 bars }
             , Cmd.none
@@ -342,7 +342,7 @@ update msg model =
         ChangeBeatsPerBar newBeatsPerBar ->
             let
                 modelWithHistory =
-                    pushToHistory model
+                    Model.pushToHistory model
             in
             ( { modelWithHistory | beatsPerBar = atLeast 1 newBeatsPerBar }
             , Cmd.none
@@ -351,7 +351,7 @@ update msg model =
         ChangeSubdivisions subDivisions ->
             let
                 modelWithHistory =
-                    pushToHistory model
+                    Model.pushToHistory model
             in
             ( { modelWithHistory | subdivisions = atLeast 1 subDivisions }
             , Cmd.none
@@ -436,13 +436,13 @@ update msg model =
             ( model, Cmd.none )
 
         UrlChanged url ->
-            ( applyQueryParams url { model | url = url }, Cmd.none )
+            ( Model.applyQueryParams url { model | url = url }, Cmd.none )
 
         Save ->
             ( model
             , let
                 query =
-                    buildQuery model
+                    Model.buildQuery model
               in
               if model.url.query == Just query then
                 Cmd.none
@@ -461,7 +461,7 @@ playPitchCmdIf shouldPlay pitchIdx model =
     if shouldPlay then
         playNote
             { webAudioFont = Instruments.tonalWebAudioFont model.currentTonalInstrument
-            , midi = Scales.pitchIdxToMidi pitchIdx (scaleConfig model)
+            , midi = Scales.pitchIdxToMidi pitchIdx (Model.scaleConfig model)
             , duration = 0.5
             , volume = 0.7
             }
@@ -536,10 +536,10 @@ viewGrid : Model -> Html Msg
 viewGrid model =
     let
         currentStep =
-            getCurrentPlayingStep model
+            Model.getCurrentPlayingStep model
 
         totalSteps =
-            Timing.getTotalSteps (timeConfig model)
+            Timing.getTotalSteps (Model.timeConfig model)
 
         gridTemplateCols =
             format "minmax($pitchLabelColMinWidth, auto) repeat($totalSteps, minmax($stepColMinWidth, 1fr))"
@@ -551,7 +551,7 @@ viewGrid model =
         gridTemplateRows =
             format "minmax($stepLabelRowMinHeight, auto) repeat($totalPitches, minmax($pitchRowMinHeight, 1fr)) repeat(2, $percRowHeight)"
                 [ ( "$stepLabelRowMinHeight", px 32 )
-                , ( "$totalPitches", String.fromInt (Scales.getTotalPitches (scaleConfig model)) )
+                , ( "$totalPitches", String.fromInt (Scales.getTotalPitches (Model.scaleConfig model)) )
                 , ( "$pitchRowMinHeight", px 32 )
                 , ( "$percRowHeight", px 48 )
                 ]
@@ -563,7 +563,7 @@ viewGrid model =
         ]
         ([ {- Empty corner cell -} div [ class labelBgColorAndClass, class "border-b border-gray-600" ] [] ]
             ++ {- Step Labels row -} times (\stepIdx -> viewStepLabel currentStep stepIdx) totalSteps
-            ++ {- Pitch rows -} (times (\pitchIdx -> viewPitchRow model model.pitchGrid currentStep pitchIdx) (Scales.getTotalPitches (scaleConfig model)) |> List.concat)
+            ++ {- Pitch rows -} (times (\pitchIdx -> viewPitchRow model model.pitchGrid currentStep pitchIdx) (Scales.getTotalPitches (Model.scaleConfig model)) |> List.concat)
             ++ {- Perc Snare row -} viewPercRow Instruments.percSnare totalSteps model.percGrid currentStep
             ++ {- Perc Kick row -} viewPercRow Instruments.percKick totalSteps model.percGrid currentStep
         )
@@ -593,10 +593,10 @@ viewPitchRow model pitchGrid currentStep pitchIdx =
         viewPitchLabel =
             div
                 [ class labelBgColorAndClass, class "border-[0.5px]" ]
-                [ text (Scales.pitchIdxToNoteName pitchIdx (scaleConfig model)) ]
+                [ text (Scales.pitchIdxToNoteName pitchIdx (Model.scaleConfig model)) ]
     in
     -- TODO: Should we fix function parameters?
-    viewPitchLabel :: times (\stepIdx -> viewPitchCell pitchIdx pitchGrid currentStep stepIdx) (Timing.getTotalSteps (timeConfig model))
+    viewPitchLabel :: times (\stepIdx -> viewPitchCell pitchIdx pitchGrid currentStep stepIdx) (Timing.getTotalSteps (Model.timeConfig model))
 
 
 viewPitchCell : Int -> PitchGrid -> Maybe Int -> Int -> Html Msg
