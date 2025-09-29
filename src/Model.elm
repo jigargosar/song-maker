@@ -3,11 +3,7 @@ module Model exposing
     , Flags
     , HistoryState
     , Model
-    , NoteToPlay
     , PlayState(..)
-    , QueryParams
-    , SongConfig
-    , applyQueryParams
     , buildQuery
     , changeOctaveCount
     , changeOctaveStart
@@ -24,10 +20,8 @@ module Model exposing
     , setBPM
     , setDrumKit
     , setTonalInstrument
-    , startPlaying
     , stop
     , stopDrawing
-    , stopPlaying
     , timeConfig
     , undo
     )
