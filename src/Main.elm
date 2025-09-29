@@ -87,7 +87,7 @@ update msg model =
         StartDrawingPitch position ->
             let
                 ( newModel, maybeNote ) =
-                    startDrawingPitch position model
+                    Model.startDrawingPitch position model
 
                 cmd =
                     case maybeNote of
@@ -102,7 +102,7 @@ update msg model =
         ContinueDrawingPitch position ->
             let
                 ( newModel, maybeNote ) =
-                    continueDrawingPitch position model
+                    Model.continueDrawingPitch position model
 
                 cmd =
                     case maybeNote of
@@ -120,7 +120,7 @@ update msg model =
         StartDrawingPerc position ->
             let
                 ( newModel, maybeNote ) =
-                    startDrawingPerc position model
+                    Model.startDrawingPerc position model
 
                 cmd =
                     case maybeNote of
@@ -135,7 +135,7 @@ update msg model =
         ContinueDrawingPerc position ->
             let
                 ( newModel, maybeNote ) =
-                    continueDrawingPerc position model
+                    Model.continueDrawingPerc position model
 
                 cmd =
                     case maybeNote of
@@ -280,177 +280,6 @@ update msg model =
               else
                 Nav.pushUrl model.key query
             )
-
-
-
--- Model Update Helper Functions
-
-
-startDrawingPitch : PitchPos -> Model -> ( Model, Maybe NoteToPlay )
-startDrawingPitch position model =
-    case model.drawState of
-        NotDrawing ->
-            let
-                modelWithHistory =
-                    Model.pushToHistory model
-
-                currentlyActive =
-                    Grid.isPitchCellActive position model.pitchGrid
-
-                newDrawState =
-                    if currentlyActive then
-                        ErasingPitch
-
-                    else
-                        DrawingPitch
-
-                newModel =
-                    { modelWithHistory
-                        | drawState = newDrawState
-                        , pitchGrid = Grid.updatePitchCell position (not currentlyActive) modelWithHistory.pitchGrid
-                    }
-
-                maybeNote =
-                    if not currentlyActive then
-                        Just
-                            { webAudioFont = Instruments.tonalWebAudioFont model.currentTonalInstrument
-                            , midi = Scales.pitchIdxToMidi position.pitchIdx (Model.scaleConfig model)
-                            , duration = 0.5
-                            , volume = 0.7
-                            }
-
-                    else
-                        Nothing
-            in
-            ( newModel, maybeNote )
-
-        _ ->
-            ( model, Nothing )
-
-
-continueDrawingPitch : PitchPos -> Model -> ( Model, Maybe NoteToPlay )
-continueDrawingPitch position model =
-    case model.drawState of
-        DrawingPitch ->
-            let
-                newModel =
-                    { model | pitchGrid = Grid.updatePitchCell position True model.pitchGrid }
-
-                maybeNote =
-                    Just
-                        { webAudioFont = Instruments.tonalWebAudioFont model.currentTonalInstrument
-                        , midi = Scales.pitchIdxToMidi position.pitchIdx (Model.scaleConfig model)
-                        , duration = 0.5
-                        , volume = 0.7
-                        }
-            in
-            ( newModel, maybeNote )
-
-        ErasingPitch ->
-            let
-                newModel =
-                    { model | pitchGrid = Grid.updatePitchCell position False model.pitchGrid }
-            in
-            ( newModel, Nothing )
-
-        _ ->
-            ( model, Nothing )
-
-
-startDrawingPerc : PercPos -> Model -> ( Model, Maybe NoteToPlay )
-startDrawingPerc position model =
-    case model.drawState of
-        NotDrawing ->
-            let
-                modelWithHistory =
-                    Model.pushToHistory model
-
-                currentlyActive =
-                    Grid.isPercCellActive position model.percGrid
-
-                newDrawState =
-                    if currentlyActive then
-                        ErasingPerc
-
-                    else
-                        DrawingPerc
-
-                newModel =
-                    { modelWithHistory
-                        | drawState = newDrawState
-                        , percGrid = Grid.updatePercCell position (not currentlyActive) modelWithHistory.percGrid
-                    }
-
-                maybeNote =
-                    if not currentlyActive then
-                        let
-                            drumConfig =
-                                Instruments.drumKitConfig model.currentDrumKit
-
-                            ( webAudioFontName, midiNote ) =
-                                case position.percType of
-                                    _ ->
-                                        if position.percType == Instruments.percKick then
-                                            ( drumConfig.kickWebAudioFont, drumConfig.kickMidi )
-
-                                        else
-                                            ( drumConfig.snareWebAudioFont, drumConfig.snareMidi )
-                        in
-                        Just
-                            { webAudioFont = webAudioFontName
-                            , midi = midiNote
-                            , duration = 0.5
-                            , volume = 0.8
-                            }
-
-                    else
-                        Nothing
-            in
-            ( newModel, maybeNote )
-
-        _ ->
-            ( model, Nothing )
-
-
-continueDrawingPerc : PercPos -> Model -> ( Model, Maybe NoteToPlay )
-continueDrawingPerc position model =
-    case model.drawState of
-        DrawingPerc ->
-            let
-                newModel =
-                    { model | percGrid = Grid.updatePercCell position True model.percGrid }
-
-                drumConfig =
-                    Instruments.drumKitConfig model.currentDrumKit
-
-                ( webAudioFontName, midiNote ) =
-                    case position.percType of
-                        _ ->
-                            if position.percType == Instruments.percKick then
-                                ( drumConfig.kickWebAudioFont, drumConfig.kickMidi )
-
-                            else
-                                ( drumConfig.snareWebAudioFont, drumConfig.snareMidi )
-
-                maybeNote =
-                    Just
-                        { webAudioFont = webAudioFontName
-                        , midi = midiNote
-                        , duration = 0.5
-                        , volume = 0.8
-                        }
-            in
-            ( newModel, maybeNote )
-
-        ErasingPerc ->
-            let
-                newModel =
-                    { model | percGrid = Grid.updatePercCell position False model.percGrid }
-            in
-            ( newModel, Nothing )
-
-        _ ->
-            ( model, Nothing )
 
 
 
