@@ -986,42 +986,35 @@ viewDrumKitOption currentDrumKit drumKit =
    TODO: Advanced Model Extraction Refactoring (IN PROGRESS)
 
    CURRENT STATUS:
-   - We have extracted one function: `startDrawingPitch : PitchPos -> Model -> (Model, Maybe NoteToPlay)`
-   - This function is NOT YET INTEGRATED into the update function
-   - We cleaned up orphan messages (PlayPitchNote, PlayPercNote) and their handlers
+   ✅ PHASE 1 - EXTRACT: All 4 functions extracted successfully
+   ✅ PHASE 2 - INTEGRATE: All functions integrated into update function with clean pattern
+   ⏳ PHASE 3 - MIGRATE: Need to move functions to Model.elm and add Model. prefixes
 
-   GOAL:
-   Extract model logic from Main.elm to achieve cleaner architecture where:
-   - Main.elm only handles Elm architecture (update orchestration, commands, ports)
-   - Model.elm handles all domain logic (Grid, Scales, Instruments interactions)
-   - Functions return (Model, Maybe NoteToPlay) pattern for command data
+   EXTRACTED FUNCTIONS:
+   ✅ startDrawingPitch : PitchPos -> Model -> (Model, Maybe NoteToPlay)
+   ✅ continueDrawingPitch : PitchPos -> Model -> (Model, Maybe NoteToPlay)
+   ✅ startDrawingPerc : PercPos -> Model -> (Model, Maybe NoteToPlay)
+   ✅ continueDrawingPerc : PercPos -> Model -> (Model, Maybe NoteToPlay)
 
-   APPROACH - 3 Step Process:
-   1. EXTRACT: Create helper functions in Main.elm that return (Model, Maybe NoteToPlay)
-   2. INTEGRATE: Update the update function to use these helpers
-   3. MIGRATE: Move all helpers to Model.elm and add Model. prefixes
-
-   REMAINING FUNCTIONS TO EXTRACT:
-   - continueDrawingPitch : PitchPos -> Model -> (Model, Maybe NoteToPlay)
-   - startDrawingPerc : PercPos -> Model -> (Model, Maybe NoteToPlay)
-   - continueDrawingPerc : PercPos -> Model -> (Model, Maybe NoteToPlay)
-
-   INTEGRATION PATTERN:
-   Replace current update cases like:
-       StartDrawingPitch position ->
-           [complex logic with playPitchCmdIf]
-
-   With clean pattern:
-       StartDrawingPitch position ->
+   INTEGRATION COMPLETE:
+   Update function now uses consistent clean pattern for all drawing operations:
+       SomeDrawingMsg position ->
            let
-               (newModel, maybeNote) = startDrawingPitch position model
+               (newModel, maybeNote) = someDrawingFunction position model
                cmd = case maybeNote of
                    Just note -> playNote note
                    Nothing -> Cmd.none
            in
            (newModel, cmd)
 
-   FINAL BENEFITS:
+   REMAINING TASKS:
+   1. Move all 4 functions from Main.elm to Model.elm
+   2. Add functions to Model.elm export list
+   3. Add Model. prefixes to function calls in Main.elm update function
+   4. Remove functions from Main.elm
+   5. Final test compilation
+
+   FINAL BENEFITS (when complete):
    - Main.elm won't import Grid, Scales, Instruments modules
    - All domain logic centralized in Model.elm
    - Pure, testable functions with clear inputs/outputs
