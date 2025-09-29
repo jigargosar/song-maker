@@ -13,6 +13,11 @@ module Grid exposing
     , updatePitchCell
     , isPercCellActive
     , updatePercCell
+    , noteDuration
+    , resizePitchGrid
+    , transposePitchGrid
+    , convertMelodyToGrid
+    , convertPercussionToGrid
     )
 
 import Instruments exposing (PercType)

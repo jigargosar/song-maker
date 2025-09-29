@@ -484,7 +484,7 @@ update msg model =
                             audioContextTime - startTime
 
                         duration =
-                            noteDuration model
+                            Grid.noteDuration (timeConfig model)
 
                         currentStep =
                             floor (elapsedTime / duration)
@@ -520,7 +520,7 @@ update msg model =
                     { modelWithHistory | scaleType = newScaleType }
 
                 newPitchGrid =
-                    resizePitchGrid modelWithHistory newModel modelWithHistory.pitchGrid
+                    Grid.resizePitchGrid (scaleConfig modelWithHistory) (scaleConfig newModel) (timeConfig newModel) modelWithHistory.pitchGrid
             in
             ( { newModel | pitchGrid = newPitchGrid }
             , Cmd.none
@@ -535,7 +535,7 @@ update msg model =
                     { modelWithHistory | rootNote = newRootNote }
 
                 newPitchGrid =
-                    transposePitchGrid modelWithHistory newModel modelWithHistory.pitchGrid
+                    Grid.transposePitchGrid (scaleConfig modelWithHistory) (scaleConfig newModel) modelWithHistory.pitchGrid
             in
             ( { newModel | pitchGrid = newPitchGrid }
             , Cmd.none
@@ -553,7 +553,7 @@ update msg model =
                     { modelWithHistory | octaveStart = clampedStart }
 
                 newPitchGrid =
-                    resizePitchGrid modelWithHistory newModel modelWithHistory.pitchGrid
+                    Grid.resizePitchGrid (scaleConfig modelWithHistory) (scaleConfig newModel) (timeConfig newModel) modelWithHistory.pitchGrid
             in
             ( { newModel | pitchGrid = newPitchGrid }
             , Cmd.none
@@ -571,7 +571,7 @@ update msg model =
                     { modelWithHistory | octaveCount = clampedCount }
 
                 newPitchGrid =
-                    resizePitchGrid modelWithHistory newModel modelWithHistory.pitchGrid
+                    Grid.resizePitchGrid (scaleConfig modelWithHistory) (scaleConfig newModel) (timeConfig newModel) modelWithHistory.pitchGrid
             in
             ( { newModel | pitchGrid = newPitchGrid }
             , Cmd.none
@@ -823,7 +823,7 @@ viewPitchCell pitchIdx pitchGrid currentStep stepIdx =
             { pitchIdx = pitchIdx, stepIdx = stepIdx }
 
         isActive =
-            isPitchCellActive position pitchGrid
+            Grid.isPitchCellActive position pitchGrid
 
         isCurrentStep =
             currentStep == Just stepIdx
@@ -886,7 +886,7 @@ viewPercCell percType percGrid currentStep stepIdx =
             { percType = percType, stepIdx = stepIdx }
 
         isActive =
-            isPercCellActive position percGrid
+            Grid.isPercCellActive position percGrid
 
         isCurrentStep =
             currentStep == Just stepIdx
@@ -993,7 +993,7 @@ getActiveNotesForStep : Int -> Model -> List NoteToPlay
 getActiveNotesForStep stepIdx model =
     let
         duration =
-            noteDuration model
+            Grid.noteDuration (timeConfig model)
 
         pitchNotes =
             times
@@ -1166,8 +1166,8 @@ twinkleSong =
 applySong : SongConfig -> Model -> Model
 applySong sc model =
     { model
-        | pitchGrid = convertMelodyToGrid sc.melody model
-        , percGrid = convertPercussionToGrid sc.percussion
+        | pitchGrid = Grid.convertMelodyToGrid sc.melody (scaleConfig model)
+        , percGrid = Grid.convertPercussionToGrid sc.percussion
         , bpm = sc.bpm
         , octaveStart = sc.octaveStart
         , octaveCount = sc.octaveCount
@@ -1177,78 +1177,12 @@ applySong sc model =
     }
 
 
-convertMelodyToGrid : List (List String) -> Model -> PitchGrid
-convertMelodyToGrid stepMelodies model =
-    stepMelodies
-        |> List.indexedMap
-            (\stepIdx noteNames ->
-                List.filterMap
-                    (\noteName ->
-                        let
-                            pitchIdx =
-                                noteNameToPitchIdx noteName model
-                        in
-                        if pitchIdx >= 0 then
-                            Just ( pitchIdx, stepIdx )
-
-                        else
-                            Nothing
-                    )
-                    noteNames
-            )
-        |> List.concat
-        |> Set.fromList
-
-
-convertPercussionToGrid : List (List PercType) -> PercGrid
-convertPercussionToGrid stepPercussion =
-    stepPercussion
-        |> List.indexedMap
-            (\stepIdx percTypes ->
-                List.map
-                    (\percType ->
-                        ( Instruments.percRowIdx percType, stepIdx )
-                    )
-                    percTypes
-            )
-        |> List.concat
-        |> Set.fromList
 
 
 
 -- Cell State Management
 
 
-isPitchCellActive : PitchPos -> PitchGrid -> Bool
-isPitchCellActive { pitchIdx, stepIdx } pitchGrid =
-    Set.member ( pitchIdx, stepIdx ) pitchGrid
-
-
-updatePitchCell : PitchPos -> Bool -> PitchGrid -> PitchGrid
-updatePitchCell { pitchIdx, stepIdx } isActive pitchGrid =
-    if isActive then
-        Set.insert ( pitchIdx, stepIdx ) pitchGrid
-
-    else
-        Set.remove ( pitchIdx, stepIdx ) pitchGrid
-
-
-isPercCellActive : PercPos -> PercGrid -> Bool
-isPercCellActive position grid =
-    Set.member (percPositionToTuple position) grid
-
-
-updatePercCell : PercPos -> Bool -> PercGrid -> PercGrid
-updatePercCell position isActive grid =
-    let
-        tuple =
-            percPositionToTuple position
-    in
-    if isActive then
-        Set.insert tuple grid
-
-    else
-        Set.remove tuple grid
 
 
 
