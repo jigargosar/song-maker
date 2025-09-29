@@ -402,7 +402,7 @@ getActiveNotesForStep stepIdx model =
 
 setBPM : Int -> Model -> Model
 setBPM newBPM model =
-    { model | bpm = max 1 newBPM }
+    { model | bpm = atLeast 1 newBPM }
 
 
 setTonalInstrument : TonalInstrument -> Model -> Model
@@ -467,7 +467,7 @@ changeOctaveStart newStart model =
             pushToHistory model
 
         clampedStart =
-            max 1 newStart
+            atLeast 1 newStart
 
         newModel =
             { modelWithHistory | octaveStart = clampedStart }
@@ -485,7 +485,7 @@ changeOctaveCount newCount model =
             pushToHistory model
 
         clampedCount =
-            max 1 newCount
+            atLeast 1 newCount
 
         newModel =
             { modelWithHistory | octaveCount = clampedCount }
