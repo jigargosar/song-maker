@@ -2,13 +2,13 @@ port module Main exposing (main)
 
 import Browser exposing (Document)
 import Browser.Navigation as Nav
-import Grid exposing (PitchPos, PitchGrid, PercPos, PercGrid, ScaleConfig, TimeConfig)
+import Grid exposing (PitchPos, PitchGrid, PercPos, PercGrid, TimeConfig)
 import Html as H exposing (Html, div, text)
 import Html.Attributes as HA exposing (class, style)
 import Html.Events as HE
 import Instruments exposing (DrumKit, PercType, TonalInstrument)
 import Json.Decode as JD
-import Scales exposing (RootNote, ScaleType)
+import Scales exposing (RootNote, ScaleType, ScaleConfig)
 import Set exposing (Set)
 import Url exposing (Url)
 import Url.Builder as UB
@@ -768,7 +768,7 @@ viewGrid model =
         gridTemplateRows =
             format "minmax($stepLabelRowMinHeight, auto) repeat($totalPitches, minmax($pitchRowMinHeight, 1fr)) repeat(2, $percRowHeight)"
                 [ ( "$stepLabelRowMinHeight", px 32 )
-                , ( "$totalPitches", String.fromInt (Grid.getTotalPitches (scaleConfig model)) )
+                , ( "$totalPitches", String.fromInt (Scales.getTotalPitches (scaleConfig model)) )
                 , ( "$pitchRowMinHeight", px 32 )
                 , ( "$percRowHeight", px 48 )
                 ]
@@ -780,7 +780,7 @@ viewGrid model =
         ]
         ([ {- Empty corner cell -} div [ class labelBgColorAndClass, class "border-b border-gray-600" ] [] ]
             ++ {- Step Labels row -} times (\stepIdx -> viewStepLabel currentStep stepIdx) totalSteps
-            ++ {- Pitch rows -} (times (\pitchIdx -> viewPitchRow model model.pitchGrid currentStep pitchIdx) (Grid.getTotalPitches (scaleConfig model)) |> List.concat)
+            ++ {- Pitch rows -} (times (\pitchIdx -> viewPitchRow model model.pitchGrid currentStep pitchIdx) (Scales.getTotalPitches (scaleConfig model)) |> List.concat)
             ++ {- Perc Snare row -} viewPercRow Instruments.percSnare totalSteps model.percGrid currentStep
             ++ {- Perc Kick row -} viewPercRow Instruments.percKick totalSteps model.percGrid currentStep
         )
@@ -810,7 +810,7 @@ viewPitchRow model pitchGrid currentStep pitchIdx =
         viewPitchLabel =
             div
                 [ class labelBgColorAndClass, class "border-[0.5px]" ]
-                [ text (Grid.pitchIdxToNoteName pitchIdx (scaleConfig model)) ]
+                [ text (Scales.pitchIdxToNoteName pitchIdx (scaleConfig model)) ]
     in
     -- TODO: Should we fix function parameters?
     viewPitchLabel :: times (\stepIdx -> viewPitchCell pitchIdx pitchGrid currentStep stepIdx) (Grid.getTotalSteps (timeConfig model))
@@ -1005,7 +1005,7 @@ getActiveNotesForStep stepIdx model =
                     if Grid.isPitchCellActive position model.pitchGrid then
                         Just
                             { webAudioFont = Instruments.tonalWebAudioFont model.currentTonalInstrument
-                            , midi = Grid.pitchIdxToMidi pitchIdx (scaleConfig model)
+                            , midi = Scales.pitchIdxToMidi pitchIdx (scaleConfig model)
                             , duration = duration
                             , volume = 0.7
                             }
@@ -1013,7 +1013,7 @@ getActiveNotesForStep stepIdx model =
                     else
                         Nothing
                 )
-                (Grid.getTotalPitches (scaleConfig model))
+                (Scales.getTotalPitches (scaleConfig model))
                 |> List.filterMap identity
 
         drumConfig =
@@ -1060,7 +1060,7 @@ playPitchCmdIf shouldPlay pitchIdx model =
     if shouldPlay then
         playNote
             { webAudioFont = Instruments.tonalWebAudioFont model.currentTonalInstrument
-            , midi = Grid.pitchIdxToMidi pitchIdx (scaleConfig model)
+            , midi = Scales.pitchIdxToMidi pitchIdx (scaleConfig model)
             , duration = 0.5
             , volume = 0.7
             }

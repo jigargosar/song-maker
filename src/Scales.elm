@@ -1,17 +1,25 @@
 module Scales exposing
     ( RootNote
     , ScaleType
+    , ScaleConfig
     , allRootNotes
     , allScales
     , chromaticNoteNames
     , getRootNoteOffset
     , getScalePattern
+    , getTotalPitches
     , major
+    , midiToPitchIdx
+    , noteNameToPitchIdx
     , notesPerOctave
     , parseRootNote
     , parseScaleType
+    , pitchIdxToMidi
+    , pitchIdxToNoteName
+    , pitchIdxToScaleDegree
     , root
     , rootNoteToString
+    , scaleDegreeToPitchIdx
     , scaleLabel
     )
 
@@ -230,3 +238,152 @@ parseRootNote str =
 
         _ ->
             C
+
+
+-- Scale Configuration
+
+
+type alias ScaleConfig =
+    { scaleType : ScaleType
+    , rootNote : RootNote
+    , octaveStart : Int
+    , octaveCount : Int
+    }
+
+
+-- Scale-based Calculations
+
+
+getTotalPitches : ScaleConfig -> Int
+getTotalPitches config =
+    notesPerOctave config.scaleType * config.octaveCount
+
+
+pitchIdxToMidi : Int -> ScaleConfig -> Int
+pitchIdxToMidi pitchIdx config =
+    let
+        scalePattern =
+            getScalePattern config.scaleType
+
+        rootOffset =
+            getRootNoteOffset config.rootNote
+
+        notesInScale =
+            notesPerOctave config.scaleType
+
+        octaveIdx =
+            pitchIdx // notesInScale
+
+        noteIdx =
+            modBy notesInScale pitchIdx
+
+        octave =
+            config.octaveStart + octaveIdx
+
+        semitone =
+            Maybe.withDefault 0 (List.drop noteIdx scalePattern |> List.head)
+
+        baseC0 =
+            12
+
+        midiC4 =
+            60
+    in
+    if octaveIdx < config.octaveCount then
+        baseC0 + (octave * 12) + rootOffset + semitone
+
+    else
+        midiC4
+
+
+pitchIdxToNoteName : Int -> ScaleConfig -> String
+pitchIdxToNoteName pitchIdx config =
+    let
+        scalePattern =
+            getScalePattern config.scaleType
+
+        rootOffset =
+            getRootNoteOffset config.rootNote
+
+        notesInScale =
+            notesPerOctave config.scaleType
+
+        octaveIdx =
+            pitchIdx // notesInScale
+
+        noteIdx =
+            modBy notesInScale pitchIdx
+
+        octave =
+            config.octaveStart + octaveIdx
+
+        semitone =
+            Maybe.withDefault 0 (List.drop noteIdx scalePattern |> List.head)
+
+        chromaticIndex =
+            modBy 12 (rootOffset + semitone)
+
+        noteName =
+            Maybe.withDefault "?" (List.drop chromaticIndex chromaticNoteNames |> List.head)
+    in
+    if octaveIdx < config.octaveCount then
+        noteName ++ String.fromInt octave
+
+    else
+        "C4"
+
+
+midiToPitchIdx : Int -> ScaleConfig -> Maybe Int
+midiToPitchIdx targetMidi config =
+    let
+        totalPitches =
+            getTotalPitches config
+    in
+    List.range 0 (totalPitches - 1)
+        |> List.filter (\pitchIdx -> pitchIdxToMidi pitchIdx config == targetMidi)
+        |> List.head
+
+
+noteNameToPitchIdx : String -> ScaleConfig -> Maybe Int
+noteNameToPitchIdx noteName config =
+    let
+        totalPitches =
+            getTotalPitches config
+    in
+    List.range 0 (totalPitches - 1)
+        |> List.filter (\pitchIdx -> pitchIdxToNoteName pitchIdx config == noteName)
+        |> List.head
+
+
+pitchIdxToScaleDegree : Int -> ScaleConfig -> { scaleDegree : Int, octave : Int }
+pitchIdxToScaleDegree pitchIdx config =
+    let
+        notesInScale =
+            notesPerOctave config.scaleType
+
+        octaveIdx =
+            pitchIdx // notesInScale
+
+        noteIdx =
+            modBy notesInScale pitchIdx
+
+        absoluteOctave =
+            config.octaveStart + octaveIdx
+    in
+    { scaleDegree = noteIdx, octave = absoluteOctave }
+
+
+scaleDegreeToPitchIdx : { scaleDegree : Int, octave : Int } -> ScaleConfig -> Maybe Int
+scaleDegreeToPitchIdx { scaleDegree, octave } config =
+    let
+        notesInScale =
+            notesPerOctave config.scaleType
+
+        octaveIdx =
+            octave - config.octaveStart
+    in
+    if octaveIdx >= 0 && octaveIdx < config.octaveCount && scaleDegree >= 0 && scaleDegree < notesInScale then
+        Just (octaveIdx * notesInScale + scaleDegree)
+
+    else
+        Nothing
