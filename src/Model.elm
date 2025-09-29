@@ -1,4 +1,21 @@
-module Model exposing (..)
+module Model exposing
+    ( Flags
+    , PlayState(..)
+    , DrawState(..)
+    , HistoryState
+    , Model
+    , QueryParams
+    , SongConfig
+    , NoteToPlay
+    , init
+    , pushToHistory
+    , getActiveNotesForStep
+    , timeConfig
+    , scaleConfig
+    , applyQueryParams
+    , buildQuery
+    , getCurrentPlayingStep
+    )
 
 import Browser.Navigation as Nav
 import Grid exposing (PercGrid, PercPos, PitchGrid, PitchPos)
