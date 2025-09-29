@@ -1,20 +1,20 @@
 module Model exposing
-    ( Flags
-    , PlayState(..)
-    , DrawState(..)
+    ( DrawState(..)
+    , Flags
     , HistoryState
     , Model
+    , NoteToPlay
+    , PlayState(..)
     , QueryParams
     , SongConfig
-    , NoteToPlay
-    , init
-    , pushToHistory
-    , getActiveNotesForStep
-    , timeConfig
-    , scaleConfig
     , applyQueryParams
     , buildQuery
+    , getActiveNotesForStep
     , getCurrentPlayingStep
+    , init
+    , pushToHistory
+    , scaleConfig
+    , timeConfig
     )
 
 import Browser.Navigation as Nav
@@ -184,7 +184,7 @@ applyQueryDefaults model =
 
 applyQueryParams : Url -> Model -> Model
 applyQueryParams url model =
-    case parseQueryParams url of
+    case parseQueryParams url |> Debug.log "parseQueryParams" of
         Just params ->
             { model
                 | bpm = Maybe.withDefault model.bpm params.bpm
