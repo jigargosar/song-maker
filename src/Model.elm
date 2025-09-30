@@ -1,9 +1,9 @@
 module Model exposing
-    ( DrawState(..)
+    ( DrawState
     , Flags
     , Model
     , NoteToPlay
-    , PlayState(..)
+    , PlayState
     , ViewModel
     , buildQuery
     , changeBars
