@@ -208,34 +208,34 @@ view model =
     { title = "SM"
     , body =
         [ div [ class "h-screen bg-gray-900 text-white flex flex-col select-none" ]
-            [ viewHeader vm model
-            , centerView vm model
-            , footerView vm model
+            [ viewHeader vm
+            , centerView vm
+            , footerView vm
             ]
         ]
     }
 
 
-viewHeader : ViewModel -> Model -> Html Msg
-viewHeader vm model =
+viewHeader : ViewModel -> Html Msg
+viewHeader vm =
     div [ class "bg-gray-800 z-20 shadow-2xl border-b border-gray-950 px-6 py-4" ]
         [ div [ class "flex flex-wrap items-center justify-between" ]
             [ div [ class "flex flex-wrap items-center gap-6" ]
                 [ div [ class "text-2xl font-bold text-white" ] [ text "Song Maker V2" ]
-                , viewScaleControls vm model
+                , viewScaleControls vm
                 , viewSequenceControls vm
                 ]
             ]
         ]
 
 
-centerView : ViewModel -> Model -> Html Msg
-centerView vm model =
-    div [ class "flex-1 overflow-auto" ] [ viewGrid vm model ]
+centerView : ViewModel -> Html Msg
+centerView vm =
+    div [ class "flex-1 overflow-auto" ] [ viewGrid vm ]
 
 
-viewGrid : ViewModel -> Model -> Html Msg
-viewGrid vm model =
+viewGrid : ViewModel -> Html Msg
+viewGrid vm =
     let
         gridTemplateCols =
             format "minmax($pitchLabelColMinWidth, auto) repeat($totalSteps, minmax($stepColMinWidth, 1fr))"
@@ -259,7 +259,7 @@ viewGrid vm model =
         ]
         ([ {- Empty corner cell -} div [ class labelBgColorAndClass, class "border-b border-gray-600" ] [] ]
             ++ {- Step Labels row -} times (\stepIdx -> viewStepLabel stepIdx (vm.isStepCurrentlyPlaying stepIdx)) vm.totalSteps
-            ++ {- Pitch rows -} (times (viewPitchRow vm model) vm.totalPitches |> List.concat)
+            ++ {- Pitch rows -} (times (viewPitchRow vm) vm.totalPitches |> List.concat)
             ++ {- Perc Snare row -} viewPercRow vm Instruments.percSnare
             ++ {- Perc Kick row -} viewPercRow vm Instruments.percKick
         )
@@ -280,8 +280,8 @@ viewStepLabel stepIdx isPlaying =
         [ text (String.fromInt (stepIdx + 1)) ]
 
 
-viewPitchRow : ViewModel -> Model -> Int -> List (Html Msg)
-viewPitchRow vm model pitchIdx =
+viewPitchRow : ViewModel -> Int -> List (Html Msg)
+viewPitchRow vm pitchIdx =
     let
         viewPitchLabel =
             div
@@ -408,8 +408,8 @@ viewPercCell vm percType stepIdx =
         [ symbol ]
 
 
-footerView : ViewModel -> Model -> Html Msg
-footerView vm model =
+footerView : ViewModel -> Html Msg
+footerView vm =
     div [ class "bg-gray-800 border-t border-gray-700 px-6 py-3" ]
         [ div [ class "flex items-center gap-6" ]
             [ viewPlayStopButton vm
@@ -552,8 +552,8 @@ pitchCellColor pitchIdx =
             "bg-[oklch(60%_0.02_0)] hover:bg-[oklch(64%_0.05_0)] transition-colors"
 
 
-viewScaleControls : ViewModel -> Model -> Html Msg
-viewScaleControls vm model =
+viewScaleControls : ViewModel -> Html Msg
+viewScaleControls vm =
     div [ class "flex items-center gap-4" ]
         [ viewControlGroup "Scale" (viewScaleTypeSelector vm)
         , viewControlGroup "Root" (viewRootNoteSelector vm)
