@@ -15,6 +15,7 @@ module Model exposing
     , getCurrentPlayingStep
     , init
     , loadFromUrl
+    , onTimeSync
     , pushToHistory
     , redo
     , scaleConfig
@@ -700,3 +701,54 @@ continueDrawingPerc position model =
 
         _ ->
             ( model, Nothing )
+
+
+onTimeSync : Float -> Model -> ( Model, List NoteToPlay )
+onTimeSync audioContextTime model =
+    let
+        updatedModel =
+            { model | audioContextTime = audioContextTime }
+    in
+    case model.playState of
+        PlayingStarted { startTime } ->
+            let
+                stepToSchedule =
+                    0
+
+                activeNotes =
+                    getActiveNotesForStep stepToSchedule updatedModel
+
+                newPlayState =
+                    Playing { startTime = startTime, nextStep = 1 }
+            in
+            ( { updatedModel | playState = newPlayState }, activeNotes )
+
+        Playing { startTime, nextStep } ->
+            let
+                elapsedTime =
+                    audioContextTime - startTime
+
+                duration =
+                    Timing.noteDuration (timeConfig model)
+
+                currentStep =
+                    floor (elapsedTime / duration)
+            in
+            if currentStep >= nextStep then
+                let
+                    stepToSchedule =
+                        modBy (Timing.getTotalSteps (timeConfig model)) nextStep
+
+                    activeNotes =
+                        getActiveNotesForStep stepToSchedule updatedModel
+
+                    newPlayState =
+                        Playing { startTime = startTime, nextStep = nextStep + 1 }
+                in
+                ( { updatedModel | playState = newPlayState }, activeNotes )
+
+            else
+                ( updatedModel, [] )
+
+        Stopped ->
+            ( updatedModel, [] )

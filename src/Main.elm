@@ -133,58 +133,13 @@ update msg model =
 
         TimeSync audioContextTime ->
             let
-                updatedModel =
-                    { model | audioContextTime = audioContextTime }
+                ( newModel, notesToPlay ) =
+                    Model.onTimeSync audioContextTime model
+
+                playCommands =
+                    List.map playNote notesToPlay |> Cmd.batch
             in
-            case model.playState of
-                PlayingStarted { startTime } ->
-                    let
-                        stepToSchedule =
-                            0
-
-                        activeNotes =
-                            Model.getActiveNotesForStep stepToSchedule updatedModel
-
-                        playCommands =
-                            List.map playNote activeNotes |> Cmd.batch
-
-                        newPlayState =
-                            Playing { startTime = startTime, nextStep = 1 }
-                    in
-                    ( { updatedModel | playState = newPlayState }, playCommands )
-
-                Playing { startTime, nextStep } ->
-                    let
-                        elapsedTime =
-                            audioContextTime - startTime
-
-                        duration =
-                            Timing.noteDuration (Model.timeConfig model)
-
-                        currentStep =
-                            floor (elapsedTime / duration)
-                    in
-                    if currentStep >= nextStep then
-                        let
-                            stepToSchedule =
-                                modBy (Timing.getTotalSteps (Model.timeConfig model)) nextStep
-
-                            activeNotes =
-                                Model.getActiveNotesForStep stepToSchedule updatedModel
-
-                            playCommands =
-                                List.map playNote activeNotes |> Cmd.batch
-
-                            newPlayState =
-                                Playing { startTime = startTime, nextStep = nextStep + 1 }
-                        in
-                        ( { updatedModel | playState = newPlayState }, playCommands )
-
-                    else
-                        ( updatedModel, Cmd.none )
-
-                Stopped ->
-                    ( updatedModel, Cmd.none )
+            ( newModel, playCommands )
 
         ChangeScaleType newScaleType ->
             ( Model.changeScaleType newScaleType model, Cmd.none )
