@@ -716,3 +716,63 @@ viewDrumKitOption currentDrumKit drumKit =
         , HA.selected (currentDrumKit == drumKit)
         ]
         [ text (Instruments.drumKitLabel drumKit) ]
+
+
+{-
+## ViewModel Migration Strategy & Current State
+
+### Goal & Why We're Pursuing It
+**Goal**: Eliminate all direct model access from view functions to create a clean separation between model structure and view requirements.
+
+**Why**:
+- **Encapsulation**: Views shouldn't depend on internal model structure
+- **Performance**: Pre-compute expensive operations once instead of repeatedly
+- **View-optimized data**: Serve data in the format views actually need (e.g., `canUndo : Bool` instead of `List.isEmpty model.undoStack`)
+- **Future flexibility**: Can change model structure without breaking views
+- **Cleaner code**: Views focus on presentation, not data manipulation
+
+### What We've Learned
+1. **Model access isn't just `model.field`** - `Model.helperFunction model` calls are also model dependencies that need extraction
+2. **Trace to destination** - We must follow data flow to see how values are actually used in views
+3. **Missed patterns** - We found duplicate logic like `currentStep == Just stepIdx` that was essentially re-implementing `vm.isStepCurrentlyPlaying`
+4. **View-optimized data** - ViewModel should serve how views consume data, not how model stores it
+
+### Current ViewModel Pattern
+```elm
+type alias ViewModel =
+    { -- Computed constants (Model-dependent)
+      totalSteps : Int
+    , totalPitches : Int
+
+    -- Simple computed props
+    , canUndo : Bool
+    , canRedo : Bool
+
+    -- Helper functions (Model-dependent logic)
+    , isStepCurrentlyPlaying : Int -> Bool
+    , isPitchCellActive : PitchPos -> Bool
+    , isPercCellActive : PercPos -> Bool
+
+    -- Direct fields (last resort)
+    -- (none yet - still have model access in views)
+    }
+```
+
+### Migration Priority Order
+1. **First: Extract `Model.*` calls** - Functions like `Model.scaleConfig model`, `Model.getCurrentPlayingStep model`
+2. **Second: Trace destinations** - Follow where these values flow to understand usage patterns
+3. **Third: Create helpers** - For selection logic, formatting, complex computations
+4. **Last resort: Direct fields** - For simple field access like `model.bpm`
+
+### Next Steps
+1. **Comprehensive audit** - Find ALL `Model.` and `model.` usage in Main.elm
+2. **Categorize patterns** - Group by usage type (selection, computation, formatting, etc.)
+3. **Plan extraction** - Design ViewModel additions based on actual usage patterns
+4. **Incremental migration** - One view function at a time
+5. **Goal: Zero model access** - Views only use ViewModel interface
+
+### Key Insight
+**ViewModel design should be driven by view consumption patterns, not model structure.**
+The facade pattern creates a view-specific API that optimizes for how views actually use data,
+not how the model happens to store it.
+-}
