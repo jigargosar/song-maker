@@ -812,6 +812,10 @@ type alias ViewModel =
     , isStepCurrentlyPlaying : Int -> Bool
     , isPitchCellActive : PitchPos -> Bool
     , isPercCellActive : PercPos -> Bool
+    , isScaleSelected : ScaleType -> Bool
+    , isRootNoteSelected : RootNote -> Bool
+    , isTonalInstrumentSelected : TonalInstrument -> Bool
+    , isDrumKitSelected : DrumKit -> Bool
     }
 
 
@@ -832,4 +836,8 @@ toVm model =
     , isStepCurrentlyPlaying = \stepIdx -> maybePlayingStepIdx == Just stepIdx
     , isPitchCellActive = \position -> Grid.isPitchCellActive position model.pitchGrid
     , isPercCellActive = \position -> Grid.isPercCellActive position model.percGrid
+    , isScaleSelected = \scale -> model.scaleType == scale
+    , isRootNoteSelected = \rootNote -> model.rootNote == rootNote
+    , isTonalInstrumentSelected = \instrument -> model.currentTonalInstrument == instrument
+    , isDrumKitSelected = \drumKit -> model.currentDrumKit == drumKit
     }
