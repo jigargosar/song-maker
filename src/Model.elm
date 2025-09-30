@@ -4,6 +4,7 @@ module Model exposing
     , Model
     , NoteToPlay
     , PlayState(..)
+    , ViewModel
     , buildQuery
     , changeBars
     , changeBeatsPerBar
@@ -32,6 +33,7 @@ module Model exposing
     , stop
     , stopDrawing
     , timeConfig
+    , toVm
     , undo
     )
 
@@ -796,3 +798,25 @@ getSaveAction model =
 
     else
         Just ( model.key, query )
+
+
+
+-- ViewModel
+
+
+type alias ViewModel a =
+    { mapSteps : ({ idx : Int, isPlaying : Bool } -> a) -> List a
+    }
+
+
+toVm : Model -> ViewModel a
+toVm model =
+    let
+        totalSteps =
+            Timing.getTotalSteps (timeConfig model)
+
+        maybePlayingStepIdx =
+            getCurrentPlayingStep model
+    in
+    { mapSteps = \fn -> times (\idx -> fn { idx = idx, isPlaying = maybePlayingStepIdx == Just idx }) totalSteps
+    }

@@ -8,7 +8,7 @@ import Html.Attributes as HA exposing (class, style)
 import Html.Events as HE
 import Instruments exposing (DrumKit, PercType, TonalInstrument)
 import Json.Decode as JD
-import Model exposing (DrawState(..), Flags, Model, NoteToPlay, PlayState(..))
+import Model exposing (DrawState(..), Flags, Model, NoteToPlay, PlayState(..), ViewModel)
 import Scales exposing (RootNote, ScaleConfig, ScaleType)
 import Timing exposing (TimeConfig)
 import Url exposing (Url)
@@ -200,37 +200,17 @@ update msg model =
 -- View
 
 
-type alias ViewModel a =
-    { mapTonalInstruments : ({ label : String, selected : Bool } -> a) -> List a
-    }
-
-
-toVm : Model -> ViewModel a
-toVm model =
-    { mapTonalInstruments =
-        \fn ->
-            Instruments.allTonal
-                |> List.map
-                    (\instrument ->
-                        fn
-                            { label = Instruments.tonalLabel instrument
-                            , selected = model.currentTonalInstrument == instrument
-                            }
-                    )
-    }
-
-
 view : Model -> Document Msg
 view model =
     let
         vm =
-            toVm model
+            Model.toVm model
     in
     { title = "SM"
     , body =
         [ div [ class "h-screen bg-gray-900 text-white flex flex-col select-none" ]
             [ viewHeader model
-            , centerView model
+            , centerView vm model
             , footerView model
             ]
         ]
@@ -250,13 +230,13 @@ viewHeader model =
         ]
 
 
-centerView : Model -> Html Msg
-centerView model =
-    div [ class "flex-1 overflow-auto" ] [ viewGrid model ]
+centerView : ViewModel (Html Msg) -> Model -> Html Msg
+centerView vm model =
+    div [ class "flex-1 overflow-auto" ] [ viewGrid vm model ]
 
 
-viewGrid : Model -> Html Msg
-viewGrid model =
+viewGrid : ViewModel (Html Msg) -> Model -> Html Msg
+viewGrid vm model =
     let
         currentStep =
             Model.getCurrentPlayingStep model
@@ -285,21 +265,22 @@ viewGrid model =
         , style "grid-template-rows" gridTemplateRows
         ]
         ([ {- Empty corner cell -} div [ class labelBgColorAndClass, class "border-b border-gray-600" ] [] ]
-            ++ {- Step Labels row -} times (\stepIdx -> viewStepLabel currentStep stepIdx) totalSteps
-            ++ {- Pitch rows -} (times (\pitchIdx -> viewPitchRow model model.pitchGrid currentStep pitchIdx) (Scales.getTotalPitches (Model.scaleConfig model)) |> List.concat)
+            ++ {- Step Labels row -} vm.mapSteps viewStepLabel
+            ++ {- Pitch rows -}
+               (times (\pitchIdx -> viewPitchRow model model.pitchGrid currentStep pitchIdx)
+                    (Scales.getTotalPitches (Model.scaleConfig model))
+                    |> List.concat
+               )
             ++ {- Perc Snare row -} viewPercRow Instruments.percSnare totalSteps model.percGrid currentStep
             ++ {- Perc Kick row -} viewPercRow Instruments.percKick totalSteps model.percGrid currentStep
         )
 
 
-viewStepLabel : Maybe Int -> Int -> Html Msg
-viewStepLabel currentStep stepIdx =
+viewStepLabel : { idx : Int, isPlaying : Bool } -> Html Msg
+viewStepLabel { idx, isPlaying } =
     let
-        isCurrentStep =
-            currentStep == Just stepIdx
-
         bgClass =
-            if isCurrentStep then
+            if isPlaying then
                 accentBgColor
 
             else
@@ -307,7 +288,7 @@ viewStepLabel currentStep stepIdx =
     in
     div
         [ class labelClass, class bgClass, class "border-b border-gray-600" ]
-        [ text (String.fromInt (stepIdx + 1)) ]
+        [ text (String.fromInt (idx + 1)) ]
 
 
 viewPitchRow : Model -> PitchGrid -> Maybe Int -> Int -> List (Html Msg)
