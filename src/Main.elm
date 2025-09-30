@@ -163,31 +163,13 @@ update msg model =
             ( Model.setDrumKit newDrumKit model, Cmd.none )
 
         ChangeBars bars ->
-            let
-                modelWithHistory =
-                    Model.pushToHistory model
-            in
-            ( { modelWithHistory | bars = atLeast 1 bars }
-            , Cmd.none
-            )
+            ( Model.changeBars bars model, Cmd.none )
 
         ChangeBeatsPerBar newBeatsPerBar ->
-            let
-                modelWithHistory =
-                    Model.pushToHistory model
-            in
-            ( { modelWithHistory | beatsPerBar = atLeast 1 newBeatsPerBar }
-            , Cmd.none
-            )
+            ( Model.changeBeatsPerBar newBeatsPerBar model, Cmd.none )
 
         ChangeSubdivisions subDivisions ->
-            let
-                modelWithHistory =
-                    Model.pushToHistory model
-            in
-            ( { modelWithHistory | subdivisions = atLeast 1 subDivisions }
-            , Cmd.none
-            )
+            ( Model.changeSubdivisions subDivisions model, Cmd.none )
 
         Undo ->
             ( Model.undo model, Cmd.none )

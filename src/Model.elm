@@ -5,10 +5,13 @@ module Model exposing
     , NoteToPlay
     , PlayState(..)
     , buildQuery
+    , changeBars
+    , changeBeatsPerBar
     , changeOctaveCount
     , changeOctaveStart
     , changeRootNote
     , changeScaleType
+    , changeSubdivisions
     , continueDrawingPerc
     , continueDrawingPitch
     , getActiveNotesForStep
@@ -752,3 +755,30 @@ onTimeSync audioContextTime model =
 
         Stopped ->
             ( updatedModel, [] )
+
+
+changeBars : Int -> Model -> Model
+changeBars newBars model =
+    let
+        modelWithHistory =
+            pushToHistory model
+    in
+    { modelWithHistory | bars = atLeast 1 newBars }
+
+
+changeBeatsPerBar : Int -> Model -> Model
+changeBeatsPerBar newBeatsPerBar model =
+    let
+        modelWithHistory =
+            pushToHistory model
+    in
+    { modelWithHistory | beatsPerBar = atLeast 1 newBeatsPerBar }
+
+
+changeSubdivisions : Int -> Model -> Model
+changeSubdivisions newSubdivisions model =
+    let
+        modelWithHistory =
+            pushToHistory model
+    in
+    { modelWithHistory | subdivisions = atLeast 1 newSubdivisions }
