@@ -811,6 +811,7 @@ type alias ViewModel =
     , canRedo : Bool
     , isStepCurrentlyPlaying : Int -> Bool
     , isPitchCellActive : PitchPos -> Bool
+    , isPercCellActive : PercPos -> Bool
     }
 
 
@@ -830,4 +831,5 @@ toVm model =
     , canRedo = not (List.isEmpty model.redoStack)
     , isStepCurrentlyPlaying = \stepIdx -> maybePlayingStepIdx == Just stepIdx
     , isPitchCellActive = \position -> Grid.isPitchCellActive position model.pitchGrid
+    , isPercCellActive = \position -> Grid.isPercCellActive position model.percGrid
     }

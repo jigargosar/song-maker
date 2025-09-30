@@ -238,9 +238,6 @@ centerView vm model =
 viewGrid : ViewModel -> Model -> Html Msg
 viewGrid vm model =
     let
-        currentStep =
-            Model.getCurrentPlayingStep model
-
         gridTemplateCols =
             format "minmax($pitchLabelColMinWidth, auto) repeat($totalSteps, minmax($stepColMinWidth, 1fr))"
                 [ ( "$pitchLabelColMinWidth", px 48 )
@@ -263,9 +260,9 @@ viewGrid vm model =
         ]
         ([ {- Empty corner cell -} div [ class labelBgColorAndClass, class "border-b border-gray-600" ] [] ]
             ++ {- Step Labels row -} times (\stepIdx -> viewStepLabel stepIdx (vm.isStepCurrentlyPlaying stepIdx)) vm.totalSteps
-            ++ {- Pitch rows -} (times (viewPitchRow vm model currentStep) vm.totalPitches |> List.concat)
-            ++ {- Perc Snare row -} viewPercRow Instruments.percSnare vm.totalSteps model.percGrid currentStep
-            ++ {- Perc Kick row -} viewPercRow Instruments.percKick vm.totalSteps model.percGrid currentStep
+            ++ {- Pitch rows -} (times (viewPitchRow vm model) vm.totalPitches |> List.concat)
+            ++ {- Perc Snare row -} viewPercRow vm Instruments.percSnare
+            ++ {- Perc Kick row -} viewPercRow vm Instruments.percKick
         )
 
 
@@ -284,19 +281,19 @@ viewStepLabel stepIdx isPlaying =
         [ text (String.fromInt (stepIdx + 1)) ]
 
 
-viewPitchRow : ViewModel -> Model -> Maybe Int -> Int -> List (Html Msg)
-viewPitchRow vm model currentStep pitchIdx =
+viewPitchRow : ViewModel -> Model -> Int -> List (Html Msg)
+viewPitchRow vm model pitchIdx =
     let
         viewPitchLabel =
             div
                 [ class labelBgColorAndClass, class "border-[0.5px]" ]
                 [ text (Scales.pitchIdxToNoteName pitchIdx (Model.scaleConfig model)) ]
     in
-    viewPitchLabel :: times (\stepIdx -> viewPitchCell vm pitchIdx currentStep stepIdx) vm.totalSteps
+    viewPitchLabel :: times (\stepIdx -> viewPitchCell vm pitchIdx stepIdx) vm.totalSteps
 
 
-viewPitchCell : ViewModel -> Int -> Maybe Int -> Int -> Html Msg
-viewPitchCell vm pitchIdx currentStep stepIdx =
+viewPitchCell : ViewModel -> Int -> Int -> Html Msg
+viewPitchCell vm pitchIdx stepIdx =
     let
         position =
             { pitchIdx = pitchIdx, stepIdx = stepIdx }
@@ -305,7 +302,7 @@ viewPitchCell vm pitchIdx currentStep stepIdx =
             vm.isPitchCellActive position
 
         isCurrentStep =
-            currentStep == Just stepIdx
+            vm.isStepCurrentlyPlaying stepIdx
 
         -- TODO: try refactor
         noteClass =
@@ -339,8 +336,8 @@ viewPitchCell vm pitchIdx currentStep stepIdx =
         []
 
 
-viewPercRow : PercType -> Int -> PercGrid -> Maybe Int -> List (Html Msg)
-viewPercRow percType totalSteps percGrid currentStep =
+viewPercRow : ViewModel -> PercType -> List (Html Msg)
+viewPercRow vm percType =
     let
         percTypeName =
             Instruments.percLabel percType
@@ -355,20 +352,20 @@ viewPercRow percType totalSteps percGrid currentStep =
                         "sticky bottom-0 h-12 z-10"
     in
     div [ class labelBgColorAndClass, class stickyClass ] [ text percTypeName ]
-        :: times (\stepIdx -> viewPercCell percType percGrid currentStep stepIdx) totalSteps
+        :: times (\stepIdx -> viewPercCell vm percType stepIdx) vm.totalSteps
 
 
-viewPercCell : PercType -> PercGrid -> Maybe Int -> Int -> Html Msg
-viewPercCell percType percGrid currentStep stepIdx =
+viewPercCell : ViewModel -> PercType -> Int -> Html Msg
+viewPercCell vm percType stepIdx =
     let
         position =
             { percType = percType, stepIdx = stepIdx }
 
         isActive =
-            Grid.isPercCellActive position percGrid
+            vm.isPercCellActive position
 
         isCurrentStep =
-            currentStep == Just stepIdx
+            vm.isStepCurrentlyPlaying stepIdx
 
         symbol =
             viewPercSymbol isActive percType
