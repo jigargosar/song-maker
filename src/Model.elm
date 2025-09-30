@@ -807,6 +807,8 @@ getSaveAction model =
 type alias ViewModel a =
     { mapSteps : ({ idx : Int, isPlaying : Bool } -> a) -> List a
     , totalSteps : Int
+    , canUndo : Bool
+    , canRedo : Bool
     }
 
 
@@ -822,4 +824,6 @@ toVm model =
     in
     { mapSteps = \fn -> times (\idx -> fn { idx = idx, isPlaying = maybePlayingStepIdx == Just idx }) totalSteps
     , totalSteps = totalSteps
+    , canUndo = not (List.isEmpty model.undoStack)
+    , canRedo = not (List.isEmpty model.redoStack)
     }

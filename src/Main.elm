@@ -211,7 +211,7 @@ view model =
         [ div [ class "h-screen bg-gray-900 text-white flex flex-col select-none" ]
             [ viewHeader model
             , centerView vm model
-            , footerView model
+            , footerView vm model
             ]
         ]
     }
@@ -417,8 +417,8 @@ viewPercCell percType percGrid currentStep stepIdx =
         [ symbol ]
 
 
-footerView : Model -> Html Msg
-footerView model =
+footerView : ViewModel (Html Msg) -> Model -> Html Msg
+footerView vm model =
     div [ class "bg-gray-800 border-t border-gray-700 px-6 py-3" ]
         [ div [ class "flex items-center gap-6" ]
             [ viewPlayStopButton model.playState
@@ -431,13 +431,13 @@ footerView model =
             , H.button
                 [ class "bg-gray-700 text-white px-3 py-1 rounded disabled:opacity-50"
                 , HE.onClick Undo
-                , HA.disabled (List.isEmpty model.undoStack)
+                , HA.disabled (not vm.canUndo)
                 ]
                 [ text "↶ Undo" ]
             , H.button
                 [ class "bg-gray-700 text-white px-3 py-1 rounded disabled:opacity-50"
                 , HE.onClick Redo
-                , HA.disabled (List.isEmpty model.redoStack)
+                , HA.disabled (not vm.canRedo)
                 ]
                 [ text "↷ Redo" ]
             , H.button
