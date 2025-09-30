@@ -286,7 +286,7 @@ viewPitchRow vm model pitchIdx =
         viewPitchLabel =
             div
                 [ class labelBgColorAndClass, class "border-[0.5px]" ]
-                [ text (Scales.pitchIdxToNoteName pitchIdx (Model.scaleConfig model)) ]
+                [ text (vm.pitchIdxToNoteName pitchIdx) ]
     in
     viewPitchLabel :: times (\stepIdx -> viewPitchCell vm pitchIdx stepIdx) vm.totalSteps
 

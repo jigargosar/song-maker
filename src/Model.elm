@@ -817,6 +817,7 @@ type alias ViewModel =
     , isRootNoteSelected : RootNote -> Bool
     , isTonalInstrumentSelected : TonalInstrument -> Bool
     , isDrumKitSelected : DrumKit -> Bool
+    , pitchIdxToNoteName : Int -> String
     }
 
 
@@ -842,4 +843,5 @@ toVm model =
     , isRootNoteSelected = \rootNote -> model.rootNote == rootNote
     , isTonalInstrumentSelected = \instrument -> model.currentTonalInstrument == instrument
     , isDrumKitSelected = \drumKit -> model.currentDrumKit == drumKit
+    , pitchIdxToNoteName = \pitchIdx -> Scales.pitchIdxToNoteName pitchIdx (scaleConfig model)
     }
