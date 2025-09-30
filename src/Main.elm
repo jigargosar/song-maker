@@ -126,7 +126,7 @@ update msg model =
             ( newModel, playMaybeNote maybeNote )
 
         Play ->
-            ( Model.play model, Cmd.none )
+            ( Model.startPlaying model, Cmd.none )
 
         Stop ->
             ( Model.stop model, Cmd.none )
