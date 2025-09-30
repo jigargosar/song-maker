@@ -809,6 +809,7 @@ type alias ViewModel =
     , totalPitches : Int
     , canUndo : Bool
     , canRedo : Bool
+    , isPlaying : Bool
     , isStepCurrentlyPlaying : Int -> Bool
     , isPitchCellActive : PitchPos -> Bool
     , isPercCellActive : PercPos -> Bool
@@ -833,6 +834,7 @@ toVm model =
     , totalPitches = Scales.getTotalPitches (scaleConfig model)
     , canUndo = not (List.isEmpty model.undoStack)
     , canRedo = not (List.isEmpty model.redoStack)
+    , isPlaying = model.playState /= Stopped
     , isStepCurrentlyPlaying = \stepIdx -> maybePlayingStepIdx == Just stepIdx
     , isPitchCellActive = \position -> Grid.isPitchCellActive position model.pitchGrid
     , isPercCellActive = \position -> Grid.isPercCellActive position model.percGrid
