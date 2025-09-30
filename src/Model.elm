@@ -806,6 +806,7 @@ getSaveAction model =
 
 type alias ViewModel =
     { totalSteps : Int
+    , totalPitches : Int
     , canUndo : Bool
     , canRedo : Bool
     , isStepCurrentlyPlaying : Int -> Bool
@@ -823,6 +824,7 @@ toVm model =
             getCurrentPlayingStep model
     in
     { totalSteps = totalSteps
+    , totalPitches = Scales.getTotalPitches (scaleConfig model)
     , canUndo = not (List.isEmpty model.undoStack)
     , canRedo = not (List.isEmpty model.redoStack)
     , isStepCurrentlyPlaying = \stepIdx -> maybePlayingStepIdx == Just stepIdx
