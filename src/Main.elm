@@ -200,8 +200,23 @@ update msg model =
 -- View
 
 
+type alias ViewModel =
+    {
+    }
+
+
+toVm : Model -> ViewModel
+toVm model =
+    {
+    }
+
+
 view : Model -> Document Msg
 view model =
+    let
+        vm =
+            toVm model
+    in
     { title = "SM"
     , body =
         [ div [ class "h-screen bg-gray-900 text-white flex flex-col select-none" ]
