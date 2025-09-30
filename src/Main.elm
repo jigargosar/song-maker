@@ -230,12 +230,12 @@ viewHeader model =
         ]
 
 
-centerView : ViewModel (Html Msg) -> Model -> Html Msg
+centerView : ViewModel -> Model -> Html Msg
 centerView vm model =
     div [ class "flex-1 overflow-auto" ] [ viewGrid vm model ]
 
 
-viewGrid : ViewModel (Html Msg) -> Model -> Html Msg
+viewGrid : ViewModel -> Model -> Html Msg
 viewGrid vm model =
     let
         currentStep =
@@ -262,7 +262,7 @@ viewGrid vm model =
         , style "grid-template-rows" gridTemplateRows
         ]
         ([ {- Empty corner cell -} div [ class labelBgColorAndClass, class "border-b border-gray-600" ] [] ]
-            ++ {- Step Labels row -} vm.mapSteps viewStepLabel
+            ++ {- Step Labels row -} times (\stepIdx -> viewStepLabel stepIdx (vm.isStepCurrentlyPlaying stepIdx)) vm.totalSteps
             ++ {- Pitch rows -}
                (times (\pitchIdx -> viewPitchRow model model.pitchGrid currentStep pitchIdx)
                     (Scales.getTotalPitches (Model.scaleConfig model))
@@ -273,8 +273,8 @@ viewGrid vm model =
         )
 
 
-viewStepLabel : { idx : Int, isPlaying : Bool } -> Html Msg
-viewStepLabel { idx, isPlaying } =
+viewStepLabel : Int -> Bool -> Html Msg
+viewStepLabel stepIdx isPlaying =
     let
         bgClass =
             if isPlaying then
@@ -285,7 +285,7 @@ viewStepLabel { idx, isPlaying } =
     in
     div
         [ class labelClass, class bgClass, class "border-b border-gray-600" ]
-        [ text (String.fromInt (idx + 1)) ]
+        [ text (String.fromInt (stepIdx + 1)) ]
 
 
 viewPitchRow : Model -> PitchGrid -> Maybe Int -> Int -> List (Html Msg)
@@ -417,7 +417,7 @@ viewPercCell percType percGrid currentStep stepIdx =
         [ symbol ]
 
 
-footerView : ViewModel (Html Msg) -> Model -> Html Msg
+footerView : ViewModel -> Model -> Html Msg
 footerView vm model =
     div [ class "bg-gray-800 border-t border-gray-700 px-6 py-3" ]
         [ div [ class "flex items-center gap-6" ]

@@ -804,15 +804,15 @@ getSaveAction model =
 -- ViewModel
 
 
-type alias ViewModel a =
-    { mapSteps : ({ idx : Int, isPlaying : Bool } -> a) -> List a
-    , totalSteps : Int
+type alias ViewModel =
+    { totalSteps : Int
     , canUndo : Bool
     , canRedo : Bool
+    , isStepCurrentlyPlaying : Int -> Bool
     }
 
 
-toVm : Model -> ViewModel a
+toVm : Model -> ViewModel
 toVm model =
     let
         totalSteps : Int
@@ -822,8 +822,8 @@ toVm model =
         maybePlayingStepIdx =
             getCurrentPlayingStep model
     in
-    { mapSteps = \fn -> times (\idx -> fn { idx = idx, isPlaying = maybePlayingStepIdx == Just idx }) totalSteps
-    , totalSteps = totalSteps
+    { totalSteps = totalSteps
     , canUndo = not (List.isEmpty model.undoStack)
     , canRedo = not (List.isEmpty model.redoStack)
+    , isStepCurrentlyPlaying = \stepIdx -> maybePlayingStepIdx == Just stepIdx
     }
