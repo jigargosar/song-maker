@@ -223,7 +223,7 @@ viewHeader vm model =
             [ div [ class "flex flex-wrap items-center gap-6" ]
                 [ div [ class "text-2xl font-bold text-white" ] [ text "Song Maker V2" ]
                 , viewScaleControls vm model
-                , viewSequenceControls model
+                , viewSequenceControls vm
                 ]
             ]
         ]
@@ -417,7 +417,7 @@ footerView vm model =
             , viewDrumKitSelector vm
             , div [ class "flex items-center gap-2" ]
                 [ H.label [ class "text-xs text-gray-400 font-medium" ] [ text "BPM" ]
-                , viewBPMInput model.bpm
+                , viewBPMInput vm.bpm
                 ]
             , H.button
                 [ class "bg-gray-700 text-white px-3 py-1 rounded disabled:opacity-50"
@@ -557,17 +557,17 @@ viewScaleControls vm model =
     div [ class "flex items-center gap-4" ]
         [ viewControlGroup "Scale" (viewScaleTypeSelector vm)
         , viewControlGroup "Root" (viewRootNoteSelector vm)
-        , viewControlGroup "Start" (viewOctaveStartInput model.octaveStart)
-        , viewControlGroup "Count" (viewOctaveCountInput model.octaveCount)
+        , viewControlGroup "Start" (viewOctaveStartInput vm.octaveStart)
+        , viewControlGroup "Count" (viewOctaveCountInput vm.octaveCount)
         ]
 
 
-viewSequenceControls : Model -> Html Msg
-viewSequenceControls model =
+viewSequenceControls : ViewModel -> Html Msg
+viewSequenceControls vm =
     div [ class "flex items-center gap-4" ]
-        [ viewControlGroup "Bars" (viewBarsInput model.bars)
-        , viewControlGroup "Beats" (viewBeatsPerBarInput model.beatsPerBar)
-        , viewControlGroup "Sub-div" (viewSubdivisionsInput model.subdivisions)
+        [ viewControlGroup "Bars" (viewBarsInput vm.bars)
+        , viewControlGroup "Beats" (viewBeatsPerBarInput vm.beatsPerBar)
+        , viewControlGroup "Sub-div" (viewSubdivisionsInput vm.subdivisions)
         ]
 
 

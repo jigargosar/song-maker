@@ -818,6 +818,12 @@ type alias ViewModel =
     , isTonalInstrumentSelected : TonalInstrument -> Bool
     , isDrumKitSelected : DrumKit -> Bool
     , pitchIdxToNoteName : Int -> String
+    , bpm : Int
+    , octaveStart : Int
+    , octaveCount : Int
+    , bars : Int
+    , beatsPerBar : Int
+    , subdivisions : Int
     }
 
 
@@ -844,4 +850,10 @@ toVm model =
     , isTonalInstrumentSelected = \instrument -> model.currentTonalInstrument == instrument
     , isDrumKitSelected = \drumKit -> model.currentDrumKit == drumKit
     , pitchIdxToNoteName = \pitchIdx -> Scales.pitchIdxToNoteName pitchIdx (scaleConfig model)
+    , bpm = model.bpm
+    , octaveStart = model.octaveStart
+    , octaveCount = model.octaveCount
+    , bars = model.bars
+    , beatsPerBar = model.beatsPerBar
+    , subdivisions = model.subdivisions
     }
