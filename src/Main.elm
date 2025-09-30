@@ -414,8 +414,8 @@ footerView vm model =
     div [ class "bg-gray-800 border-t border-gray-700 px-6 py-3" ]
         [ div [ class "flex items-center gap-6" ]
             [ viewPlayStopButton model.playState
-            , viewTonalInstrumentSelector model.currentTonalInstrument
-            , viewDrumKitSelector model.currentDrumKit
+            , viewTonalInstrumentSelector vm
+            , viewDrumKitSelector vm
             , div [ class "flex items-center gap-2" ]
                 [ H.label [ class "text-xs text-gray-400 font-medium" ] [ text "BPM" ]
                 , viewBPMInput model.bpm
@@ -559,7 +559,7 @@ viewScaleControls : ViewModel -> Model -> Html Msg
 viewScaleControls vm model =
     div [ class "flex items-center gap-4" ]
         [ viewControlGroup "Scale" (viewScaleTypeSelector vm)
-        , viewControlGroup "Root" (viewRootNoteSelector model.rootNote)
+        , viewControlGroup "Root" (viewRootNoteSelector vm)
         , viewControlGroup "Start" (viewOctaveStartInput model.octaveStart)
         , viewControlGroup "Count" (viewOctaveCountInput model.octaveCount)
         ]
@@ -601,18 +601,18 @@ viewScaleOption vm scale =
     H.option [ HA.value (Scales.scaleLabel scale), HA.selected (vm.isScaleSelected scale) ] [ text (Scales.scaleLabel scale) ]
 
 
-viewRootNoteSelector : RootNote -> Html Msg
-viewRootNoteSelector currentRoot =
+viewRootNoteSelector : ViewModel -> Html Msg
+viewRootNoteSelector vm =
     H.select
         [ class "bg-gray-700 text-white text-sm border border-gray-600 rounded px-2 py-1 cursor-pointer hover:bg-gray-600 transition-colors"
         , HE.onInput (Scales.parseRootNote >> ChangeRootNote)
         ]
-        (List.map (viewRootNoteOption currentRoot) Scales.allRootNotes)
+        (List.map (viewRootNoteOption vm) Scales.allRootNotes)
 
 
-viewRootNoteOption : RootNote -> RootNote -> Html Msg
-viewRootNoteOption currentRoot rootNote =
-    H.option [ HA.value (Scales.rootNoteToString rootNote), HA.selected (currentRoot == rootNote) ]
+viewRootNoteOption : ViewModel -> RootNote -> Html Msg
+viewRootNoteOption vm rootNote =
+    H.option [ HA.value (Scales.rootNoteToString rootNote), HA.selected (vm.isRootNoteSelected rootNote) ]
         [ text (Scales.rootNoteToString rootNote) ]
 
 
@@ -682,38 +682,38 @@ viewSubdivisionsInput currentSubdivisions =
         []
 
 
-viewTonalInstrumentSelector : TonalInstrument -> Html Msg
-viewTonalInstrumentSelector currentInstrument =
+viewTonalInstrumentSelector : ViewModel -> Html Msg
+viewTonalInstrumentSelector vm =
     H.select
         [ class "bg-gray-700 text-white text-sm border border-gray-600 rounded px-2 py-1 cursor-pointer hover:bg-gray-600 transition-colors"
         , HE.onInput (Instruments.parseTonal >> ChangeTonalInstrument)
         ]
-        (List.map (viewTonalInstrumentOption currentInstrument) Instruments.allTonal)
+        (List.map (viewTonalInstrumentOption vm) Instruments.allTonal)
 
 
-viewDrumKitSelector : DrumKit -> Html Msg
-viewDrumKitSelector currentDrumKit =
+viewDrumKitSelector : ViewModel -> Html Msg
+viewDrumKitSelector vm =
     H.select
         [ class "bg-gray-700 text-white text-sm border border-gray-600 rounded px-2 py-1 cursor-pointer hover:bg-gray-600 transition-colors"
         , HE.onInput (Instruments.parseDrumKit >> ChangeDrumKit)
         ]
-        (List.map (viewDrumKitOption currentDrumKit) Instruments.allDrumKits)
+        (List.map (viewDrumKitOption vm) Instruments.allDrumKits)
 
 
-viewTonalInstrumentOption : TonalInstrument -> TonalInstrument -> Html Msg
-viewTonalInstrumentOption currentInstrument instrument =
+viewTonalInstrumentOption : ViewModel -> TonalInstrument -> Html Msg
+viewTonalInstrumentOption vm instrument =
     H.option
         [ HA.value (Instruments.tonalLabel instrument)
-        , HA.selected (currentInstrument == instrument)
+        , HA.selected (vm.isTonalInstrumentSelected instrument)
         ]
         [ text (Instruments.tonalLabel instrument) ]
 
 
-viewDrumKitOption : DrumKit -> DrumKit -> Html Msg
-viewDrumKitOption currentDrumKit drumKit =
+viewDrumKitOption : ViewModel -> DrumKit -> Html Msg
+viewDrumKitOption vm drumKit =
     H.option
         [ HA.value (Instruments.drumKitLabel drumKit)
-        , HA.selected (currentDrumKit == drumKit)
+        , HA.selected (vm.isDrumKitSelected drumKit)
         ]
         [ text (Instruments.drumKitLabel drumKit) ]
 
