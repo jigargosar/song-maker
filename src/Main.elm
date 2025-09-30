@@ -292,7 +292,7 @@ viewPitchRow vm model currentStep pitchIdx =
                 [ class labelBgColorAndClass, class "border-[0.5px]" ]
                 [ text (Scales.pitchIdxToNoteName pitchIdx (Model.scaleConfig model)) ]
     in
-    viewPitchLabel :: times (\stepIdx -> viewPitchCell vm pitchIdx currentStep stepIdx) (Timing.getTotalSteps (Model.timeConfig model))
+    viewPitchLabel :: times (\stepIdx -> viewPitchCell vm pitchIdx currentStep stepIdx) vm.totalSteps
 
 
 viewPitchCell : ViewModel -> Int -> Maybe Int -> Int -> Html Msg
