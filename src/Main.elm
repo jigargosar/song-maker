@@ -209,7 +209,7 @@ view model =
     { title = "SM"
     , body =
         [ div [ class "h-screen bg-gray-900 text-white flex flex-col select-none" ]
-            [ viewHeader model
+            [ viewHeader vm model
             , centerView vm model
             , footerView vm model
             ]
@@ -217,13 +217,13 @@ view model =
     }
 
 
-viewHeader : Model -> Html Msg
-viewHeader model =
+viewHeader : ViewModel -> Model -> Html Msg
+viewHeader vm model =
     div [ class "bg-gray-800 z-20 shadow-2xl border-b border-gray-950 px-6 py-4" ]
         [ div [ class "flex flex-wrap items-center justify-between" ]
             [ div [ class "flex flex-wrap items-center gap-6" ]
                 [ div [ class "text-2xl font-bold text-white" ] [ text "Song Maker V2" ]
-                , viewScaleControls model
+                , viewScaleControls vm model
                 , viewSequenceControls model
                 ]
             ]
@@ -555,10 +555,10 @@ pitchCellColor pitchIdx =
             "bg-[oklch(60%_0.02_0)] hover:bg-[oklch(64%_0.05_0)] transition-colors"
 
 
-viewScaleControls : Model -> Html Msg
-viewScaleControls model =
+viewScaleControls : ViewModel -> Model -> Html Msg
+viewScaleControls vm model =
     div [ class "flex items-center gap-4" ]
-        [ viewControlGroup "Scale" (viewScaleTypeSelector model.scaleType)
+        [ viewControlGroup "Scale" (viewScaleTypeSelector vm)
         , viewControlGroup "Root" (viewRootNoteSelector model.rootNote)
         , viewControlGroup "Start" (viewOctaveStartInput model.octaveStart)
         , viewControlGroup "Count" (viewOctaveCountInput model.octaveCount)
@@ -583,8 +583,8 @@ viewControlGroup labelText control =
         ]
 
 
-viewScaleTypeSelector : ScaleType -> Html Msg
-viewScaleTypeSelector currentScale =
+viewScaleTypeSelector : ViewModel -> Html Msg
+viewScaleTypeSelector vm =
     H.select
         [ class "bg-gray-700 text-white text-sm border border-gray-600 rounded px-2 py-1 cursor-pointer hover:bg-gray-600 transition-colors"
         , HE.onInput (Scales.parseScaleType >> ChangeScaleType)
@@ -593,12 +593,12 @@ viewScaleTypeSelector currentScale =
         --, H.option [ HA.value "Pentatonic", HA.selected (currentScale == Pentatonic) ] [ text "Pentatonic" ]
         --, H.option [ HA.value "Chromatic", HA.selected (currentScale == Chromatic) ] [ text "Chromatic" ]
         --]
-        (Scales.allScales |> List.map (viewScaleOption currentScale))
+        (Scales.allScales |> List.map (viewScaleOption vm))
 
 
-viewScaleOption : ScaleType -> ScaleType -> Html msg
-viewScaleOption currentScale scale =
-    H.option [ HA.value (Scales.scaleLabel scale), HA.selected (currentScale == scale) ] [ text (Scales.scaleLabel scale) ]
+viewScaleOption : ViewModel -> ScaleType -> Html msg
+viewScaleOption vm scale =
+    H.option [ HA.value (Scales.scaleLabel scale), HA.selected (vm.isScaleSelected scale) ] [ text (Scales.scaleLabel scale) ]
 
 
 viewRootNoteSelector : RootNote -> Html Msg
