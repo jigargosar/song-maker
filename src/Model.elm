@@ -5,7 +5,6 @@ module Model exposing
     , NoteToPlay
     , PlayState
     , ViewModel
-    , buildQuery
     , changeBars
     , changeBeatsPerBar
     , changeOctaveCount
@@ -15,15 +14,11 @@ module Model exposing
     , changeSubdivisions
     , continueDrawingPerc
     , continueDrawingPitch
-    , getActiveNotesForStep
-    , getCurrentPlayingStep
     , getSaveAction
     , init
     , loadFromUrl
     , onTimeSync
-    , pushToHistory
     , redo
-    , scaleConfig
     , setBPM
     , setDrumKit
     , setTonalInstrument
@@ -32,7 +27,6 @@ module Model exposing
     , startPlaying
     , stop
     , stopDrawing
-    , timeConfig
     , toVm
     , undo
     )
