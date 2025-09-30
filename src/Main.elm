@@ -200,14 +200,23 @@ update msg model =
 -- View
 
 
-type alias ViewModel =
-    {
+type alias ViewModel a =
+    { mapTonalInstruments : ({ label : String, selected : Bool } -> a) -> List a
     }
 
 
-toVm : Model -> ViewModel
+toVm : Model -> ViewModel a
 toVm model =
-    {
+    { mapTonalInstruments =
+        \fn ->
+            Instruments.allTonal
+                |> List.map
+                    (\instrument ->
+                        fn
+                            { label = Instruments.tonalLabel instrument
+                            , selected = model.currentTonalInstrument == instrument
+                            }
+                    )
     }
 
 
