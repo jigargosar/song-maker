@@ -263,7 +263,7 @@ viewGrid vm model =
         ]
         ([ {- Empty corner cell -} div [ class labelBgColorAndClass, class "border-b border-gray-600" ] [] ]
             ++ {- Step Labels row -} times (\stepIdx -> viewStepLabel stepIdx (vm.isStepCurrentlyPlaying stepIdx)) vm.totalSteps
-            ++ {- Pitch rows -} (times (viewPitchRow model model.pitchGrid currentStep) vm.totalPitches |> List.concat)
+            ++ {- Pitch rows -} (times (viewPitchRow vm model currentStep) vm.totalPitches |> List.concat)
             ++ {- Perc Snare row -} viewPercRow Instruments.percSnare vm.totalSteps model.percGrid currentStep
             ++ {- Perc Kick row -} viewPercRow Instruments.percKick vm.totalSteps model.percGrid currentStep
         )
@@ -284,26 +284,25 @@ viewStepLabel stepIdx isPlaying =
         [ text (String.fromInt (stepIdx + 1)) ]
 
 
-viewPitchRow : Model -> PitchGrid -> Maybe Int -> Int -> List (Html Msg)
-viewPitchRow model pitchGrid currentStep pitchIdx =
+viewPitchRow : ViewModel -> Model -> Maybe Int -> Int -> List (Html Msg)
+viewPitchRow vm model currentStep pitchIdx =
     let
         viewPitchLabel =
             div
                 [ class labelBgColorAndClass, class "border-[0.5px]" ]
                 [ text (Scales.pitchIdxToNoteName pitchIdx (Model.scaleConfig model)) ]
     in
-    -- TODO: Should we fix function parameters?
-    viewPitchLabel :: times (\stepIdx -> viewPitchCell pitchIdx pitchGrid currentStep stepIdx) (Timing.getTotalSteps (Model.timeConfig model))
+    viewPitchLabel :: times (\stepIdx -> viewPitchCell vm pitchIdx currentStep stepIdx) (Timing.getTotalSteps (Model.timeConfig model))
 
 
-viewPitchCell : Int -> PitchGrid -> Maybe Int -> Int -> Html Msg
-viewPitchCell pitchIdx pitchGrid currentStep stepIdx =
+viewPitchCell : ViewModel -> Int -> Maybe Int -> Int -> Html Msg
+viewPitchCell vm pitchIdx currentStep stepIdx =
     let
         position =
             { pitchIdx = pitchIdx, stepIdx = stepIdx }
 
         isActive =
-            Grid.isPitchCellActive position pitchGrid
+            vm.isPitchCellActive position
 
         isCurrentStep =
             currentStep == Just stepIdx

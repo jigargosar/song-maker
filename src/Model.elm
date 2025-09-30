@@ -810,6 +810,7 @@ type alias ViewModel =
     , canUndo : Bool
     , canRedo : Bool
     , isStepCurrentlyPlaying : Int -> Bool
+    , isPitchCellActive : PitchPos -> Bool
     }
 
 
@@ -828,4 +829,5 @@ toVm model =
     , canUndo = not (List.isEmpty model.undoStack)
     , canRedo = not (List.isEmpty model.redoStack)
     , isStepCurrentlyPlaying = \stepIdx -> maybePlayingStepIdx == Just stepIdx
+    , isPitchCellActive = \position -> Grid.isPitchCellActive position model.pitchGrid
     }
