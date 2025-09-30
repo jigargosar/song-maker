@@ -251,7 +251,7 @@ viewGrid vm model =
         gridTemplateRows =
             format "minmax($stepLabelRowMinHeight, auto) repeat($totalPitches, minmax($pitchRowMinHeight, 1fr)) repeat(2, $percRowHeight)"
                 [ ( "$stepLabelRowMinHeight", px 32 )
-                , ( "$totalPitches", String.fromInt (Scales.getTotalPitches (Model.scaleConfig model)) )
+                , ( "$totalPitches", String.fromInt vm.totalPitches )
                 , ( "$pitchRowMinHeight", px 32 )
                 , ( "$percRowHeight", px 48 )
                 ]
@@ -263,11 +263,7 @@ viewGrid vm model =
         ]
         ([ {- Empty corner cell -} div [ class labelBgColorAndClass, class "border-b border-gray-600" ] [] ]
             ++ {- Step Labels row -} times (\stepIdx -> viewStepLabel stepIdx (vm.isStepCurrentlyPlaying stepIdx)) vm.totalSteps
-            ++ {- Pitch rows -}
-               (times (\pitchIdx -> viewPitchRow model model.pitchGrid currentStep pitchIdx)
-                    (Scales.getTotalPitches (Model.scaleConfig model))
-                    |> List.concat
-               )
+            ++ {- Pitch rows -} (times (viewPitchRow model model.pitchGrid currentStep) vm.totalPitches |> List.concat)
             ++ {- Perc Snare row -} viewPercRow Instruments.percSnare vm.totalSteps model.percGrid currentStep
             ++ {- Perc Kick row -} viewPercRow Instruments.percKick vm.totalSteps model.percGrid currentStep
         )
