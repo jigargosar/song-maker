@@ -775,4 +775,78 @@ type alias ViewModel =
 **ViewModel design should be driven by view consumption patterns, not model structure.**
 The facade pattern creates a view-specific API that optimizes for how views actually use data,
 not how the model happens to store it.
+
+---
+
+## Operational Guide for Continuing Migration
+
+### Systematic Discovery Process
+{-
+1. Find all candidates:
+   - Run: grep -n "model\." src/Main.elm
+   - Run: grep -n "Model\." src/Main.elm
+2. Categorize each usage (see patterns below)
+3. Group related extractions for batch migration
+-}
+
+### Concrete Transformation Patterns
+{-
+PATTERN: Direct field access
+- Before: model.bpm
+- After: vm.bpm (add to ViewModel type)
+
+PATTERN: Model function call
+- Before: Model.scaleConfig model
+- After: vm.scaleConfig (add computed field)
+
+PATTERN: Selection logic
+- Before: model.currentScale == scale
+- After: vm.isScaleSelected scale (add helper function)
+
+PATTERN: Complex computation
+- Before: Scales.pitchIdxToNoteName pitchIdx (Model.scaleConfig model)
+- After: vm.pitchIdxToNoteName pitchIdx (add helper with pre-computed config)
+-}
+
+### Step-by-Step Migration Workflow
+{-
+1. Pick one view function to migrate
+2. Identify all model access in that function
+3. Design ViewModel additions needed
+4. Add new fields/functions to ViewModel type in Model.elm
+5. Implement in toVm function
+6. Update function signature to accept ViewModel parameter
+7. Update all function calls throughout call chain
+8. Test compilation: elm make src/Main.elm --output=NUL
+9. Repeat for next function
+-}
+
+### Validation Checklist
+{-
+After each migration:
+✓ Compiles successfully
+✓ No remaining model access in migrated function
+✓ Function signature updated correctly
+✓ All callers updated to pass vm parameter
+✓ ViewModel type exports added to Model.elm
+-}
+
+### Edge Cases & Common Pitfalls
+{-
+PITFALL: Don't miss indirect model access
+- Bad: currentStep == Just stepIdx (duplicates existing vm.isStepCurrentlyPlaying)
+- Good: vm.isStepCurrentlyPlaying stepIdx
+
+PITFALL: Don't expose raw complex data structures
+- Bad: vm.pitchGrid (exposes implementation)
+- Good: vm.isPitchCellActive : PitchPos -> Bool (encapsulates behavior)
+
+PITFALL: Don't create view-specific formatting in ViewModel
+- Bad: vm.bpmText (ViewModel shouldn't know about text formatting)
+- Good: vm.bpm (let view do String.fromInt vm.bpm)
+
+PITFALL: Don't mix pure module functions with model-dependent calls
+- Keep: Model.init, Model.startDrawingPitch (proper module functions)
+- Extract: Model.scaleConfig model, Model.getCurrentPlayingStep model (model-dependent)
+-}
 -}
