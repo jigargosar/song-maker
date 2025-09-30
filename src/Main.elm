@@ -241,13 +241,10 @@ viewGrid vm model =
         currentStep =
             Model.getCurrentPlayingStep model
 
-        totalSteps =
-            Timing.getTotalSteps (Model.timeConfig model)
-
         gridTemplateCols =
             format "minmax($pitchLabelColMinWidth, auto) repeat($totalSteps, minmax($stepColMinWidth, 1fr))"
                 [ ( "$pitchLabelColMinWidth", px 48 )
-                , ( "$totalSteps", String.fromInt totalSteps )
+                , ( "$totalSteps", String.fromInt vm.totalSteps )
                 , ( "$stepColMinWidth", px 48 )
                 ]
 
@@ -271,8 +268,8 @@ viewGrid vm model =
                     (Scales.getTotalPitches (Model.scaleConfig model))
                     |> List.concat
                )
-            ++ {- Perc Snare row -} viewPercRow Instruments.percSnare totalSteps model.percGrid currentStep
-            ++ {- Perc Kick row -} viewPercRow Instruments.percKick totalSteps model.percGrid currentStep
+            ++ {- Perc Snare row -} viewPercRow Instruments.percSnare vm.totalSteps model.percGrid currentStep
+            ++ {- Perc Kick row -} viewPercRow Instruments.percKick vm.totalSteps model.percGrid currentStep
         )
 
 

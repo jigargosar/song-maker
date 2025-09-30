@@ -806,12 +806,14 @@ getSaveAction model =
 
 type alias ViewModel a =
     { mapSteps : ({ idx : Int, isPlaying : Bool } -> a) -> List a
+    , totalSteps : Int
     }
 
 
 toVm : Model -> ViewModel a
 toVm model =
     let
+        totalSteps : Int
         totalSteps =
             Timing.getTotalSteps (timeConfig model)
 
@@ -819,4 +821,5 @@ toVm model =
             getCurrentPlayingStep model
     in
     { mapSteps = \fn -> times (\idx -> fn { idx = idx, isPlaying = maybePlayingStepIdx == Just idx }) totalSteps
+    , totalSteps = totalSteps
     }
