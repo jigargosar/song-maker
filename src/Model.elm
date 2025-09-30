@@ -16,6 +16,7 @@ module Model exposing
     , continueDrawingPitch
     , getActiveNotesForStep
     , getCurrentPlayingStep
+    , getSaveAction
     , init
     , loadFromUrl
     , onTimeSync
@@ -782,3 +783,16 @@ changeSubdivisions newSubdivisions model =
             pushToHistory model
     in
     { modelWithHistory | subdivisions = atLeast 1 newSubdivisions }
+
+
+getSaveAction : Model -> Maybe ( Nav.Key, String )
+getSaveAction model =
+    let
+        query =
+            buildQuery model
+    in
+    if model.url.query == Just query then
+        Nothing
+
+    else
+        Just ( model.key, query )

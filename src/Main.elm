@@ -184,17 +184,16 @@ update msg model =
             ( Model.loadFromUrl url model, Cmd.none )
 
         Save ->
-            ( model
-            , let
-                query =
-                    Model.buildQuery model
-              in
-              if model.url.query == Just query then
-                Cmd.none
+            let
+                saveCommand =
+                    case Model.getSaveAction model of
+                        Just ( key, query ) ->
+                            Nav.pushUrl key query
 
-              else
-                Nav.pushUrl model.key query
-            )
+                        Nothing ->
+                            Cmd.none
+            in
+            ( model, saveCommand )
 
 
 
