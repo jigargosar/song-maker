@@ -830,9 +830,13 @@ toVm model =
 
         maybePlayingStepIdx =
             getCurrentPlayingStep model
+
+        -- Extract computed values to avoid recalculation in helper functions
+        scaleConfigValue =
+            scaleConfig model
     in
     { totalSteps = totalSteps
-    , totalPitches = Scales.getTotalPitches (scaleConfig model)
+    , totalPitches = Scales.getTotalPitches scaleConfigValue
     , canUndo = not (List.isEmpty model.undoStack)
     , canRedo = not (List.isEmpty model.redoStack)
     , isPlaying = model.playState /= Stopped
@@ -843,7 +847,7 @@ toVm model =
     , isRootNoteSelected = \rootNote -> model.rootNote == rootNote
     , isTonalInstrumentSelected = \instrument -> model.currentTonalInstrument == instrument
     , isDrumKitSelected = \drumKit -> model.currentDrumKit == drumKit
-    , pitchIdxToNoteName = \pitchIdx -> Scales.pitchIdxToNoteName pitchIdx (scaleConfig model)
+    , pitchIdxToNoteName = \pitchIdx -> Scales.pitchIdxToNoteName pitchIdx scaleConfigValue
     , bpm = model.bpm
     , octaveStart = model.octaveStart
     , octaveCount = model.octaveCount
