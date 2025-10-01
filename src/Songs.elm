@@ -84,16 +84,23 @@ twinkleSong =
 furEliseSong : SongConfig
 furEliseSong =
     { melody =
-        -- Opening: E5 D#5 E5 D#5 E5 B4 D5 C5 A4
-        [ [ "E5" ], [ "D#5" ], [ "E5" ], [ "D#5" ], [ "E5" ], [ "B4" ], [ "D5" ], [ "C5" ], [ "A4" ], [] ]
+        [ [ "D#5" ], [ "E5" ], [ "D#5" ], [ "E5" ], [ "B4" ], [ "D5" ], [ "C5" ], [ "A4" ] ]
+            ++ [ [ "C4" ], [ "E4" ], [ "A4" ], [ "B4" ], [ "E4" ], [ "G#4" ], [ "B4" ], [ "C5" ] ]
+            ++ [ [ "E5" ], [ "D#5" ], [ "E5" ], [ "D#5" ], [ "E5" ], [ "B4" ], [ "D5" ], [ "C5" ] ]
+            ++ [ [ "A4" ], [ "C4" ], [ "E4" ], [ "A4" ], [ "B4" ], [ "E4" ], [ "C5" ], [ "B4" ] ]
+            ++ [ [ "A4" ], [], [], [] ]
     , percussion =
-        [ [ kick ], [], [], [], [], [], [], [], [ snare ], [] ]
+        [ [ kick ], [], [], [], [ snare ], [], [], [] ]
+            ++ [ [ kick ], [], [], [], [ snare ], [], [], [] ]
+            ++ [ [ kick ], [], [], [], [ snare ], [], [], [] ]
+            ++ [ [ kick ], [], [], [], [ snare ], [], [], [] ]
+            ++ [ [ kick ], [], [], [] ]
     , scaleType = Scales.Chromatic
     , rootNote = Scales.A
-    , bpm = 120
-    , octaveStart = 4
-    , octaveCount = 2
-    , bars = 2
+    , bpm = 80
+    , octaveStart = 3
+    , octaveCount = 3
+    , bars = 5
     , beatsPerBar = 4
     , subdivisions = 2
     }

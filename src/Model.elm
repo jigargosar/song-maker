@@ -78,7 +78,7 @@ init _ url key =
             }
     in
     if url.query == Nothing then
-        initialModel |> loadSongByName "twinkle"
+        initialModel |> loadSongByName "fur-elise"
 
     else
         initialModel |> applyQueryParams url
