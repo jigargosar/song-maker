@@ -104,6 +104,9 @@ type alias HistoryState =
     , bars : Int
     , beatsPerBar : Int
     , subdivisions : Int
+    , bpm : Int
+    , currentTonalInstrument : TonalInstrument
+    , currentDrumKit : DrumKit
     }
 
 
@@ -211,34 +214,52 @@ applyQueryParams url model =
             applyQueryDefaults model
 
 
+{-| Convert Model to HistoryState by extracting history-tracked fields
+-}
+toHistoryState : Model -> HistoryState
+toHistoryState model =
+    { pitchGrid = model.pitchGrid
+    , percGrid = model.percGrid
+    , scaleType = model.scaleType
+    , rootNote = model.rootNote
+    , octaveStart = model.octaveStart
+    , octaveCount = model.octaveCount
+    , bars = model.bars
+    , beatsPerBar = model.beatsPerBar
+    , subdivisions = model.subdivisions
+    , bpm = model.bpm
+    , currentTonalInstrument = model.currentTonalInstrument
+    , currentDrumKit = model.currentDrumKit
+    }
+
+
+{-| Restore history-tracked fields from HistoryState into Model
+-}
+updateModelFromHistoryState : HistoryState -> Model -> Model
+updateModelFromHistoryState historyState model =
+    { model
+        | pitchGrid = historyState.pitchGrid
+        , percGrid = historyState.percGrid
+        , scaleType = historyState.scaleType
+        , rootNote = historyState.rootNote
+        , octaveStart = historyState.octaveStart
+        , octaveCount = historyState.octaveCount
+        , bars = historyState.bars
+        , beatsPerBar = historyState.beatsPerBar
+        , subdivisions = historyState.subdivisions
+        , bpm = historyState.bpm
+        , currentTonalInstrument = historyState.currentTonalInstrument
+        , currentDrumKit = historyState.currentDrumKit
+    }
+
+
 {-| Push the current state to the undo stack and clear the redo stack
 -}
 pushToHistory : Model -> Model
 pushToHistory model =
-    let
-        currentHistoryState : HistoryState
-        currentHistoryState =
-            { pitchGrid = model.pitchGrid
-            , percGrid = model.percGrid
-            , scaleType = model.scaleType
-            , rootNote = model.rootNote
-            , octaveStart = model.octaveStart
-            , octaveCount = model.octaveCount
-            , bars = model.bars
-            , beatsPerBar = model.beatsPerBar
-            , subdivisions = model.subdivisions
-            }
-
-        newUndoStack =
-            currentHistoryState :: model.undoStack
-
-        -- Clear redo stack when new operation is performed
-        newRedoStack =
-            []
-    in
     { model
-        | undoStack = newUndoStack
-        , redoStack = newRedoStack
+        | undoStack = toHistoryState model :: model.undoStack
+        , redoStack = []
     }
 
 
@@ -468,37 +489,11 @@ undo model =
             model
 
         lastState :: remainingUndoStack ->
-            let
-                newRedoStack : List HistoryState
-                newRedoStack =
-                    { pitchGrid = model.pitchGrid
-                    , percGrid = model.percGrid
-                    , scaleType = model.scaleType
-                    , rootNote = model.rootNote
-                    , octaveStart = model.octaveStart
-                    , octaveCount = model.octaveCount
-                    , bars = model.bars
-                    , beatsPerBar = model.beatsPerBar
-                    , subdivisions = model.subdivisions
-                    }
-                        :: model.redoStack
-
-                newModel =
-                    { model
-                        | pitchGrid = lastState.pitchGrid
-                        , percGrid = lastState.percGrid
-                        , scaleType = lastState.scaleType
-                        , rootNote = lastState.rootNote
-                        , octaveStart = lastState.octaveStart
-                        , octaveCount = lastState.octaveCount
-                        , bars = lastState.bars
-                        , beatsPerBar = lastState.beatsPerBar
-                        , subdivisions = lastState.subdivisions
-                        , undoStack = remainingUndoStack
-                        , redoStack = newRedoStack
-                    }
-            in
-            newModel
+            updateModelFromHistoryState lastState
+                { model
+                    | undoStack = remainingUndoStack
+                    , redoStack = toHistoryState model :: model.redoStack
+                }
 
 
 redo : Model -> Model
@@ -510,32 +505,14 @@ redo model =
         lastState :: remainingRedoStack ->
             let
                 newUndoStack =
-                    { pitchGrid = model.pitchGrid
-                    , percGrid = model.percGrid
-                    , scaleType = model.scaleType
-                    , rootNote = model.rootNote
-                    , octaveStart = model.octaveStart
-                    , octaveCount = model.octaveCount
-                    , bars = model.bars
-                    , beatsPerBar = model.beatsPerBar
-                    , subdivisions = model.subdivisions
-                    }
-                        :: model.undoStack
+                    toHistoryState model :: model.undoStack
 
                 newModel =
-                    { model
-                        | pitchGrid = lastState.pitchGrid
-                        , percGrid = lastState.percGrid
-                        , scaleType = lastState.scaleType
-                        , rootNote = lastState.rootNote
-                        , octaveStart = model.octaveStart
-                        , octaveCount = model.octaveCount
-                        , bars = lastState.bars
-                        , beatsPerBar = lastState.beatsPerBar
-                        , subdivisions = lastState.subdivisions
-                        , undoStack = newUndoStack
-                        , redoStack = remainingRedoStack
-                    }
+                    updateModelFromHistoryState lastState
+                        { model
+                            | undoStack = newUndoStack
+                            , redoStack = remainingRedoStack
+                        }
             in
             newModel
 
