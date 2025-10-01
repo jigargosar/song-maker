@@ -9,6 +9,8 @@ module Grid exposing
     , emptyPitchGrid
     , isPercCellActive
     , isPitchCellActive
+    , parsePitchGrid
+    , pitchGridToString
     , resizePitchGrid
     , transposePitchGrid
     , updatePercCell
@@ -178,3 +180,52 @@ convertPercussionToGrid stepPercussion =
             )
         |> List.concat
         |> Set.fromList
+
+
+
+-- Grid Serialization
+
+
+{-| Convert PitchGrid to comma-separated integers: "0,0,1,2,5,10"
+-}
+pitchGridToString : PitchGrid -> String
+pitchGridToString grid =
+    grid
+        |> Set.toList
+        |> List.concatMap (\( pitch, step ) -> [ String.fromInt pitch, String.fromInt step ])
+        |> String.join ","
+
+
+{-| Parse comma-separated integers back to PitchGrid: "0,0,1,2,5,10"
+-}
+parsePitchGrid : String -> Maybe PitchGrid
+parsePitchGrid str =
+    let
+        _ =
+            Debug.log "str" str
+    in
+    if String.isEmpty str then
+        Just Set.empty
+
+    else
+        str
+            |> String.split ","
+            |> List.filterMap String.toInt
+            |> pairUp
+            |> Maybe.map Set.fromList
+
+
+{-| Group list into pairs: [0,0,1,2] -> [(0,0),(1,2)]
+-}
+pairUp : List Int -> Maybe (List ( Int, Int ))
+pairUp list =
+    case list of
+        [] ->
+            Just []
+
+        x :: y :: rest ->
+            pairUp rest
+                |> Maybe.map (\pairs -> ( x, y ) :: pairs)
+
+        _ ->
+            Nothing

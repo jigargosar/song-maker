@@ -77,7 +77,13 @@ init _ url key =
     in
     initialModel
         |> applyQueryParams url
-        |> applySong Songs.twinkleSong
+        |> (\m ->
+                if url.query == Nothing then
+                    applySong Songs.twinkleSong m
+
+                else
+                    m
+           )
 
 
 type PlayState
@@ -159,6 +165,7 @@ type alias QueryParams =
     { bpm : Maybe Int
     , octaveStart : Maybe Int
     , octaveCount : Maybe Int
+    , pitchGrid : Maybe PitchGrid
     }
 
 
@@ -168,6 +175,7 @@ queryParser =
         |> Pipeline.optional (Query.int "bpm")
         |> Pipeline.optional (Query.int "octaveStart")
         |> Pipeline.optional (Query.int "octaveCount")
+        |> Pipeline.optional (Query.string "pitchGrid" |> Query.map (Maybe.andThen Grid.parsePitchGrid))
 
 
 buildQuery : Model -> String
@@ -177,6 +185,7 @@ buildQuery model =
         [ UB.int "bpm" model.bpm
         , UB.int "octaveStart" model.octaveStart
         , UB.int "octaveCount" model.octaveCount
+        , UB.string "pitchGrid" (Grid.pitchGridToString model.pitchGrid)
         ]
 
 
@@ -208,6 +217,7 @@ applyQueryParams url model =
                 | bpm = Maybe.withDefault model.bpm params.bpm
                 , octaveStart = Maybe.withDefault model.octaveStart params.octaveStart
                 , octaveCount = Maybe.withDefault model.octaveCount params.octaveCount
+                , pitchGrid = Maybe.withDefault model.pitchGrid params.pitchGrid
             }
 
         Nothing ->
