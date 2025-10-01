@@ -114,6 +114,33 @@ type alias HistoryState =
     }
 
 
+{-| CRITICAL: When adding ANY field to Model, decide: "Should this be tracked in history and URL?"
+
+Ask: Is this user-facing state that should be:
+
+  - Undoable (appears in undo/redo)?
+  - Save-able (appears in URL query params)?
+
+If YES → Update all 10 locations:
+
+1.  Model type (line ~117) - ADD HERE FIRST
+2.  HistoryState type (line ~101)
+3.  QueryParams type (line ~162) - as Maybe Type
+4.  toHistoryState function (line ~268)
+5.  updateModelFromHistoryState function (line ~287)
+6.  applyQueryDefaults function (line ~225)
+7.  applyQueryParams function (line ~243)
+8.  queryParser function (line ~178)
+9.  buildQuery function (line ~195)
+10. applySong function (line ~321) - if applicable
+
+If NO → Just add to Model type, nothing else needed
+
+When adding/modifying a function that mutates history-tracked fields:
+
+  - Add pushToHistory as first line if change should be undoable
+
+-}
 type alias Model =
     { pitchGrid : PitchGrid
     , percGrid : PercGrid
