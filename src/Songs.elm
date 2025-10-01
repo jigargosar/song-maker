@@ -70,12 +70,30 @@ twinkleSong =
             ++ [ [ kick ], [], [ snare ], [] ]
             -- "sky (end)"
             ++ [ [ kick ], [], [ snare ], [] ]
-    , scaleType = Scales.major
-    , rootNote = Scales.root
+    , scaleType = Scales.Major
+    , rootNote = Scales.C
     , bpm = 90
     , octaveStart = 3
     , octaveCount = 3
     , bars = 4
+    , beatsPerBar = 4
+    , subdivisions = 2
+    }
+
+
+furEliseSong : SongConfig
+furEliseSong =
+    { melody =
+        -- Opening: E5 D#5 E5 D#5 E5 B4 D5 C5 A4
+        [ [ "E5" ], [ "D#5" ], [ "E5" ], [ "D#5" ], [ "E5" ], [ "B4" ], [ "D5" ], [ "C5" ], [ "A4" ], [] ]
+    , percussion =
+        [ [ kick ], [], [], [], [], [], [], [], [ snare ], [] ]
+    , scaleType = Scales.Chromatic
+    , rootNote = Scales.A
+    , bpm = 120
+    , octaveStart = 4
+    , octaveCount = 2
+    , bars = 2
     , beatsPerBar = 4
     , subdivisions = 2
     }
@@ -86,18 +104,21 @@ twinkleSong =
 
 
 {-| TODO: Add these songs:
-- Happy Birthday
-- Mary Had a Little Lamb
-- Ode to Joy
-- Jingle Bells
-- Für Elise
-- Old MacDonald
+
+  - Happy Birthday
+  - Mary Had a Little Lamb
+  - Ode to Joy
+  - Jingle Bells
+  - Für Elise
+  - Old MacDonald
 
 List of all available songs for UI display
+
 -}
 allSongs : List { name : String, displayName : String }
 allSongs =
     [ { name = "twinkle", displayName = "Twinkle Twinkle Little Star" }
+    , { name = "fur-elise", displayName = "Für Elise" }
     ]
 
 
@@ -108,6 +129,9 @@ parseSong name =
     case name of
         "twinkle" ->
             Just twinkleSong
+
+        "fur-elise" ->
+            Just furEliseSong
 
         _ ->
             Nothing

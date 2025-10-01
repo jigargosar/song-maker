@@ -56,8 +56,8 @@ init _ url key =
     let
         initialModel : Model
         initialModel =
-            { scaleType = Scales.major
-            , rootNote = Scales.root
+            { scaleType = Scales.Major
+            , rootNote = Scales.C
             , octaveStart = 3
             , octaveCount = 3
             , bars = 8
@@ -255,8 +255,8 @@ applyQueryDefaults model =
     { model
         | pitchGrid = Grid.emptyPitchGrid
         , percGrid = Grid.emptyPercGrid
-        , scaleType = Scales.major
-        , rootNote = Scales.root
+        , scaleType = Scales.Major
+        , rootNote = Scales.C
         , octaveStart = 3
         , octaveCount = 3
         , bars = 8

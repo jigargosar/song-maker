@@ -1,14 +1,13 @@
 module Scales exposing
-    ( RootNote
-    , ScaleType
+    ( RootNote(..)
     , ScaleConfig
+    , ScaleType(..)
     , allRootNotes
     , allScales
     , chromaticNoteNames
     , getRootNoteOffset
     , getScalePattern
     , getTotalPitches
-    , major
     , midiToPitchIdx
     , noteNameToPitchIdx
     , notesPerOctave
@@ -17,21 +16,10 @@ module Scales exposing
     , pitchIdxToMidi
     , pitchIdxToNoteName
     , pitchIdxToScaleDegree
-    , root
     , rootNoteToString
     , scaleDegreeToPitchIdx
     , scaleLabel
     )
-
-
-major : ScaleType
-major =
-    Major
-
-
-root : RootNote
-root =
-    C
 
 
 type ScaleType
@@ -240,6 +228,7 @@ parseRootNote str =
             C
 
 
+
 -- Scale Configuration
 
 
@@ -249,6 +238,7 @@ type alias ScaleConfig =
     , octaveStart : Int
     , octaveCount : Int
     }
+
 
 
 -- Scale-based Calculations
