@@ -121,18 +121,19 @@ Ask: Is this user-facing state that should be:
   - Undoable (appears in undo/redo)?
   - Save-able (appears in URL query params)?
 
-If YES → Update all 10 locations:
+If YES → Update all 11 locations:
 
-1.  Model type (line ~117) - ADD HERE FIRST
-2.  HistoryState type (line ~101)
-3.  QueryParams type (line ~162) - as Maybe Type
-4.  toHistoryState function (line ~268)
-5.  updateModelFromHistoryState function (line ~287)
-6.  applyQueryDefaults function (line ~225)
-7.  applyQueryParams function (line ~243)
-8.  queryParser function (line ~178)
-9.  buildQuery function (line ~195)
-10. applySong function (line ~321) - if applicable
+1.  Model type - ADD HERE FIRST
+2.  HistoryState type
+3.  QueryParams type - as Maybe Type
+4.  toHistoryState function
+5.  updateModelFromHistoryState function
+6.  applyQueryDefaults function
+7.  applyQueryParams function
+8.  queryParser function
+9.  buildQuery function
+10. applySong function - if applicable
+11. SongConfig type in Songs.elm - if songs should specify this field
 
 If NO → Just add to Model type, nothing else needed
 
@@ -350,6 +351,8 @@ applySong sc model =
     { model
         | pitchGrid = Grid.convertMelodyToGrid sc.melody (scaleConfig model)
         , percGrid = Grid.convertPercussionToGrid sc.percussion
+        , scaleType = sc.scaleType
+        , rootNote = sc.rootNote
         , bpm = sc.bpm
         , octaveStart = sc.octaveStart
         , octaveCount = sc.octaveCount

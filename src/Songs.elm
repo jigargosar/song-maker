@@ -1,6 +1,7 @@
 module Songs exposing (SongConfig, allSongs, parseSong, twinkleSong)
 
 import Instruments exposing (PercType)
+import Scales exposing (RootNote, ScaleType)
 
 
 
@@ -10,6 +11,8 @@ import Instruments exposing (PercType)
 type alias SongConfig =
     { melody : List (List String) -- Each step can have multiple notes
     , percussion : List (List PercType) -- Each step can have multiple drums
+    , scaleType : ScaleType
+    , rootNote : RootNote
     , bpm : Int
     , octaveStart : Int
     , octaveCount : Int
@@ -67,6 +70,8 @@ twinkleSong =
             ++ [ [ kick ], [], [ snare ], [] ]
             -- "sky (end)"
             ++ [ [ kick ], [], [ snare ], [] ]
+    , scaleType = Scales.major
+    , rootNote = Scales.root
     , bpm = 90
     , octaveStart = 3
     , octaveCount = 3
@@ -80,7 +85,15 @@ twinkleSong =
 -- Song list and parsing
 
 
-{-| List of all available songs for UI display
+{-| TODO: Add these songs:
+- Happy Birthday
+- Mary Had a Little Lamb
+- Ode to Joy
+- Jingle Bells
+- Für Elise
+- Old MacDonald
+
+List of all available songs for UI display
 -}
 allSongs : List { name : String, displayName : String }
 allSongs =
