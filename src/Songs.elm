@@ -146,6 +146,137 @@ stairwayToHeavenSong =
     }
 
 
+happyBirthdaySong : SongConfig
+happyBirthdaySong =
+    { melody =
+        -- Happy birthday to you
+        [ [ "C4" ], [ "C4" ], [ "D4" ], [ "C4" ], [ "F4" ], [ "E4" ], [], [] ]
+            -- Happy birthday to you
+            ++ [ [ "C4" ], [ "C4" ], [ "D4" ], [ "C4" ], [ "G4" ], [ "F4" ], [], [] ]
+            -- Happy birthday dear...
+            ++ [ [ "C4" ], [ "C4" ], [ "C5" ], [ "A4" ], [ "F4" ], [ "E4" ], [ "D4" ], [] ]
+            -- Happy birthday to you
+            ++ [ [ "A#4" ], [ "A#4" ], [ "A4" ], [ "F4" ], [ "G4" ], [ "F4" ], [], [] ]
+    , percussion =
+        [ [ kick ], [], [ snare ], [], [ kick ], [], [], [] ]
+            ++ [ [ kick ], [], [ snare ], [], [ kick ], [], [], [] ]
+            ++ [ [ kick ], [], [ snare ], [], [ kick ], [], [ snare ], [] ]
+            ++ [ [ kick ], [], [ snare ], [], [ kick ], [], [], [] ]
+    , scaleType = Scales.Major
+    , rootNote = Scales.C
+    , bpm = 120
+    , octaveStart = 3
+    , octaveCount = 3
+    , bars = 4
+    , beatsPerBar = 4
+    , subdivisions = 2
+    }
+
+
+maryHadALittleLambSong : SongConfig
+maryHadALittleLambSong =
+    { melody =
+        -- Mary had a little lamb
+        [ [ "E4" ], [ "D4" ], [ "C4" ], [ "D4" ], [ "E4" ], [ "E4" ], [ "E4" ], [] ]
+            -- Little lamb, little lamb
+            ++ [ [ "D4" ], [ "D4" ], [ "D4" ], [], [ "E4" ], [ "G4" ], [ "G4" ], [] ]
+            -- Mary had a little lamb
+            ++ [ [ "E4" ], [ "D4" ], [ "C4" ], [ "D4" ], [ "E4" ], [ "E4" ], [ "E4" ], [ "E4" ] ]
+            -- Its fleece was white as snow
+            ++ [ [ "D4" ], [ "D4" ], [ "E4" ], [ "D4" ], [ "C4" ], [], [], [] ]
+    , percussion =
+        [ [ kick ], [], [ snare ], [], [ kick ], [], [ snare ], [] ]
+            ++ [ [ kick ], [], [ snare ], [], [ kick ], [], [ snare ], [] ]
+            ++ [ [ kick ], [], [ snare ], [], [ kick ], [], [ snare ], [] ]
+            ++ [ [ kick ], [], [ snare ], [], [ kick ], [], [], [] ]
+    , scaleType = Scales.Major
+    , rootNote = Scales.C
+    , bpm = 120
+    , octaveStart = 3
+    , octaveCount = 3
+    , bars = 4
+    , beatsPerBar = 4
+    , subdivisions = 2
+    }
+
+
+odeToJoySong : SongConfig
+odeToJoySong =
+    { melody =
+        -- First phrase
+        [ [ "E4" ], [ "E4" ], [ "F4" ], [ "G4" ], [ "G4" ], [ "F4" ], [ "E4" ], [ "D4" ] ]
+            ++ [ [ "C4" ], [ "C4" ], [ "D4" ], [ "E4" ], [ "E4" ], [], [ "D4" ], [ "D4" ] ]
+            -- Second phrase (repeat with different ending)
+            ++ [ [ "E4" ], [ "E4" ], [ "F4" ], [ "G4" ], [ "G4" ], [ "F4" ], [ "E4" ], [ "D4" ] ]
+            ++ [ [ "C4" ], [ "C4" ], [ "D4" ], [ "E4" ], [ "D4" ], [], [ "C4" ], [ "C4" ] ]
+    , percussion =
+        [ [ kick ], [], [ snare ], [], [ kick ], [], [ snare ], [] ]
+            ++ [ [ kick ], [], [ snare ], [], [ kick ], [], [ snare ], [] ]
+            ++ [ [ kick ], [], [ snare ], [], [ kick ], [], [ snare ], [] ]
+            ++ [ [ kick ], [], [ snare ], [], [ kick ], [], [ snare ], [] ]
+    , scaleType = Scales.Major
+    , rootNote = Scales.C
+    , bpm = 120
+    , octaveStart = 3
+    , octaveCount = 3
+    , bars = 4
+    , beatsPerBar = 4
+    , subdivisions = 2
+    }
+
+
+jingleBellsSong : SongConfig
+jingleBellsSong =
+    { melody =
+        -- Jingle bells, jingle bells, jingle all the way
+        [ [ "E4" ], [ "E4" ], [ "E4" ], [], [ "E4" ], [ "E4" ], [ "E4" ], [] ]
+            ++ [ [ "E4" ], [ "G4" ], [ "C4" ], [], [ "D4" ], [], [ "E4" ], [] ]
+            -- Oh what fun it is to ride in a one-horse open sleigh
+            ++ [ [ "F4" ], [ "F4" ], [ "F4" ], [ "F4" ], [ "F4" ], [ "E4" ], [ "E4" ], [ "E4" ] ]
+            ++ [ [ "E4" ], [ "D4" ], [ "D4" ], [ "E4" ], [ "D4" ], [], [ "G4" ], [] ]
+    , percussion =
+        [ [ kick ], [], [ snare ], [], [ kick ], [], [ snare ], [] ]
+            ++ [ [ kick ], [], [ snare ], [], [ kick ], [], [ snare ], [] ]
+            ++ [ [ kick ], [], [ snare ], [], [ kick ], [], [ snare ], [] ]
+            ++ [ [ kick ], [], [ snare ], [], [ kick ], [], [ snare ], [] ]
+    , scaleType = Scales.Major
+    , rootNote = Scales.C
+    , bpm = 140
+    , octaveStart = 3
+    , octaveCount = 3
+    , bars = 4
+    , beatsPerBar = 4
+    , subdivisions = 2
+    }
+
+
+oldMacDonaldSong : SongConfig
+oldMacDonaldSong =
+    { melody =
+        -- Old MacDonald had a farm
+        [ [ "C4" ], [ "C4" ], [ "C4" ], [ "G4" ], [ "A4" ], [ "A4" ], [ "G4" ], [] ]
+            -- E-I-E-I-O
+            ++ [ [ "E4" ], [ "E4" ], [ "D4" ], [ "D4" ], [ "C4" ], [], [], [] ]
+            -- And on that farm he had a duck
+            ++ [ [ "G4" ], [ "G4" ], [ "C4" ], [ "C4" ], [ "C4" ], [ "G4" ], [ "A4" ], [ "A4" ] ]
+            -- E-I-E-I-O
+            ++ [ [ "G4" ], [], [ "E4" ], [ "E4" ], [ "D4" ], [ "D4" ], [ "C4" ], [] ]
+    , percussion =
+        [ [ kick ], [], [ snare ], [], [ kick ], [], [ snare ], [] ]
+            ++ [ [ kick ], [], [ snare ], [], [ kick ], [], [], [] ]
+            ++ [ [ kick ], [], [ snare ], [], [ kick ], [], [ snare ], [] ]
+            ++ [ [ kick ], [], [ snare ], [], [ kick ], [], [ snare ], [] ]
+    , scaleType = Scales.Major
+    , rootNote = Scales.C
+    , bpm = 130
+    , octaveStart = 3
+    , octaveCount = 3
+    , bars = 4
+    , beatsPerBar = 4
+    , subdivisions = 2
+    }
+
+
 
 -- Song list and parsing
 
@@ -167,6 +298,11 @@ allSongs =
     [ { name = "twinkle", displayName = "Twinkle Twinkle Little Star" }
     , { name = "fur-elise", displayName = "Für Elise" }
     , { name = "stairway", displayName = "Stairway to Heaven (Intro)" }
+    , { name = "happy-birthday", displayName = "Happy Birthday" }
+    , { name = "mary-lamb", displayName = "Mary Had a Little Lamb" }
+    , { name = "ode-to-joy", displayName = "Ode to Joy" }
+    , { name = "jingle-bells", displayName = "Jingle Bells" }
+    , { name = "old-macdonald", displayName = "Old MacDonald" }
     ]
 
 
@@ -183,6 +319,21 @@ parseSong name =
 
         "stairway" ->
             Just stairwayToHeavenSong
+
+        "happy-birthday" ->
+            Just happyBirthdaySong
+
+        "mary-lamb" ->
+            Just maryHadALittleLambSong
+
+        "ode-to-joy" ->
+            Just odeToJoySong
+
+        "jingle-bells" ->
+            Just jingleBellsSong
+
+        "old-macdonald" ->
+            Just oldMacDonaldSong
 
         _ ->
             Nothing
