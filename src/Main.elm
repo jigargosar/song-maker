@@ -180,11 +180,12 @@ update msg model =
             ( Model.redo model, Cmd.none )
 
         Reset ->
-            let
-                ( newModel, key ) =
-                    Model.reset model
-            in
-            ( newModel, Nav.pushUrl key "/" )
+            case Model.reset model of
+                Nothing ->
+                    ( model, Cmd.none )
+
+                Just ( newModel, key ) ->
+                    ( newModel, Nav.pushUrl key "/" )
 
         LoadSong songName ->
             ( Model.loadSongByName songName model, Cmd.none )

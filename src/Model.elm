@@ -270,14 +270,20 @@ updateModelFromHistoryState historyState model =
     }
 
 
-{-| Push the current state to the undo stack and clear the redo stack
+{-| Push the current state to the undo stack and clear the redo stack.
+Returns unchanged model if state hasn't changed (prevents duplicate history entries).
 -}
 pushToHistory : Model -> Model
 pushToHistory model =
-    { model
-        | undoStack = toHistoryState model :: model.undoStack
-        , redoStack = []
-    }
+    let
+        currentState =
+            toHistoryState model
+    in
+    if Just currentState == List.head model.undoStack then
+        model
+
+    else
+        { model | undoStack = currentState :: model.undoStack, redoStack = [] }
 
 
 applySong : SongConfig -> Model -> Model
@@ -306,13 +312,19 @@ loadSongByName songName model =
             model
 
 
-reset : Model -> ( Model, Nav.Key )
+reset : Model -> Maybe ( Model, Nav.Key )
 reset model =
-    ( model
-        |> pushToHistory
-        |> applyQueryDefaults
-    , model.key
-    )
+    let
+        resetModel =
+            model
+                |> pushToHistory
+                |> applyQueryDefaults
+    in
+    if resetModel == model then
+        Nothing
+
+    else
+        Just ( resetModel, model.key )
 
 
 
