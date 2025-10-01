@@ -348,8 +348,16 @@ pushToHistory model =
 
 applySong : SongConfig -> Model -> Model
 applySong sc model =
+    let
+        songScaleConfig =
+            { scaleType = sc.scaleType
+            , rootNote = sc.rootNote
+            , octaveStart = sc.octaveStart
+            , octaveCount = sc.octaveCount
+            }
+    in
     { model
-        | pitchGrid = Grid.convertMelodyToGrid sc.melody (scaleConfig model)
+        | pitchGrid = Grid.convertMelodyToGrid sc.melody songScaleConfig
         , percGrid = Grid.convertPercussionToGrid sc.percussion
         , scaleType = sc.scaleType
         , rootNote = sc.rootNote
