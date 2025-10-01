@@ -68,6 +68,7 @@ type Msg
     | ChangeSubdivisions Int
     | Undo
     | Redo
+    | Reset
     | LoadSong String
     | LinkClicked Browser.UrlRequest
     | UrlChanged Url
@@ -178,6 +179,13 @@ update msg model =
         Redo ->
             ( Model.redo model, Cmd.none )
 
+        Reset ->
+            let
+                ( newModel, key ) =
+                    Model.reset model
+            in
+            ( newModel, Nav.pushUrl key "/" )
+
         LoadSong songName ->
             ( Model.loadSongByName songName model, Cmd.none )
 
@@ -230,6 +238,11 @@ viewHeader vm =
                 , viewScaleControls vm
                 , viewSequenceControls vm
                 ]
+            , H.button
+                [ class "bg-gray-700 text-white px-3 py-1 rounded hover:bg-gray-600 transition-colors"
+                , HE.onClick Reset
+                ]
+                [ text "Reset" ]
             ]
         ]
 

@@ -20,6 +20,7 @@ module Model exposing
     , loadSongByName
     , onTimeSync
     , redo
+    , reset
     , setBPM
     , setDrumKit
     , setTonalInstrument
@@ -200,9 +201,18 @@ parseQueryParams url =
 applyQueryDefaults : Model -> Model
 applyQueryDefaults model =
     { model
-        | bpm = 120
+        | pitchGrid = Grid.emptyPitchGrid
+        , percGrid = Grid.emptyPercGrid
+        , scaleType = Scales.major
+        , rootNote = Scales.root
         , octaveStart = 3
         , octaveCount = 3
+        , bars = 8
+        , beatsPerBar = 4
+        , subdivisions = 2
+        , bpm = 120
+        , currentTonalInstrument = Instruments.defaultTonalInstrument
+        , currentDrumKit = Instruments.defaultDrumKit
     }
 
 
@@ -294,6 +304,15 @@ loadSongByName songName model =
 
         Nothing ->
             model
+
+
+reset : Model -> ( Model, Nav.Key )
+reset model =
+    ( model
+        |> pushToHistory
+        |> applyQueryDefaults
+    , model.key
+    )
 
 
 
