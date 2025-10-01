@@ -112,6 +112,40 @@ furEliseSong =
     }
 
 
+stairwayToHeavenSong : SongConfig
+stairwayToHeavenSong =
+    { melody =
+        -- Intro arpeggio pattern
+        -- Measure 1 (Am): A C E A C E C A with bass A
+        [ [ "A4", "A3" ], [ "C5" ], [ "E5" ], [ "A5" ], [ "C5" ], [ "E5" ], [ "C5" ], [ "A4" ] ]
+            -- Measure 2 (Am/G#): Same pattern with bass G#
+            ++ [ [ "A4", "G#3" ], [ "C5" ], [ "E5" ], [ "A5" ], [ "C5" ], [ "E5" ], [ "C5" ], [ "A4" ] ]
+            -- Measure 3 (Am/G): Same pattern with bass G
+            ++ [ [ "A4", "G3" ], [ "C5" ], [ "E5" ], [ "A5" ], [ "C5" ], [ "E5" ], [ "C5" ], [ "A4" ] ]
+            -- Measure 4 (D/F#): D F# A D F# A F# D with bass F#
+            ++ [ [ "D5", "F#3" ], [ "F#4" ], [ "A4" ], [ "D5" ], [ "F#4" ], [ "A4" ], [ "F#4" ], [ "D4" ] ]
+            -- Measure 5 (Fmaj7): F A C F A C A F with bass F
+            ++ [ [ "F4", "F3" ], [ "A4" ], [ "C5" ], [ "F5" ], [ "A4" ], [ "C5" ], [ "A4" ], [ "F4" ] ]
+            -- Measure 6 (G - Am): G B D G B D G D with bass pattern
+            ++ [ [ "G4" ], [ "B4" ], [ "D5" ], [ "G5" ], [ "B4" ], [ "D5" ], [ "G4" ], [ "D4" ] ]
+    , percussion =
+        [ [], [], [], [], [], [], [], [] ]
+            ++ [ [], [], [], [], [], [], [], [] ]
+            ++ [ [], [], [], [], [], [], [], [] ]
+            ++ [ [], [], [], [], [], [], [], [] ]
+            ++ [ [], [], [], [], [], [], [], [] ]
+            ++ [ [], [], [], [], [], [], [], [] ]
+    , scaleType = Scales.Chromatic
+    , rootNote = Scales.A
+    , bpm = 66
+    , octaveStart = 3
+    , octaveCount = 3
+    , bars = 6
+    , beatsPerBar = 4
+    , subdivisions = 2
+    }
+
+
 
 -- Song list and parsing
 
@@ -132,6 +166,7 @@ allSongs : List { name : String, displayName : String }
 allSongs =
     [ { name = "twinkle", displayName = "Twinkle Twinkle Little Star" }
     , { name = "fur-elise", displayName = "Für Elise" }
+    , { name = "stairway", displayName = "Stairway to Heaven (Intro)" }
     ]
 
 
@@ -145,6 +180,9 @@ parseSong name =
 
         "fur-elise" ->
             Just furEliseSong
+
+        "stairway" ->
+            Just stairwayToHeavenSong
 
         _ ->
             Nothing
