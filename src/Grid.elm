@@ -9,7 +9,9 @@ module Grid exposing
     , emptyPitchGrid
     , isPercCellActive
     , isPitchCellActive
+    , parsePercGrid
     , parsePitchGrid
+    , percGridToString
     , pitchGridToString
     , resizePitchGrid
     , transposePitchGrid
@@ -204,6 +206,31 @@ parsePitchGrid str =
         _ =
             Debug.log "str" str
     in
+    if String.isEmpty str then
+        Just Set.empty
+
+    else
+        str
+            |> String.split ","
+            |> List.filterMap String.toInt
+            |> pairUp
+            |> Maybe.map Set.fromList
+
+
+{-| Convert PercGrid to comma-separated integers: "0,0,1,2,5,10"
+-}
+percGridToString : PercGrid -> String
+percGridToString grid =
+    grid
+        |> Set.toList
+        |> List.concatMap (\( perc, step ) -> [ String.fromInt perc, String.fromInt step ])
+        |> String.join ","
+
+
+{-| Parse comma-separated integers back to PercGrid: "0,0,1,2,5,10"
+-}
+parsePercGrid : String -> Maybe PercGrid
+parsePercGrid str =
     if String.isEmpty str then
         Just Set.empty
 

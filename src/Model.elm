@@ -164,6 +164,14 @@ type alias QueryParams =
     , octaveStart : Maybe Int
     , octaveCount : Maybe Int
     , pitchGrid : Maybe PitchGrid
+    , percGrid : Maybe PercGrid
+    , scaleType : Maybe ScaleType
+    , rootNote : Maybe RootNote
+    , bars : Maybe Int
+    , beatsPerBar : Maybe Int
+    , subdivisions : Maybe Int
+    , currentTonalInstrument : Maybe TonalInstrument
+    , currentDrumKit : Maybe DrumKit
     }
 
 
@@ -174,6 +182,14 @@ queryParser =
         |> Pipeline.optional (Query.int "octaveStart")
         |> Pipeline.optional (Query.int "octaveCount")
         |> Pipeline.optional (Query.string "pitchGrid" |> Query.map (Maybe.andThen Grid.parsePitchGrid))
+        |> Pipeline.optional (Query.string "percGrid" |> Query.map (Maybe.andThen Grid.parsePercGrid))
+        |> Pipeline.optional (Query.string "scale" |> Query.map (Maybe.map Scales.parseScaleType))
+        |> Pipeline.optional (Query.string "root" |> Query.map (Maybe.map Scales.parseRootNote))
+        |> Pipeline.optional (Query.int "bars")
+        |> Pipeline.optional (Query.int "beatsPerBar")
+        |> Pipeline.optional (Query.int "subdivisions")
+        |> Pipeline.optional (Query.string "instrument" |> Query.map (Maybe.map Instruments.parseTonal))
+        |> Pipeline.optional (Query.string "drumKit" |> Query.map (Maybe.map Instruments.parseDrumKit))
 
 
 buildQuery : Model -> String
@@ -184,6 +200,14 @@ buildQuery model =
         , UB.int "octaveStart" model.octaveStart
         , UB.int "octaveCount" model.octaveCount
         , UB.string "pitchGrid" (Grid.pitchGridToString model.pitchGrid)
+        , UB.string "percGrid" (Grid.percGridToString model.percGrid)
+        , UB.string "scale" (Scales.scaleLabel model.scaleType)
+        , UB.string "root" (Scales.rootNoteToString model.rootNote)
+        , UB.int "bars" model.bars
+        , UB.int "beatsPerBar" model.beatsPerBar
+        , UB.int "subdivisions" model.subdivisions
+        , UB.string "instrument" (Instruments.tonalLabel model.currentTonalInstrument)
+        , UB.string "drumKit" (Instruments.drumKitLabel model.currentDrumKit)
         ]
 
 
@@ -225,6 +249,14 @@ applyQueryParams url model =
                 , octaveStart = Maybe.withDefault model.octaveStart params.octaveStart
                 , octaveCount = Maybe.withDefault model.octaveCount params.octaveCount
                 , pitchGrid = Maybe.withDefault model.pitchGrid params.pitchGrid
+                , percGrid = Maybe.withDefault model.percGrid params.percGrid
+                , scaleType = Maybe.withDefault model.scaleType params.scaleType
+                , rootNote = Maybe.withDefault model.rootNote params.rootNote
+                , bars = Maybe.withDefault model.bars params.bars
+                , beatsPerBar = Maybe.withDefault model.beatsPerBar params.beatsPerBar
+                , subdivisions = Maybe.withDefault model.subdivisions params.subdivisions
+                , currentTonalInstrument = Maybe.withDefault model.currentTonalInstrument params.currentTonalInstrument
+                , currentDrumKit = Maybe.withDefault model.currentDrumKit params.currentDrumKit
             }
 
         Nothing ->
