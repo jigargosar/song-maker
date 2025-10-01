@@ -1,6 +1,6 @@
 module Songs exposing (SongConfig, allSongs, parseSong, twinkleSong)
 
-import Instruments exposing (PercType, percKick, percSnare)
+import Instruments exposing (PercType)
 
 
 
@@ -19,19 +19,20 @@ type alias SongConfig =
     }
 
 
+kick =
+    Instruments.percKick
+
+
+snare =
+    Instruments.percSnare
+
+
 
 -- twinkleSong value
 
 
 twinkleSong : SongConfig
 twinkleSong =
-    let
-        kick =
-            percKick
-
-        snare =
-            percSnare
-    in
     { melody =
         -- "Twinkle twinkle little star"
         [ [ "C4", "C3", "E4" ], [ "C4" ], [ "G4", "G3", "B4" ], [ "G4" ] ]

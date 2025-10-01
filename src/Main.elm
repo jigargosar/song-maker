@@ -10,6 +10,7 @@ import Instruments exposing (DrumKit, PercType, TonalInstrument)
 import Json.Decode as JD
 import Model exposing (DrawState, Flags, Model, NoteToPlay, PlayState, ViewModel)
 import Scales exposing (RootNote, ScaleConfig, ScaleType)
+import Songs
 import Url exposing (Url)
 import Utils exposing (..)
 
@@ -67,6 +68,7 @@ type Msg
     | ChangeSubdivisions Int
     | Undo
     | Redo
+    | LoadSong String
     | LinkClicked Browser.UrlRequest
     | UrlChanged Url
     | Save
@@ -175,6 +177,9 @@ update msg model =
 
         Redo ->
             ( Model.redo model, Cmd.none )
+
+        LoadSong songName ->
+            ( Model.loadSongByName songName model, Cmd.none )
 
         LinkClicked _ ->
             ( model, Cmd.none )
@@ -413,6 +418,7 @@ footerView vm =
     div [ class "bg-gray-800 border-t border-gray-700 px-6 py-3" ]
         [ div [ class "flex items-center gap-6" ]
             [ viewPlayStopButton vm
+            , viewSongSelector
             , viewTonalInstrumentSelector vm
             , viewDrumKitSelector vm
             , div [ class "flex items-center gap-2" ]
@@ -714,3 +720,19 @@ viewDrumKitOption vm drumKit =
         , HA.selected (vm.isDrumKitSelected drumKit)
         ]
         [ text (Instruments.drumKitLabel drumKit) ]
+
+
+viewSongSelector : Html Msg
+viewSongSelector =
+    H.select
+        [ class "bg-gray-700 text-white text-sm border border-gray-600 rounded px-2 py-1 cursor-pointer hover:bg-gray-600 transition-colors"
+        , HE.onInput LoadSong
+        ]
+        (H.option [ HA.value "", HA.selected True ] [ text "Load Song..." ]
+            :: List.map viewSongOption Songs.allSongs
+        )
+
+
+viewSongOption : { name : String, displayName : String } -> Html Msg
+viewSongOption song =
+    H.option [ HA.value song.name ] [ text song.displayName ]

@@ -17,6 +17,7 @@ module Model exposing
     , getSaveAction
     , init
     , loadFromUrl
+    , loadSongByName
     , onTimeSync
     , redo
     , setBPM
