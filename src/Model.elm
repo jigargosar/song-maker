@@ -75,15 +75,11 @@ init _ url key =
             , key = key
             }
     in
-    initialModel
-        |> applyQueryParams url
-        |> (\m ->
-                if url.query == Nothing then
-                    applySong Songs.twinkleSong m
+    if url.query == Nothing then
+        initialModel |> loadSongByName "twinkle"
 
-                else
-                    m
-           )
+    else
+        initialModel |> applyQueryParams url
 
 
 type PlayState
@@ -285,6 +281,18 @@ applySong sc model =
         , beatsPerBar = sc.beatsPerBar
         , subdivisions = sc.subdivisions
     }
+
+
+loadSongByName : String -> Model -> Model
+loadSongByName songName model =
+    case Songs.parseSong songName of
+        Just songConfig ->
+            model
+                |> pushToHistory
+                |> applySong songConfig
+
+        Nothing ->
+            model
 
 
 

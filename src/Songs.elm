@@ -1,4 +1,4 @@
-module Songs exposing (SongConfig, twinkleSong)
+module Songs exposing (SongConfig, allSongs, parseSong, twinkleSong)
 
 import Instruments exposing (PercType, percKick, percSnare)
 
@@ -73,3 +73,27 @@ twinkleSong =
     , beatsPerBar = 4
     , subdivisions = 2
     }
+
+
+
+-- Song list and parsing
+
+
+{-| List of all available songs for UI display
+-}
+allSongs : List { name : String, displayName : String }
+allSongs =
+    [ { name = "twinkle", displayName = "Twinkle Twinkle Little Star" }
+    ]
+
+
+{-| Parse song name to SongConfig
+-}
+parseSong : String -> Maybe SongConfig
+parseSong name =
+    case name of
+        "twinkle" ->
+            Just twinkleSong
+
+        _ ->
+            Nothing
