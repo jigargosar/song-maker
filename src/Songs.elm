@@ -204,11 +204,11 @@ odeToJoySong : SongConfig
 odeToJoySong =
     { melody =
         -- First phrase
-        [ [ "E4" ], [ "E4" ], [ "F4" ], [ "G4" ], [ "G4" ], [ "F4" ], [ "E4" ], [ "D4" ] ]
-            ++ [ [ "C4" ], [ "C4" ], [ "D4" ], [ "E4" ], [ "E4" ], [], [ "C4" ], [ "D4" ] ]
-            -- Second phrase (repeat with different ending)
-            ++ [ [ "E4" ], [ "E4" ], [ "F4" ], [ "G4" ], [ "G4" ], [ "F4" ], [ "E4" ], [ "D4" ] ]
-            ++ [ [ "C4" ], [ "C4" ], [ "D4" ], [ "E4" ], [], [], [], [ "C4" ] ]
+        [ [ "C4" ], [ "C4" ], [ "D4" ], [ "E4" ], [ "C4" ], [ "E4" ], [ "D4" ], [] ]
+            ++ [ [ "C4" ], [ "C4" ], [ "D4" ], [ "E4" ], [ "C4" ], [], [ "B3" ], [] ]
+            -- Second phrase
+            ++ [ [ "C4" ], [ "C4" ], [ "D4" ], [ "E4" ], [ "F4" ], [ "E4" ], [ "D4" ], [ "C4" ] ]
+            ++ [ [ "B3" ], [ "G3" ], [ "A3" ], [ "B3" ], [ "C4" ], [], [ "C4" ], [] ]
     , percussion =
         [ [ kick ], [], [ snare ], [], [ kick ], [], [ snare ], [] ]
             ++ [ [ kick ], [], [ snare ], [], [ kick ], [], [ snare ], [] ]
@@ -216,7 +216,7 @@ odeToJoySong =
             ++ [ [ kick ], [], [ snare ], [], [ kick ], [], [ snare ], [] ]
     , scaleType = Scales.Major
     , rootNote = Scales.C
-    , bpm = 120
+    , bpm = 100
     , octaveStart = 3
     , octaveCount = 3
     , bars = 4

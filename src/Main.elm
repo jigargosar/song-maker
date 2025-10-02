@@ -319,6 +319,9 @@ viewStepLabel stepIdx isPlaying =
                 if event.isPrimary && event.pointer.keys.shift then
                     ShiftStepRight stepIdx
 
+                else if event.isPrimary then
+                    PlayFromStep stepIdx
+
                 else
                     NoOp
             )
