@@ -81,10 +81,15 @@ init _ url key =
             }
     in
     if url.query == Nothing then
-        initialModel |> loadSongByName "ode-to-joy"
+        loadDefaultSong initialModel
 
     else
-        initialModel |> applyQueryParams url
+        applyQueryParams url initialModel
+
+
+loadDefaultSong : Model -> Model
+loadDefaultSong model =
+    loadSongByName "ode-to-joy" model
 
 
 type PlayState
@@ -664,7 +669,11 @@ stop model =
 
 loadFromUrl : Url -> Model -> Model
 loadFromUrl url model =
-    applyQueryParams url { model | url = url }
+    if url.query == Nothing then
+        loadDefaultSong { model | url = url }
+
+    else
+        applyQueryParams url { model | url = url }
 
 
 undo : Model -> Model
