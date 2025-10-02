@@ -14,11 +14,13 @@ module Model exposing
     , changeSubdivisions
     , continueDrawingPerc
     , continueDrawingPitch
+    , deleteStep
     , getSaveAction
     , init
     , loadFromUrl
     , loadSongByName
     , onTimeSync
+    , playFromStep
     , redo
     , reset
     , setBPM
@@ -413,6 +415,21 @@ shiftStepRight fromStepIdx model =
     { modelWithHistory | pitchGrid = newPitchGrid, percGrid = newPercGrid }
 
 
+deleteStep : Int -> Model -> Model
+deleteStep stepToDelete model =
+    let
+        modelWithHistory =
+            pushToHistory model
+
+        totalSteps =
+            Timing.getTotalSteps (timeConfig model)
+
+        ( newPitchGrid, newPercGrid ) =
+            Grid.deleteStep stepToDelete totalSteps modelWithHistory.pitchGrid modelWithHistory.percGrid
+    in
+    { modelWithHistory | pitchGrid = newPitchGrid, percGrid = newPercGrid }
+
+
 
 -- Sequencer Functions
 
@@ -594,6 +611,11 @@ startPlaying model =
 
         _ ->
             model
+
+
+playFromStep : Int -> Model -> Model
+playFromStep stepIdx model =
+    setPlayState (Playing { startTime = model.audioContextTime, nextStep = stepIdx }) model
 
 
 setPlayState playState model =

@@ -5,6 +5,7 @@ module Grid exposing
     , PitchPos
     , convertMelodyToGrid
     , convertPercussionToGrid
+    , deleteStep
     , emptyPercGrid
     , emptyPitchGrid
     , isPercCellActive
@@ -185,6 +186,44 @@ shiftStepRight fromStepIdx totalSteps pitchGrid percGrid =
 
                             else
                                 Nothing
+
+                        else
+                            Just ( percRowIdx, stepIdx )
+                    )
+                |> Set.fromList
+    in
+    ( newPitchGrid, newPercGrid )
+
+
+deleteStep : Int -> Int -> PitchGrid -> PercGrid -> ( PitchGrid, PercGrid )
+deleteStep stepToDelete totalSteps pitchGrid percGrid =
+    let
+        newPitchGrid =
+            pitchGrid
+                |> Set.toList
+                |> List.filterMap
+                    (\( pitchIdx, stepIdx ) ->
+                        if stepIdx == stepToDelete then
+                            Nothing
+
+                        else if stepIdx > stepToDelete then
+                            Just ( pitchIdx, stepIdx - 1 )
+
+                        else
+                            Just ( pitchIdx, stepIdx )
+                    )
+                |> Set.fromList
+
+        newPercGrid =
+            percGrid
+                |> Set.toList
+                |> List.filterMap
+                    (\( percRowIdx, stepIdx ) ->
+                        if stepIdx == stepToDelete then
+                            Nothing
+
+                        else if stepIdx > stepToDelete then
+                            Just ( percRowIdx, stepIdx - 1 )
 
                         else
                             Just ( percRowIdx, stepIdx )

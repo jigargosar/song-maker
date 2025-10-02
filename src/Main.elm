@@ -74,7 +74,9 @@ type Msg
     | LinkClicked Browser.UrlRequest
     | UrlChanged Url
     | Save
+    | PlayFromStep Int
     | ShiftStepRight Int
+    | DeleteStep Int
 
 
 subscriptions : Model -> Sub Msg
@@ -210,8 +212,14 @@ update msg model =
             in
             ( model, saveCommand )
 
+        PlayFromStep stepIdx ->
+            ( Model.playFromStep stepIdx model, Cmd.none )
+
         ShiftStepRight stepIdx ->
             ( Model.shiftStepRight stepIdx model, Cmd.none )
+
+        DeleteStep stepIdx ->
+            ( Model.deleteStep stepIdx model, Cmd.none )
 
 
 
@@ -305,6 +313,7 @@ viewStepLabel stepIdx isPlaying =
         , class "border-b border-gray-600"
         , class "sticky top-0 z-10"
         , class "cursor-pointer"
+        , class "group relative"
         , PE.onDown
             (\event ->
                 if event.isPrimary && event.pointer.keys.shift then
@@ -314,7 +323,29 @@ viewStepLabel stepIdx isPlaying =
                     NoOp
             )
         ]
-        [ text (String.fromInt (stepIdx + 1)) ]
+        [ text (String.fromInt (stepIdx + 1))
+        , div
+            [ class "absolute top-full left-1/2 -translate-x-1/2 pt-2 hidden group-hover:block z-20" ]
+            [ div
+                [ class "bg-gray-800 border border-gray-600 rounded-lg shadow-xl p-4" ]
+                [ div
+                    [ class "flex flex-col gap-2" ]
+                    [ viewStepButton "Play From" (PlayFromStep stepIdx)
+                    , viewStepButton "Shift Right" (ShiftStepRight stepIdx)
+                    , viewStepButton "Delete" (DeleteStep stepIdx)
+                    ]
+                ]
+            ]
+        ]
+
+
+viewStepButton : String -> Msg -> Html Msg
+viewStepButton label msg =
+    H.button
+        [ class "text-sm px-4 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded transition-colors shadow-lg whitespace-nowrap"
+        , HE.onClick msg
+        ]
+        [ text label ]
 
 
 viewPitchRow : ViewModel -> Int -> List (Html Msg)
