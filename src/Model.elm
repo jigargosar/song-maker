@@ -223,8 +223,8 @@ queryParser =
         |> Pipeline.optional (Query.string "drumKit" |> Query.map (Maybe.map Instruments.parseDrumKit))
 
 
-buildAbsoluteQuery : Model -> String
-buildAbsoluteQuery model =
+buildAbsoluteQueryFromModel : Model -> String
+buildAbsoluteQueryFromModel model =
     UB.absolute
         []
         [ UB.int "bpm" model.bpm
@@ -923,20 +923,24 @@ changeSubdivisions newSubdivisions model =
 toQueryString : Model -> Maybe ( Nav.Key, String )
 toQueryString model =
     let
-        newAbsoluteQuery : String
-        newAbsoluteQuery =
-            buildAbsoluteQuery model
+        absoluteQueryFromModel : String
+        absoluteQueryFromModel =
+            buildAbsoluteQueryFromModel model
 
-        oldAbsoluteQuery : Maybe String
-        oldAbsoluteQuery =
-            model.url.query
-                |> Maybe.map (\q -> "/?" ++ q)
+        absoluteQueryFromUrl : String
+        absoluteQueryFromUrl =
+            buildAbsoluteQueryFromUrl model.url
     in
-    if oldAbsoluteQuery == Just newAbsoluteQuery then
+    if absoluteQueryFromUrl == absoluteQueryFromModel then
         Nothing
 
     else
-        Just ( model.key, newAbsoluteQuery )
+        Just ( model.key, absoluteQueryFromModel )
+
+
+buildAbsoluteQueryFromUrl : Url -> String
+buildAbsoluteQueryFromUrl url =
+    url.query |> Maybe.map (\q -> "/?" ++ q) |> Maybe.withDefault "/"
 
 
 
