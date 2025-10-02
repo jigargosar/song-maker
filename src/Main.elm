@@ -276,7 +276,7 @@ viewGrid vm =
         , style "grid-template-columns" gridTemplateCols
         , style "grid-template-rows" gridTemplateRows
         ]
-        ([ {- Empty corner cell -} div [ class labelBgColorAndClass, class "border-b border-gray-600" ] [] ]
+        ([ {- Empty corner cell -} div [ class labelBgColorAndClass, class "border-b border-gray-600", class "sticky top-0 left-0 z-20" ] [] ]
             ++ {- Step Labels row -} times (\stepIdx -> viewStepLabel stepIdx (vm.isStepCurrentlyPlaying stepIdx)) vm.totalSteps
             ++ {- Pitch rows -} (times (viewPitchRow vm) vm.totalPitches |> List.concat)
             ++ {- Perc Snare row -} viewPercRow vm Instruments.percSnare
@@ -295,7 +295,7 @@ viewStepLabel stepIdx isPlaying =
                 labelBgColor
     in
     div
-        [ class labelClass, class bgClass, class "border-b border-gray-600" ]
+        [ class labelClass, class bgClass, class "border-b border-gray-600", class "sticky top-0 z-10" ]
         [ text (String.fromInt (stepIdx + 1)) ]
 
 
@@ -304,7 +304,7 @@ viewPitchRow vm pitchIdx =
     let
         viewPitchLabel =
             div
-                [ class labelBgColorAndClass, class "border-[0.5px]" ]
+                [ class labelBgColorAndClass, class "border-[0.5px]", class "sticky left-0 z-10" ]
                 [ text (vm.pitchIdxToNoteName pitchIdx) ]
     in
     viewPitchLabel :: times (\stepIdx -> viewPitchCell vm pitchIdx stepIdx) vm.totalSteps
