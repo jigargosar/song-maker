@@ -205,10 +205,10 @@ odeToJoySong =
     { melody =
         -- First phrase
         [ [ "E4" ], [ "E4" ], [ "F4" ], [ "G4" ], [ "G4" ], [ "F4" ], [ "E4" ], [ "D4" ] ]
-            ++ [ [ "C4" ], [ "C4" ], [ "D4" ], [ "E4" ], [ "E4" ], [], [ "D4" ], [ "D4" ] ]
+            ++ [ [ "C4" ], [ "C4" ], [ "D4" ], [ "E4" ], [ "E4" ], [], [ "C4" ], [ "D4" ] ]
             -- Second phrase (repeat with different ending)
             ++ [ [ "E4" ], [ "E4" ], [ "F4" ], [ "G4" ], [ "G4" ], [ "F4" ], [ "E4" ], [ "D4" ] ]
-            ++ [ [ "C4" ], [ "C4" ], [ "D4" ], [ "E4" ], [ "D4" ], [], [ "C4" ], [ "C4" ] ]
+            ++ [ [ "C4" ], [ "C4" ], [ "D4" ], [ "E4" ], [], [], [], [ "C4" ] ]
     , percussion =
         [ [ kick ], [], [ snare ], [], [ kick ], [], [ snare ], [] ]
             ++ [ [ kick ], [], [ snare ], [], [ kick ], [], [ snare ], [] ]
@@ -253,27 +253,45 @@ jingleBellsSong =
 oldMacDonaldSong : SongConfig
 oldMacDonaldSong =
     { melody =
-        -- Old MacDonald had a farm
-        [ [ "C4" ], [ "C4" ], [ "C4" ], [ "G4" ], [ "A4" ], [ "A4" ], [ "G4" ], [] ]
-            -- E-I-E-I-O
+        -- Old MacDonald had a farm: C4 C4 C4 G4 A4 A4 G4
+        [ [ "C4" ], [ "C4" ], [ "C4" ], [ "G4" ], [ "A4" ], [ "A4" ], [ "G4" ] ]
+            -- E-I-E-I-O: E4 E4 D4 D4 C4 _ _ _
             ++ [ [ "E4" ], [ "E4" ], [ "D4" ], [ "D4" ], [ "C4" ], [], [], [] ]
-            -- And on that farm he had a duck
-            ++ [ [ "G4" ], [ "G4" ], [ "C4" ], [ "C4" ], [ "C4" ], [ "G4" ], [ "A4" ], [ "A4" ] ]
-            -- E-I-E-I-O
-            ++ [ [ "G4" ], [], [ "E4" ], [ "E4" ], [ "D4" ], [ "D4" ], [ "C4" ], [] ]
+            -- And on that farm he had a cow: G4 G4 F4 F4 E4 E4 D4
+            ++ [ [ "G4" ], [ "G4" ], [ "F4" ], [ "F4" ], [ "E4" ], [ "E4" ], [ "D4" ] ]
+            -- E-I-E-I-O: _ _ G4 G4 F4 F4 E4 E4 D4
+            ++ [ [], [], [ "G4" ], [ "G4" ], [ "F4" ], [ "F4" ], [ "E4" ], [ "E4" ], [ "D4" ] ]
+            -- With a moo moo here: C4 _ G4 G4 C4 _ _ _
+            ++ [ [ "C4" ], [], [ "G4" ], [ "G4" ], [ "C4" ], [], [], [] ]
+            -- And a moo moo there: C4 _ G4 G4 C4 _ _ _
+            ++ [ [ "C4" ], [], [ "G4" ], [ "G4" ], [ "C4" ], [], [], [] ]
+            -- Here a moo, there a moo: G4 G4 G4 G4 G4 G4 _
+            ++ [ [ "G4" ], [ "G4" ], [ "G4" ], [ "G4" ], [ "G4" ], [ "G4" ], [] ]
+            -- Everywhere a moo moo: C4 _ G4 G4 C4 _ _ _
+            ++ [ [ "C4" ], [], [ "G4" ], [ "G4" ], [ "C4" ], [], [], [] ]
+            -- Old MacDonald had a farm: C4 C4 C4 G4 A4 A4 G4
+            ++ [ [ "C4" ], [ "C4" ], [ "C4" ], [ "G4" ], [ "A4" ], [ "A4" ], [ "G4" ] ]
+            -- E-I-E-I-O: E4 E4 D4 D4 C4
+            ++ [ [ "E4" ], [ "E4" ], [ "D4" ], [ "D4" ], [ "C4" ] ]
     , percussion =
-        [ [ kick ], [], [ snare ], [], [ kick ], [], [ snare ], [] ]
+        [ [ kick ], [], [ snare ], [], [ kick ], [], [ snare ] ]
             ++ [ [ kick ], [], [ snare ], [], [ kick ], [], [], [] ]
-            ++ [ [ kick ], [], [ snare ], [], [ kick ], [], [ snare ], [] ]
-            ++ [ [ kick ], [], [ snare ], [], [ kick ], [], [ snare ], [] ]
+            ++ [ [ kick ], [], [ snare ], [], [ kick ], [], [ snare ] ]
+            ++ [ [], [], [ kick ], [], [ snare ], [], [ kick ], [], [ snare ] ]
+            ++ [ [ kick ], [], [ snare ], [], [ kick ], [], [], [] ]
+            ++ [ [ kick ], [], [ snare ], [], [ kick ], [], [], [] ]
+            ++ [ [ kick ], [], [ snare ], [], [ kick ], [], [] ]
+            ++ [ [ kick ], [], [ snare ], [], [ kick ], [], [], [] ]
+            ++ [ [ kick ], [], [ snare ], [], [ kick ], [], [ snare ] ]
+            ++ [ [ kick ], [], [ snare ], [], [ kick ] ]
     , scaleType = Scales.Major
     , rootNote = Scales.C
-    , bpm = 130
+    , bpm = 160
     , octaveStart = 3
     , octaveCount = 3
-    , bars = 4
-    , beatsPerBar = 4
-    , subdivisions = 2
+    , bars = 71
+    , beatsPerBar = 1
+    , subdivisions = 1
     }
 
 
