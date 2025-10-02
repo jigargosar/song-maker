@@ -206,6 +206,17 @@ type alias QueryParams =
     }
 
 
+parseQueryParams : Url -> Maybe QueryParams
+parseQueryParams url =
+    if url.query == Nothing then
+        -- This check is required since when there is no query params we need to apply default params
+        Nothing
+
+    else
+        Parser.parse (Parser.top <?> queryParser) url
+            |> Maybe.andThen identity
+
+
 queryParser : Query.Parser (Maybe QueryParams)
 queryParser =
     Pipeline.succeed QueryParams
@@ -221,6 +232,29 @@ queryParser =
         |> Pipeline.optional (Query.int "subdivisions")
         |> Pipeline.optional (Query.string "instrument" |> Query.map (Maybe.map Instruments.parseTonal))
         |> Pipeline.optional (Query.string "drumKit" |> Query.map (Maybe.map Instruments.parseDrumKit))
+
+
+toQueryString : Model -> Maybe ( Nav.Key, String )
+toQueryString model =
+    let
+        absoluteQueryFromModel : String
+        absoluteQueryFromModel =
+            buildAbsoluteQueryFromModel model
+
+        absoluteQueryFromUrl : String
+        absoluteQueryFromUrl =
+            buildAbsoluteQueryFromUrl model.url
+    in
+    if absoluteQueryFromUrl == absoluteQueryFromModel then
+        Nothing
+
+    else
+        Just ( model.key, absoluteQueryFromModel )
+
+
+buildAbsoluteQueryFromUrl : Url -> String
+buildAbsoluteQueryFromUrl url =
+    url.query |> Maybe.map (\q -> "/?" ++ q) |> Maybe.withDefault "/"
 
 
 buildAbsoluteQueryFromModel : Model -> String
@@ -240,17 +274,6 @@ buildAbsoluteQueryFromModel model =
         , UB.string "instrument" (Instruments.tonalLabel model.currentTonalInstrument)
         , UB.string "drumKit" (Instruments.drumKitLabel model.currentDrumKit)
         ]
-
-
-parseQueryParams : Url -> Maybe QueryParams
-parseQueryParams url =
-    if url.query == Nothing then
-        -- This check is required since when there is no query params we need to apply default params
-        Nothing
-
-    else
-        Parser.parse (Parser.top <?> queryParser) url
-            |> Maybe.andThen identity
 
 
 applyQueryDefaults : Model -> Model
@@ -918,29 +941,6 @@ changeSubdivisions newSubdivisions model =
             pushToHistory model
     in
     { modelWithHistory | subdivisions = atLeast 1 newSubdivisions }
-
-
-toQueryString : Model -> Maybe ( Nav.Key, String )
-toQueryString model =
-    let
-        absoluteQueryFromModel : String
-        absoluteQueryFromModel =
-            buildAbsoluteQueryFromModel model
-
-        absoluteQueryFromUrl : String
-        absoluteQueryFromUrl =
-            buildAbsoluteQueryFromUrl model.url
-    in
-    if absoluteQueryFromUrl == absoluteQueryFromModel then
-        Nothing
-
-    else
-        Just ( model.key, absoluteQueryFromModel )
-
-
-buildAbsoluteQueryFromUrl : Url -> String
-buildAbsoluteQueryFromUrl url =
-    url.query |> Maybe.map (\q -> "/?" ++ q) |> Maybe.withDefault "/"
 
 
 
