@@ -615,7 +615,11 @@ startPlaying model =
 
 playFromStep : Int -> Model -> Model
 playFromStep stepIdx model =
-    setPlayState (Playing { startTime = model.audioContextTime, nextStep = stepIdx }) model
+    let
+        adjustedStartTime =
+            model.audioContextTime - (toFloat stepIdx * Timing.noteDuration (timeConfig model))
+    in
+    setPlayState (Playing { startTime = adjustedStartTime, nextStep = stepIdx + 1 }) model
 
 
 setPlayState playState model =
