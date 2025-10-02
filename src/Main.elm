@@ -326,20 +326,25 @@ viewStepLabel stepIdx isPlaying =
             )
         ]
         [ text (String.fromInt (stepIdx + 1))
-        , div
-            [ class "absolute top-full left-1/2 -translate-x-1/2 pt-2 hidden group-hover:block z-20" ]
+        , viewStepHoverPopup stepIdx
+        ]
+
+
+viewStepHoverPopup : Int -> Html Msg
+viewStepHoverPopup stepIdx =
+    div
+        [ class "absolute top-full left-1/2 -translate-x-1/2 pt-2 hidden group-hover:block z-20" ]
+        [ div
+            [ class "bg-gray-800 border border-gray-600 rounded-lg shadow-xl p-4"
+            , PE.onWithOptions "pointerdown"
+                { stopPropagation = True, preventDefault = False }
+                (\_ -> NoOp)
+            ]
             [ div
-                [ class "bg-gray-800 border border-gray-600 rounded-lg shadow-xl p-4"
-                , PE.onWithOptions "pointerdown"
-                    { stopPropagation = True, preventDefault = False }
-                    (\_ -> NoOp)
-                ]
-                [ div
-                    [ class "flex flex-col gap-2" ]
-                    [ viewStepButton "Play From" (PlayFromStep stepIdx)
-                    , viewStepButton "Shift Right" (ShiftStepRight stepIdx)
-                    , viewStepButton "Delete" (DeleteStep stepIdx)
-                    ]
+                [ class "flex flex-col gap-2" ]
+                [ viewStepButton "Play From" (PlayFromStep stepIdx)
+                , viewStepButton "Shift Right" (ShiftStepRight stepIdx)
+                , viewStepButton "Delete" (DeleteStep stepIdx)
                 ]
             ]
         ]
