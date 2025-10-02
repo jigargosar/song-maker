@@ -923,9 +923,11 @@ changeSubdivisions newSubdivisions model =
 toQueryString : Model -> Maybe ( Nav.Key, String )
 toQueryString model =
     let
+        newAbsoluteQuery : String
         newAbsoluteQuery =
             buildAbsoluteQuery model
 
+        oldAbsoluteQuery : Maybe String
         oldAbsoluteQuery =
             model.url.query
                 |> Maybe.map (\q -> "/?" ++ q)
