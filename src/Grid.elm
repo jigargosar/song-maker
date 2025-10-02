@@ -290,10 +290,6 @@ pitchGridToString grid =
 -}
 parsePitchGrid : String -> Maybe PitchGrid
 parsePitchGrid str =
-    let
-        _ =
-            Debug.log "str" str
-    in
     if String.isEmpty str then
         Just Set.empty
 

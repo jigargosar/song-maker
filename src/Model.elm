@@ -15,7 +15,6 @@ module Model exposing
     , continueDrawingPerc
     , continueDrawingPitch
     , deleteStep
-    , getSaveAction
     , init
     , loadFromUrl
     , loadSongByName
@@ -32,6 +31,7 @@ module Model exposing
     , startPlaying
     , stop
     , stopDrawing
+    , toQueryString
     , toVm
     , undo
     )
@@ -223,8 +223,8 @@ queryParser =
         |> Pipeline.optional (Query.string "drumKit" |> Query.map (Maybe.map Instruments.parseDrumKit))
 
 
-buildQuery : Model -> String
-buildQuery model =
+buildAbsoluteQuery : Model -> String
+buildAbsoluteQuery model =
     UB.absolute
         []
         [ UB.int "bpm" model.bpm
@@ -273,7 +273,7 @@ applyQueryDefaults model =
 
 applyQueryParams : Url -> Model -> Model
 applyQueryParams url model =
-    case parseQueryParams url |> Debug.log "parseQueryParams" of
+    case parseQueryParams url of
         Just params ->
             { model
                 | bpm = Maybe.withDefault model.bpm params.bpm
@@ -920,17 +920,21 @@ changeSubdivisions newSubdivisions model =
     { modelWithHistory | subdivisions = atLeast 1 newSubdivisions }
 
 
-getSaveAction : Model -> Maybe ( Nav.Key, String )
-getSaveAction model =
+toQueryString : Model -> Maybe ( Nav.Key, String )
+toQueryString model =
     let
-        query =
-            buildQuery model
+        newAbsoluteQuery =
+            buildAbsoluteQuery model
+
+        oldAbsoluteQuery =
+            model.url.query
+                |> Maybe.map (\q -> "/?" ++ q)
     in
-    if model.url.query == Just query then
+    if oldAbsoluteQuery == Just newAbsoluteQuery then
         Nothing
 
     else
-        Just ( model.key, query )
+        Just ( model.key, newAbsoluteQuery )
 
 
 
