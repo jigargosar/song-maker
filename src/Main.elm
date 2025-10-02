@@ -310,9 +310,8 @@ viewStepLabel stepIdx isPlaying =
     div
         [ class labelClass
         , class bgClass
-        , class "border-b border-gray-600"
+        , class "border-b border-gray-600 cursor-pointer"
         , class "sticky top-0 z-10"
-        , class "cursor-pointer"
         , class "group relative"
         , PE.onDown
             (\event ->
