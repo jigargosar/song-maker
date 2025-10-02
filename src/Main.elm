@@ -667,10 +667,6 @@ viewScaleTypeSelector vm =
         [ class "bg-gray-700 text-white text-sm border border-gray-600 rounded px-2 py-1 cursor-pointer hover:bg-gray-600 transition-colors"
         , HE.onInput (Scales.parseScaleType >> ChangeScaleType)
         ]
-        --[ H.option [ HA.value "Major", HA.selected (currentScale == Major) ] [ text "Major" ]
-        --, H.option [ HA.value "Pentatonic", HA.selected (currentScale == Pentatonic) ] [ text "Pentatonic" ]
-        --, H.option [ HA.value "Chromatic", HA.selected (currentScale == Chromatic) ] [ text "Chromatic" ]
-        --]
         (Scales.allScales |> List.map (viewScaleOption vm))
 
 
