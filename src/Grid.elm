@@ -14,6 +14,7 @@ module Grid exposing
     , percGridToString
     , pitchGridToString
     , resizePitchGrid
+    , shiftStepRight
     , transposePitchGrid
     , updatePercCell
     , updatePitchCell
@@ -143,6 +144,54 @@ transposePitchGrid oldConfig newConfig existingGrid =
                         Nothing
             )
         |> Set.fromList
+
+
+shiftStepRight : Int -> Int -> PitchGrid -> PercGrid -> ( PitchGrid, PercGrid )
+shiftStepRight fromStepIdx totalSteps pitchGrid percGrid =
+    let
+        newPitchGrid =
+            pitchGrid
+                |> Set.toList
+                |> List.filterMap
+                    (\( pitchIdx, stepIdx ) ->
+                        if stepIdx >= fromStepIdx then
+                            let
+                                newStepIdx =
+                                    stepIdx + 1
+                            in
+                            if newStepIdx < totalSteps then
+                                Just ( pitchIdx, newStepIdx )
+
+                            else
+                                Nothing
+
+                        else
+                            Just ( pitchIdx, stepIdx )
+                    )
+                |> Set.fromList
+
+        newPercGrid =
+            percGrid
+                |> Set.toList
+                |> List.filterMap
+                    (\( percRowIdx, stepIdx ) ->
+                        if stepIdx >= fromStepIdx then
+                            let
+                                newStepIdx =
+                                    stepIdx + 1
+                            in
+                            if newStepIdx < totalSteps then
+                                Just ( percRowIdx, newStepIdx )
+
+                            else
+                                Nothing
+
+                        else
+                            Just ( percRowIdx, stepIdx )
+                    )
+                |> Set.fromList
+    in
+    ( newPitchGrid, newPercGrid )
 
 
 

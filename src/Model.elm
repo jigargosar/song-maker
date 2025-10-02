@@ -24,6 +24,7 @@ module Model exposing
     , setBPM
     , setDrumKit
     , setTonalInstrument
+    , shiftStepRight
     , startDrawingPerc
     , startDrawingPitch
     , startPlaying
@@ -395,6 +396,21 @@ reset model =
 
     else
         Just ( resetModel, model.key )
+
+
+shiftStepRight : Int -> Model -> Model
+shiftStepRight fromStepIdx model =
+    let
+        modelWithHistory =
+            pushToHistory model
+
+        totalSteps =
+            Timing.getTotalSteps (timeConfig model)
+
+        ( newPitchGrid, newPercGrid ) =
+            Grid.shiftStepRight fromStepIdx totalSteps modelWithHistory.pitchGrid modelWithHistory.percGrid
+    in
+    { modelWithHistory | pitchGrid = newPitchGrid, percGrid = newPercGrid }
 
 
 

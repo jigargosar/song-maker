@@ -6,6 +6,7 @@ import Grid exposing (PercGrid, PercPos, PitchGrid, PitchPos)
 import Html as H exposing (Html, div, text)
 import Html.Attributes as HA exposing (class, style)
 import Html.Events as HE
+import Html.Events.Extra.Pointer as PE
 import Instruments exposing (DrumKit, PercType, TonalInstrument)
 import Json.Decode as JD
 import Model exposing (DrawState, Flags, Model, NoteToPlay, PlayState, ViewModel)
@@ -73,6 +74,7 @@ type Msg
     | LinkClicked Browser.UrlRequest
     | UrlChanged Url
     | Save
+    | ShiftStepRight Int
 
 
 subscriptions : Model -> Sub Msg
@@ -208,6 +210,9 @@ update msg model =
             in
             ( model, saveCommand )
 
+        ShiftStepRight stepIdx ->
+            ( Model.shiftStepRight stepIdx model, Cmd.none )
+
 
 
 -- View
@@ -295,7 +300,20 @@ viewStepLabel stepIdx isPlaying =
                 labelBgColor
     in
     div
-        [ class labelClass, class bgClass, class "border-b border-gray-600", class "sticky top-0 z-10" ]
+        [ class labelClass
+        , class bgClass
+        , class "border-b border-gray-600"
+        , class "sticky top-0 z-10"
+        , class "cursor-pointer"
+        , PE.onDown
+            (\event ->
+                if event.isPrimary && event.pointer.keys.shift then
+                    ShiftStepRight stepIdx
+
+                else
+                    NoOp
+            )
+        ]
         [ text (String.fromInt (stepIdx + 1)) ]
 
 
