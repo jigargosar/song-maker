@@ -81,7 +81,7 @@ init _ url key =
         loadDefaultSong initialModel
 
     else
-        applyQueryParams url initialModel
+        Foo.applyQueryParams url initialModel
 
 
 loadDefaultSong : Model -> Model
@@ -195,39 +195,17 @@ timeConfig model =
 toQueryString : Model -> Maybe ( Nav.Key, String )
 toQueryString model =
     let
-        absoluteQueryFromModel : String
         absoluteQueryFromModel =
-            buildAbsoluteQueryFromModel model
+            Foo.buildQueryString model
 
-        absoluteQueryFromUrl : String
         absoluteQueryFromUrl =
-            buildAbsoluteQueryFromUrl model.url
+            Foo.buildQueryStringFromUrl model.url
     in
     if absoluteQueryFromUrl == absoluteQueryFromModel then
         Nothing
 
     else
         Just ( model.key, absoluteQueryFromModel )
-
-
-buildAbsoluteQueryFromUrl : Url -> String
-buildAbsoluteQueryFromUrl url =
-    Foo.buildQueryStringFromUrl url
-
-
-buildAbsoluteQueryFromModel : Model -> String
-buildAbsoluteQueryFromModel model =
-    Foo.buildQueryString model
-
-
-applyQueryDefaults : Model -> Model
-applyQueryDefaults model =
-    Foo.applyDefaults model
-
-
-applyQueryParams : Url -> Model -> Model
-applyQueryParams url model =
-    Foo.applyQueryParams url model
 
 
 {-| Convert Model to HistoryState by extracting history-tracked fields
@@ -327,7 +305,7 @@ reset model =
         resetModel =
             model
                 |> pushToHistory
-                |> applyQueryDefaults
+                |> Foo.applyDefaults
     in
     if resetModel == model then
         Nothing
@@ -581,7 +559,7 @@ loadFromUrl url model =
         loadDefaultSong { model | url = url }
 
     else
-        applyQueryParams url { model | url = url }
+        Foo.applyQueryParams url { model | url = url }
 
 
 undo : Model -> Model
