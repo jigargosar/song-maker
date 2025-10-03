@@ -1,4 +1,4 @@
-module UrlPersistence exposing
+module QuerystringCodec exposing
     ( QueryData
     , load
     , reset

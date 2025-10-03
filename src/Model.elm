@@ -39,11 +39,11 @@ module Model exposing
 import Browser.Navigation as Nav
 import Grid exposing (PercGrid, PercPos, PitchGrid, PitchPos)
 import Instruments exposing (DrumKit, PercType, TonalInstrument)
+import QuerystringCodec as QC
 import Scales exposing (RootNote, ScaleConfig, ScaleType)
 import Songs exposing (SongConfig)
 import Timing exposing (TimeConfig)
 import Url exposing (Url)
-import UrlPersistence as UP
 import Utils exposing (..)
 
 
@@ -81,7 +81,7 @@ init _ url key =
         loadDefaultSong initialModel
 
     else
-        UP.load url initialModel
+        QC.load url initialModel
 
 
 loadDefaultSong : Model -> Model
@@ -194,7 +194,7 @@ timeConfig model =
 
 toQueryStringIfChanged : Model -> Maybe ( Nav.Key, String )
 toQueryStringIfChanged model =
-    UP.serialize model.url model
+    QC.serialize model.url model
         |> Maybe.map (\queryString -> ( model.key, queryString ))
 
 
@@ -295,7 +295,7 @@ reset model =
         resetModel =
             model
                 |> pushToHistory
-                |> UP.reset
+                |> QC.reset
     in
     if resetModel == model then
         Nothing
@@ -553,7 +553,7 @@ loadFromUrl url model =
         loadDefaultSong newModel
 
     else
-        UP.load url newModel
+        QC.load url newModel
 
 
 undo : Model -> Model
