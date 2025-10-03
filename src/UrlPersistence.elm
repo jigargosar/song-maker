@@ -1,4 +1,4 @@
-module Foo exposing
+module UrlPersistence exposing
     ( QueryData
     , applyDefaults
     , applyQueryParams

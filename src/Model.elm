@@ -37,8 +37,8 @@ module Model exposing
     )
 
 import Browser.Navigation as Nav
-import Foo
 import Grid exposing (PercGrid, PercPos, PitchGrid, PitchPos)
+import UrlPersistence as UP
 import Instruments exposing (DrumKit, PercType, TonalInstrument)
 import Scales exposing (RootNote, ScaleConfig, ScaleType)
 import Songs exposing (SongConfig)
@@ -81,7 +81,7 @@ init _ url key =
         loadDefaultSong initialModel
 
     else
-        Foo.applyQueryParams url initialModel
+        UP.applyQueryParams url initialModel
 
 
 loadDefaultSong : Model -> Model
@@ -194,7 +194,7 @@ timeConfig model =
 
 toQueryString : Model -> Maybe ( Nav.Key, String )
 toQueryString model =
-    Foo.getChangedQuery model.url model
+    UP.getChangedQuery model.url model
         |> Maybe.map (\queryString -> ( model.key, queryString ))
 
 
@@ -295,7 +295,7 @@ reset model =
         resetModel =
             model
                 |> pushToHistory
-                |> Foo.applyDefaults
+                |> UP.applyDefaults
     in
     if resetModel == model then
         Nothing
@@ -549,7 +549,7 @@ loadFromUrl url model =
         loadDefaultSong { model | url = url }
 
     else
-        Foo.applyQueryParams url { model | url = url }
+        UP.applyQueryParams url { model | url = url }
 
 
 undo : Model -> Model
@@ -894,5 +894,4 @@ toVm model =
 
 {- TODO:
    - Reset undo/redo stacks in loadFromUrl to prevent stale history
-   - Consider renaming Foo.elm to more descriptive name (e.g., QueryParams, UrlPersistence)
 -}
