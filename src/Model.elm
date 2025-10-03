@@ -37,16 +37,13 @@ module Model exposing
     )
 
 import Browser.Navigation as Nav
+import Foo
 import Grid exposing (PercGrid, PercPos, PitchGrid, PitchPos)
 import Instruments exposing (DrumKit, PercType, TonalInstrument)
 import Scales exposing (RootNote, ScaleConfig, ScaleType)
 import Songs exposing (SongConfig)
 import Timing exposing (TimeConfig)
 import Url exposing (Url)
-import Url.Builder as UB
-import Url.Parser as Parser exposing ((<?>))
-import Url.Parser.Query as Query
-import Url.Query.Pipeline as Pipeline
 import Utils exposing (..)
 
 
@@ -195,50 +192,6 @@ timeConfig model =
     }
 
 
-type alias QueryParams =
-    { bpm : Maybe Int
-    , octaveStart : Maybe Int
-    , octaveCount : Maybe Int
-    , pitchGrid : Maybe PitchGrid
-    , percGrid : Maybe PercGrid
-    , scaleType : Maybe ScaleType
-    , rootNote : Maybe RootNote
-    , bars : Maybe Int
-    , beatsPerBar : Maybe Int
-    , subdivisions : Maybe Int
-    , currentTonalInstrument : Maybe TonalInstrument
-    , currentDrumKit : Maybe DrumKit
-    }
-
-
-parseQueryParams : Url -> Maybe QueryParams
-parseQueryParams url =
-    if url.query == Nothing then
-        -- This check is required since when there is no query params we need to apply default params
-        Nothing
-
-    else
-        Parser.parse (Parser.top <?> queryParser) url
-            |> Maybe.andThen identity
-
-
-queryParser : Query.Parser (Maybe QueryParams)
-queryParser =
-    Pipeline.succeed QueryParams
-        |> Pipeline.optional (Query.int "bpm")
-        |> Pipeline.optional (Query.int "octaveStart")
-        |> Pipeline.optional (Query.int "octaveCount")
-        |> Pipeline.optional (Query.string "pitchGrid" |> Query.map (Maybe.andThen Grid.parsePitchGrid))
-        |> Pipeline.optional (Query.string "percGrid" |> Query.map (Maybe.andThen Grid.parsePercGrid))
-        |> Pipeline.optional (Query.string "scale" |> Query.map (Maybe.map Scales.parseScaleType))
-        |> Pipeline.optional (Query.string "root" |> Query.map (Maybe.map Scales.parseRootNote))
-        |> Pipeline.optional (Query.int "bars")
-        |> Pipeline.optional (Query.int "beatsPerBar")
-        |> Pipeline.optional (Query.int "subdivisions")
-        |> Pipeline.optional (Query.string "instrument" |> Query.map (Maybe.map Instruments.parseTonal))
-        |> Pipeline.optional (Query.string "drumKit" |> Query.map (Maybe.map Instruments.parseDrumKit))
-
-
 toQueryString : Model -> Maybe ( Nav.Key, String )
 toQueryString model =
     let
@@ -259,67 +212,22 @@ toQueryString model =
 
 buildAbsoluteQueryFromUrl : Url -> String
 buildAbsoluteQueryFromUrl url =
-    url.query |> Maybe.map (\q -> "/?" ++ q) |> Maybe.withDefault "/"
+    Foo.buildQueryStringFromUrl url
 
 
 buildAbsoluteQueryFromModel : Model -> String
 buildAbsoluteQueryFromModel model =
-    UB.absolute
-        []
-        [ UB.int "bpm" model.bpm
-        , UB.int "octaveStart" model.octaveStart
-        , UB.int "octaveCount" model.octaveCount
-        , UB.string "pitchGrid" (Grid.pitchGridToString model.pitchGrid)
-        , UB.string "percGrid" (Grid.percGridToString model.percGrid)
-        , UB.string "scale" (Scales.scaleLabel model.scaleType)
-        , UB.string "root" (Scales.rootNoteToString model.rootNote)
-        , UB.int "bars" model.bars
-        , UB.int "beatsPerBar" model.beatsPerBar
-        , UB.int "subdivisions" model.subdivisions
-        , UB.string "instrument" (Instruments.tonalLabel model.currentTonalInstrument)
-        , UB.string "drumKit" (Instruments.drumKitLabel model.currentDrumKit)
-        ]
+    Foo.buildQueryString model
 
 
 applyQueryDefaults : Model -> Model
 applyQueryDefaults model =
-    { model
-        | pitchGrid = Grid.emptyPitchGrid
-        , percGrid = Grid.emptyPercGrid
-        , scaleType = Scales.Major
-        , rootNote = Scales.C
-        , octaveStart = 3
-        , octaveCount = 3
-        , bars = 8
-        , beatsPerBar = 4
-        , subdivisions = 2
-        , bpm = 120
-        , currentTonalInstrument = Instruments.defaultTonalInstrument
-        , currentDrumKit = Instruments.defaultDrumKit
-    }
+    Foo.applyDefaults model
 
 
 applyQueryParams : Url -> Model -> Model
 applyQueryParams url model =
-    case parseQueryParams url of
-        Just params ->
-            { model
-                | bpm = Maybe.withDefault model.bpm params.bpm
-                , octaveStart = Maybe.withDefault model.octaveStart params.octaveStart
-                , octaveCount = Maybe.withDefault model.octaveCount params.octaveCount
-                , pitchGrid = Maybe.withDefault model.pitchGrid params.pitchGrid
-                , percGrid = Maybe.withDefault model.percGrid params.percGrid
-                , scaleType = Maybe.withDefault model.scaleType params.scaleType
-                , rootNote = Maybe.withDefault model.rootNote params.rootNote
-                , bars = Maybe.withDefault model.bars params.bars
-                , beatsPerBar = Maybe.withDefault model.beatsPerBar params.beatsPerBar
-                , subdivisions = Maybe.withDefault model.subdivisions params.subdivisions
-                , currentTonalInstrument = Maybe.withDefault model.currentTonalInstrument params.currentTonalInstrument
-                , currentDrumKit = Maybe.withDefault model.currentDrumKit params.currentDrumKit
-            }
-
-        Nothing ->
-            applyQueryDefaults model
+    Foo.applyQueryParams url model
 
 
 {-| Convert Model to HistoryState by extracting history-tracked fields
@@ -1013,3 +921,24 @@ toVm model =
     , beatsPerBar = model.beatsPerBar
     , subdivisions = model.subdivisions
     }
+
+
+
+{- MIGRATION STATUS: Query/URL logic extracted to Foo.elm module (~95 lines removed).
+
+   GOAL: Extract URL/query persistence concerns from Model.elm to dedicated module.
+   Reduce Model.elm LOC, improve separation of concerns, make query handling testable in isolation.
+
+   COMPLETED:
+   - Created Foo.elm with QueryData parameterized type alias
+   - Moved parsing, serialization, and application logic to Foo
+   - Model.elm now delegates via thin wrappers:
+     * buildAbsoluteQueryFromModel -> Foo.buildQueryString
+     * buildAbsoluteQueryFromUrl -> Foo.buildQueryStringFromUrl
+     * applyQueryDefaults -> Foo.applyDefaults
+     * applyQueryParams -> Foo.applyQueryParams
+
+   TODO:
+   - Reset undo/redo stacks in loadFromUrl to prevent stale history
+   - Consider renaming Foo.elm to more descriptive name (e.g., QueryParams, UrlPersistence)
+-}
