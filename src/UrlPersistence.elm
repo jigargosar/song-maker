@@ -1,10 +1,10 @@
 module UrlPersistence exposing
     ( QueryData
     , applyDefaults
-    , applyQueryParams
     , buildQueryString
     , buildQueryStringFromUrl
     , getChangedQuery
+    , loadFromUrl
     )
 
 import Grid exposing (PercGrid, PitchGrid)
@@ -101,8 +101,8 @@ buildQueryStringFromUrl url =
     url.query |> Maybe.map (\q -> "/?" ++ q) |> Maybe.withDefault "/"
 
 
-applyQueryParams : Url -> QueryData a -> QueryData a
-applyQueryParams url data =
+loadFromUrl : Url -> QueryData a -> QueryData a
+loadFromUrl url data =
     case parseQueryParams url of
         Just params ->
             { data

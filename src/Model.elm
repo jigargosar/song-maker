@@ -38,12 +38,12 @@ module Model exposing
 
 import Browser.Navigation as Nav
 import Grid exposing (PercGrid, PercPos, PitchGrid, PitchPos)
-import UrlPersistence as UP
 import Instruments exposing (DrumKit, PercType, TonalInstrument)
 import Scales exposing (RootNote, ScaleConfig, ScaleType)
 import Songs exposing (SongConfig)
 import Timing exposing (TimeConfig)
 import Url exposing (Url)
+import UrlPersistence as UP
 import Utils exposing (..)
 
 
@@ -81,7 +81,7 @@ init _ url key =
         loadDefaultSong initialModel
 
     else
-        UP.applyQueryParams url initialModel
+        UP.loadFromUrl url initialModel
 
 
 loadDefaultSong : Model -> Model
@@ -545,11 +545,15 @@ stop model =
 
 loadFromUrl : Url -> Model -> Model
 loadFromUrl url model =
+    let
+        newModel =
+            { model | url = url }
+    in
     if url.query == Nothing then
-        loadDefaultSong { model | url = url }
+        loadDefaultSong newModel
 
     else
-        UP.applyQueryParams url { model | url = url }
+        UP.loadFromUrl url newModel
 
 
 undo : Model -> Model
