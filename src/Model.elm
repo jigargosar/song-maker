@@ -902,21 +902,7 @@ toVm model =
 
 
 
-{- MIGRATION STATUS: Query/URL logic extracted to Foo.elm module (~95 lines removed).
-
-   GOAL: Extract URL/query persistence concerns from Model.elm to dedicated module.
-   Reduce Model.elm LOC, improve separation of concerns, make query handling testable in isolation.
-
-   COMPLETED:
-   - Created Foo.elm with QueryData parameterized type alias
-   - Moved parsing, serialization, and application logic to Foo
-   - Model.elm now delegates via thin wrappers:
-     * buildAbsoluteQueryFromModel -> Foo.buildQueryString
-     * buildAbsoluteQueryFromUrl -> Foo.buildQueryStringFromUrl
-     * applyQueryDefaults -> Foo.applyDefaults
-     * applyQueryParams -> Foo.applyQueryParams
-
-   TODO:
+{- TODO:
    - Reset undo/redo stacks in loadFromUrl to prevent stale history
    - Consider renaming Foo.elm to more descriptive name (e.g., QueryParams, UrlPersistence)
 -}
