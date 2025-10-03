@@ -194,18 +194,8 @@ timeConfig model =
 
 toQueryString : Model -> Maybe ( Nav.Key, String )
 toQueryString model =
-    let
-        absoluteQueryFromModel =
-            Foo.buildQueryString model
-
-        absoluteQueryFromUrl =
-            Foo.buildQueryStringFromUrl model.url
-    in
-    if absoluteQueryFromUrl == absoluteQueryFromModel then
-        Nothing
-
-    else
-        Just ( model.key, absoluteQueryFromModel )
+    Foo.getChangedQuery model.url model
+        |> Maybe.map (\queryString -> ( model.key, queryString ))
 
 
 {-| Convert Model to HistoryState by extracting history-tracked fields

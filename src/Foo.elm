@@ -4,6 +4,7 @@ module Foo exposing
     , applyQueryParams
     , buildQueryString
     , buildQueryStringFromUrl
+    , getChangedQuery
     )
 
 import Grid exposing (PercGrid, PitchGrid)
@@ -139,3 +140,19 @@ applyDefaults data =
         , currentTonalInstrument = Instruments.defaultTonalInstrument
         , currentDrumKit = Instruments.defaultDrumKit
     }
+
+
+getChangedQuery : Url -> QueryData a -> Maybe String
+getChangedQuery url data =
+    let
+        newQuery =
+            buildQueryString data
+
+        oldQuery =
+            buildQueryStringFromUrl url
+    in
+    if oldQuery == newQuery then
+        Nothing
+
+    else
+        Just newQuery
