@@ -550,7 +550,7 @@ loadFromUrl url model =
             { model | url = url }
     in
     if url.query == Nothing then
-        loadDefaultSong newModel
+        QC.reset newModel
 
     else
         QC.load url newModel
