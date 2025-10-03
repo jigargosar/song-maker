@@ -5,6 +5,48 @@ import Scales exposing (RootNote, ScaleType)
 
 
 
+-- Song list and parsing
+
+
+allSongs : List { name : String, displayName : String }
+allSongs =
+    [ { name = "twinkle", displayName = "Twinkle Twinkle Little Star" }
+    , { name = "happy-birthday", displayName = "Happy Birthday" }
+    , { name = "mary-lamb", displayName = "Mary Had a Little Lamb" }
+    , { name = "ode-to-joy", displayName = "Ode to Joy" }
+    , { name = "jingle-bells", displayName = "Jingle Bells" }
+    , { name = "old-macdonald", displayName = "Old MacDonald" }
+    ]
+
+
+{-| Parse song name to SongConfig
+-}
+parseSong : String -> Maybe SongConfig
+parseSong name =
+    case name of
+        "twinkle" ->
+            Just twinkleSong
+
+        "happy-birthday" ->
+            Just happyBirthdaySong
+
+        "mary-lamb" ->
+            Just maryHadALittleLambSong
+
+        "ode-to-joy" ->
+            Just odeToJoySong
+
+        "jingle-bells" ->
+            Just jingleBellsSong
+
+        "old-macdonald" ->
+            Just oldMacDonaldSong
+
+        _ ->
+            Nothing
+
+
+
 -- SongConfig type alias
 
 
@@ -76,71 +118,6 @@ twinkleSong =
     , octaveStart = 3
     , octaveCount = 3
     , bars = 4
-    , beatsPerBar = 4
-    , subdivisions = 2
-    }
-
-
-furEliseSong : SongConfig
-furEliseSong =
-    { melody =
-        -- RH: E D# E D# E B D C A - C E A B - E G# B C - E -
-        -- LH: - - - - - - - - - A E A - E E G# - A E A -
-        [ [ "E5" ], [ "D#5" ], [ "E5" ], [ "D#5" ], [ "E5" ], [ "B4" ], [ "D5" ], [ "C5" ] ]
-            ++ [ [ "A4", "A3" ], [], [ "C5", "E3" ], [ "E5", "A3" ], [ "A5" ], [ "B5", "E3" ], [], [ "E5", "E3" ] ]
-            ++ [ [ "G#5", "G#3" ], [ "B5" ], [ "C6", "A3" ], [], [ "E5", "E3" ], [], [ "A3" ], [] ]
-            -- RH: E D# E D# E B D C A - C E A B - E C B A
-            -- LH: - - - - - - - - - A E A - E E G# - A E A
-            ++ [ [ "E5" ], [ "D#5" ], [ "E5" ], [ "D#5" ], [ "E5" ], [ "B4" ], [ "D5" ], [ "C5" ] ]
-            ++ [ [ "A4", "A3" ], [], [ "C5", "E3" ], [ "E5", "A3" ], [ "A5" ], [ "B5", "E3" ], [], [ "E5", "E3" ] ]
-            ++ [ [ "C6", "G#3" ], [ "B5" ], [ "A5", "A3" ], [], [ "E3" ], [], [ "A3" ], [] ]
-    , percussion =
-        [ [ kick ], [], [], [], [ snare ], [], [], [] ]
-            ++ [ [], [], [], [], [ snare ], [], [], [] ]
-            ++ [ [ kick ], [], [], [], [], [], [], [] ]
-            ++ [ [ kick ], [], [], [], [ snare ], [], [], [] ]
-            ++ [ [], [], [], [], [ snare ], [], [], [] ]
-            ++ [ [ kick ], [], [], [], [], [], [], [] ]
-    , scaleType = Scales.Chromatic
-    , rootNote = Scales.A
-    , bpm = 90
-    , octaveStart = 3
-    , octaveCount = 4
-    , bars = 6
-    , beatsPerBar = 4
-    , subdivisions = 2
-    }
-
-
-stairwayToHeavenSong : SongConfig
-stairwayToHeavenSong =
-    { melody =
-        -- Intro arpeggio pattern
-        -- Measure 1 (Am): A C E A C E C A with bass A
-        [ [ "A4", "A3" ], [ "C5" ], [ "E5" ], [ "A5" ], [ "C5" ], [ "E5" ], [ "C5" ], [ "A4" ] ]
-            -- Measure 2 (Am/G#): Same pattern with bass G#
-            ++ [ [ "A4", "G#3" ], [ "C5" ], [ "E5" ], [ "A5" ], [ "C5" ], [ "E5" ], [ "C5" ], [ "A4" ] ]
-            -- Measure 3 (Am/G): Same pattern with bass G
-            ++ [ [ "A4", "G3" ], [ "C5" ], [ "E5" ], [ "A5" ], [ "C5" ], [ "E5" ], [ "C5" ], [ "A4" ] ]
-            -- Measure 4 (D/F#): D F# A D F# A F# D with bass F#
-            ++ [ [ "D5", "F#3" ], [ "F#4" ], [ "A4" ], [ "D5" ], [ "F#4" ], [ "A4" ], [ "F#4" ], [ "D4" ] ]
-            -- Measure 5 (Fmaj7): F A C F A C A F with bass F
-            ++ [ [ "F4", "F3" ], [ "A4" ], [ "C5" ], [ "F5" ], [ "A4" ], [ "C5" ], [ "A4" ], [ "F4" ] ]
-            -- Measure 6 (G - Am): G B D G B D G D with bass pattern
-            ++ [ [ "G4" ], [ "B4" ], [ "D5" ], [ "G5" ], [ "B4" ], [ "D5" ], [ "G4" ], [ "D4" ] ]
-    , percussion =
-        [ [], [], [], [], [], [], [], [] ]
-            ++ [ [], [], [], [], [], [], [], [] ]
-            ++ [ [], [], [], [], [], [], [], [] ]
-            ++ [ [], [], [], [], [], [], [], [] ]
-            ++ [ [], [], [], [], [], [], [], [] ]
-            ++ [ [], [], [], [], [], [], [], [] ]
-    , scaleType = Scales.Chromatic
-    , rootNote = Scales.A
-    , bpm = 66
-    , octaveStart = 3
-    , octaveCount = 3
-    , bars = 6
     , beatsPerBar = 4
     , subdivisions = 2
     }
@@ -291,65 +268,3 @@ oldMacDonaldSong =
     , beatsPerBar = 1
     , subdivisions = 1
     }
-
-
-
--- Song list and parsing
-
-
-{-| TODO: Add these songs:
-
-  - Happy Birthday
-  - Mary Had a Little Lamb
-  - Ode to Joy
-  - Jingle Bells
-  - Für Elise
-  - Old MacDonald
-
-List of all available songs for UI display
-
--}
-allSongs : List { name : String, displayName : String }
-allSongs =
-    [ { name = "twinkle", displayName = "Twinkle Twinkle Little Star" }
-    , { name = "fur-elise", displayName = "Für Elise" }
-    , { name = "stairway", displayName = "Stairway to Heaven (Intro)" }
-    , { name = "happy-birthday", displayName = "Happy Birthday" }
-    , { name = "mary-lamb", displayName = "Mary Had a Little Lamb" }
-    , { name = "ode-to-joy", displayName = "Ode to Joy" }
-    , { name = "jingle-bells", displayName = "Jingle Bells" }
-    , { name = "old-macdonald", displayName = "Old MacDonald" }
-    ]
-
-
-{-| Parse song name to SongConfig
--}
-parseSong : String -> Maybe SongConfig
-parseSong name =
-    case name of
-        "twinkle" ->
-            Just twinkleSong
-
-        "fur-elise" ->
-            Just furEliseSong
-
-        "stairway" ->
-            Just stairwayToHeavenSong
-
-        "happy-birthday" ->
-            Just happyBirthdaySong
-
-        "mary-lamb" ->
-            Just maryHadALittleLambSong
-
-        "ode-to-joy" ->
-            Just odeToJoySong
-
-        "jingle-bells" ->
-            Just jingleBellsSong
-
-        "old-macdonald" ->
-            Just oldMacDonaldSong
-
-        _ ->
-            Nothing
