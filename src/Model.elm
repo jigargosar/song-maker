@@ -81,7 +81,7 @@ init _ url key =
         loadDefaultSong initialModel
 
     else
-        UP.loadFromUrl url initialModel
+        UP.load url initialModel
 
 
 loadDefaultSong : Model -> Model
@@ -194,7 +194,7 @@ timeConfig model =
 
 toQueryStringIfChanged : Model -> Maybe ( Nav.Key, String )
 toQueryStringIfChanged model =
-    UP.toQueryStringIfChanged model.url model
+    UP.serialize model.url model
         |> Maybe.map (\queryString -> ( model.key, queryString ))
 
 
@@ -295,7 +295,7 @@ reset model =
         resetModel =
             model
                 |> pushToHistory
-                |> UP.applyDefaults
+                |> UP.reset
     in
     if resetModel == model then
         Nothing
@@ -553,7 +553,7 @@ loadFromUrl url model =
         loadDefaultSong newModel
 
     else
-        UP.loadFromUrl url newModel
+        UP.load url newModel
 
 
 undo : Model -> Model

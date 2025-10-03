@@ -1,10 +1,8 @@
 module UrlPersistence exposing
     ( QueryData
-    , applyDefaults
-    , buildQueryString
-    , buildQueryStringFromUrl
-    , loadFromUrl
-    , toQueryStringIfChanged
+    , load
+    , reset
+    , serialize
     )
 
 import Grid exposing (PercGrid, PitchGrid)
@@ -101,8 +99,8 @@ buildQueryStringFromUrl url =
     url.query |> Maybe.map (\q -> "/?" ++ q) |> Maybe.withDefault "/"
 
 
-loadFromUrl : Url -> QueryData a -> QueryData a
-loadFromUrl url data =
+load : Url -> QueryData a -> QueryData a
+load url data =
     case parseQueryParams url of
         Just params ->
             { data
@@ -121,11 +119,11 @@ loadFromUrl url data =
             }
 
         Nothing ->
-            applyDefaults data
+            reset data
 
 
-applyDefaults : QueryData a -> QueryData a
-applyDefaults data =
+reset : QueryData a -> QueryData a
+reset data =
     { data
         | pitchGrid = Grid.emptyPitchGrid
         , percGrid = Grid.emptyPercGrid
@@ -142,8 +140,8 @@ applyDefaults data =
     }
 
 
-toQueryStringIfChanged : Url -> QueryData a -> Maybe String
-toQueryStringIfChanged url data =
+serialize : Url -> QueryData a -> Maybe String
+serialize url data =
     let
         dataQuery =
             buildQueryString data
