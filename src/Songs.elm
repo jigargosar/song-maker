@@ -4,50 +4,10 @@ import Instruments exposing (PercType)
 import Scales exposing (RootNote, ScaleType)
 
 
-
--- Song list and parsing
-
-
-allSongs : List { name : String, displayName : String }
-allSongs =
-    [ { name = "twinkle", displayName = "Twinkle Twinkle Little Star" }
-    , { name = "happy-birthday", displayName = "Happy Birthday" }
-    , { name = "mary-lamb", displayName = "Mary Had a Little Lamb" }
-    , { name = "ode-to-joy", displayName = "Ode to Joy" }
-    , { name = "jingle-bells", displayName = "Jingle Bells" }
-    ]
-
-
-{-| Parse song name to SongConfig
--}
-parseSong : String -> Maybe SongConfig
-parseSong name =
-    case name of
-        "twinkle" ->
-            Just twinkleSong
-
-        "happy-birthday" ->
-            Just happyBirthdaySong
-
-        "mary-lamb" ->
-            Just maryHadALittleLambSong
-
-        "ode-to-joy" ->
-            Just odeToJoySong
-
-        "jingle-bells" ->
-            Just jingleBellsSong
-
-        _ ->
-            Nothing
-
-
-
--- SongConfig type alias
-
-
 type alias SongConfig =
-    { melody : List (List String) -- Each step can have multiple notes
+    { name : String
+    , displayName : String
+    , melody : List (List String) -- Each step can have multiple notes
     , percussion : List (List PercType) -- Each step can have multiple drums
     , scaleType : ScaleType
     , rootNote : RootNote
@@ -60,6 +20,22 @@ type alias SongConfig =
     }
 
 
+allSongs : List SongConfig
+allSongs =
+    [ twinkleSong
+    , happyBirthdaySong
+    , maryHadALittleLambSong
+    , odeToJoySong
+    , jingleBellsSong
+    ]
+
+
+parseSong : String -> Maybe SongConfig
+parseSong name =
+    List.filter (\s -> s.name == name) allSongs
+        |> List.head
+
+
 kick =
     Instruments.percKick
 
@@ -68,13 +44,11 @@ snare =
     Instruments.percSnare
 
 
-
--- twinkleSong value
-
-
 twinkleSong : SongConfig
 twinkleSong =
-    { melody =
+    { name = "twinkle"
+    , displayName = "Twinkle Twinkle Little Star"
+    , melody =
         -- "Twinkle twinkle little star"
         [ [ "C4", "C3", "E4" ], [ "C4" ], [ "G4", "G3", "B4" ], [ "G4" ] ]
             -- "how I wonder what"
@@ -121,7 +95,9 @@ twinkleSong =
 
 happyBirthdaySong : SongConfig
 happyBirthdaySong =
-    { melody =
+    { name = "happy-birthday"
+    , displayName = "Happy Birthday"
+    , melody =
         -- Happy birthday to you
         [ [ "C4" ], [ "C4" ], [ "D4" ], [ "C4" ], [ "F4" ], [ "E4" ], [], [] ]
             -- Happy birthday to you
@@ -148,7 +124,9 @@ happyBirthdaySong =
 
 maryHadALittleLambSong : SongConfig
 maryHadALittleLambSong =
-    { melody =
+    { name = "mary-lamb"
+    , displayName = "Mary Had a Little Lamb"
+    , melody =
         -- Mary had a little lamb
         [ [ "E4" ], [ "D4" ], [ "C4" ], [ "D4" ], [ "E4" ], [ "E4" ], [ "E4" ], [] ]
             -- Little lamb, little lamb
@@ -175,7 +153,9 @@ maryHadALittleLambSong =
 
 odeToJoySong : SongConfig
 odeToJoySong =
-    { melody =
+    { name = "ode-to-joy"
+    , displayName = "Ode to Joy"
+    , melody =
         -- First phrase
         [ [ "C4" ], [ "C4" ], [ "D4" ], [ "E4" ], [ "C4" ], [ "E4" ], [ "D4" ], [] ]
             ++ [ [ "C4" ], [ "C4" ], [ "D4" ], [ "E4" ], [ "C4" ], [], [ "B3" ], [] ]
@@ -200,7 +180,9 @@ odeToJoySong =
 
 jingleBellsSong : SongConfig
 jingleBellsSong =
-    { melody =
+    { name = "jingle-bells"
+    , displayName = "Jingle Bells"
+    , melody =
         [ [ "E4" ], [ "E4" ], [ "E4" ], [], [ "E4" ], [ "E4" ], [ "E4" ], [] ]
             ++ [ [ "E4" ], [ "G4" ], [ "C4" ], [ "D4" ], [ "E4" ], [], [], [] ]
             ++ [ [ "F4" ], [ "F4" ], [ "F4" ], [ "F4" ], [ "F4" ], [ "E4" ], [ "E4" ], [ "E4" ] ]

@@ -11,7 +11,7 @@ import Instruments exposing (DrumKit, PercType, TonalInstrument)
 import Json.Decode as JD
 import Model exposing (DrawState, Flags, Model, NoteToPlay, PlayState, ViewModel)
 import Scales exposing (RootNote, ScaleConfig, ScaleType)
-import Songs
+import Songs exposing (SongConfig)
 import Url exposing (Url)
 import Utils exposing (..)
 
@@ -803,6 +803,6 @@ viewSongSelector =
         )
 
 
-viewSongOption : { name : String, displayName : String } -> Html Msg
+viewSongOption : SongConfig -> Html Msg
 viewSongOption song =
     H.option [ HA.value song.name ] [ text song.displayName ]
