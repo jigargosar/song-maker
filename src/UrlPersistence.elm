@@ -145,14 +145,14 @@ applyDefaults data =
 toQueryString : Url -> QueryData a -> Maybe String
 toQueryString url data =
     let
-        newQuery =
+        dataQuery =
             buildQueryString data
 
-        oldQuery =
+        urlQuery =
             buildQueryStringFromUrl url
     in
-    if oldQuery == newQuery then
+    if urlQuery == dataQuery then
         Nothing
 
     else
-        Just newQuery
+        Just dataQuery
