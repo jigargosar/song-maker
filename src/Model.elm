@@ -194,7 +194,7 @@ timeConfig model =
 
 toQueryString : Model -> Maybe ( Nav.Key, String )
 toQueryString model =
-    UP.getChangedQuery model.url model
+    UP.toQueryString model.url model
         |> Maybe.map (\queryString -> ( model.key, queryString ))
 
 
