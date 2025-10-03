@@ -89,7 +89,7 @@ init _ url key =
 
 loadDefaultSong : Model -> Model
 loadDefaultSong model =
-    loadSongByName "ode-to-joy" model
+    loadSongByName "jingle-bells" model
 
 
 type PlayState

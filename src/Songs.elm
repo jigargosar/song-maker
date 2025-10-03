@@ -228,22 +228,20 @@ odeToJoySong =
 jingleBellsSong : SongConfig
 jingleBellsSong =
     { melody =
-        -- Jingle bells, jingle bells, jingle all the way
         [ [ "E4" ], [ "E4" ], [ "E4" ], [], [ "E4" ], [ "E4" ], [ "E4" ], [] ]
-            ++ [ [ "E4" ], [ "G4" ], [ "C4" ], [], [ "D4" ], [], [ "E4" ], [] ]
-            -- Oh what fun it is to ride in a one-horse open sleigh
+            ++ [ [ "E4" ], [ "G4" ], [ "C4" ], [ "D4" ], [ "E4" ], [], [], [] ]
             ++ [ [ "F4" ], [ "F4" ], [ "F4" ], [ "F4" ], [ "F4" ], [ "E4" ], [ "E4" ], [ "E4" ] ]
             ++ [ [ "E4" ], [ "D4" ], [ "D4" ], [ "E4" ], [ "D4" ], [], [ "G4" ], [] ]
     , percussion =
-        [ [ kick ], [], [ snare ], [], [ kick ], [], [ snare ], [] ]
-            ++ [ [ kick ], [], [ snare ], [], [ kick ], [], [ snare ], [] ]
-            ++ [ [ kick ], [], [ snare ], [], [ kick ], [], [ snare ], [] ]
-            ++ [ [ kick ], [], [ snare ], [], [ kick ], [], [ snare ], [] ]
+        [ [ snare ], [], [ kick ], [], [ snare ], [], [ kick ], [] ]
+            ++ [ [ snare ], [], [ kick ], [], [ snare ], [], [ kick ], [] ]
+            ++ [ [ snare ], [], [ kick ], [], [ snare ], [], [ kick ], [] ]
+            ++ [ [ snare ], [], [ kick ], [], [ snare ], [], [ kick ], [] ]
     , scaleType = Scales.Major
     , rootNote = Scales.C
-    , bpm = 140
-    , octaveStart = 3
-    , octaveCount = 3
+    , bpm = 120
+    , octaveStart = 4
+    , octaveCount = 1
     , bars = 4
     , beatsPerBar = 4
     , subdivisions = 2
