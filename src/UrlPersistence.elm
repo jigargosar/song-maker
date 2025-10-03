@@ -4,7 +4,7 @@ module UrlPersistence exposing
     , buildQueryString
     , buildQueryStringFromUrl
     , loadFromUrl
-    , toQueryString
+    , toQueryStringIfChanged
     )
 
 import Grid exposing (PercGrid, PitchGrid)
@@ -142,8 +142,8 @@ applyDefaults data =
     }
 
 
-toQueryString : Url -> QueryData a -> Maybe String
-toQueryString url data =
+toQueryStringIfChanged : Url -> QueryData a -> Maybe String
+toQueryStringIfChanged url data =
     let
         dataQuery =
             buildQueryString data

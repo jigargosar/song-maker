@@ -31,7 +31,7 @@ module Model exposing
     , startPlaying
     , stop
     , stopDrawing
-    , toQueryString
+    , toQueryStringIfChanged
     , toVm
     , undo
     )
@@ -192,9 +192,9 @@ timeConfig model =
     }
 
 
-toQueryString : Model -> Maybe ( Nav.Key, String )
-toQueryString model =
-    UP.toQueryString model.url model
+toQueryStringIfChanged : Model -> Maybe ( Nav.Key, String )
+toQueryStringIfChanged model =
+    UP.toQueryStringIfChanged model.url model
         |> Maybe.map (\queryString -> ( model.key, queryString ))
 
 

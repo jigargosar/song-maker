@@ -203,7 +203,7 @@ update msg model =
         Save ->
             let
                 saveCommand =
-                    case Model.toQueryString model of
+                    case Model.toQueryStringIfChanged model of
                         Just ( key, query ) ->
                             Nav.pushUrl key query
 
