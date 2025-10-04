@@ -2,15 +2,15 @@ port module Main exposing (main)
 
 import Browser exposing (Document)
 import Browser.Navigation as Nav
-import Grid exposing (PercGrid, PercPos, PitchGrid, PitchPos)
+import Grid exposing (PercPos, PitchPos)
 import Html as H exposing (Attribute, Html, div, text)
 import Html.Attributes as HA exposing (class, style)
 import Html.Events as HE
 import Html.Events.Extra.Pointer as PE
 import Instruments exposing (DrumKit, PercType, TonalInstrument)
 import Json.Decode as JD
-import Model exposing (DrawState, Flags, Model, NoteToPlay, PlayState, ViewModel)
-import Scales exposing (RootNote, ScaleConfig, ScaleType)
+import Model exposing (Flags, Model, NoteToPlay, ViewModel)
+import Scales exposing (RootNote, ScaleType)
 import Songs exposing (SongConfig)
 import Url exposing (Url)
 import Utils exposing (..)

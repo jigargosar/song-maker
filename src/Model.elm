@@ -38,7 +38,7 @@ module Model exposing
 
 import Browser.Navigation as Nav
 import Grid exposing (PercGrid, PercPos, PitchGrid, PitchPos)
-import Instruments exposing (DrumKit, PercType, TonalInstrument)
+import Instruments exposing (DrumKit, TonalInstrument)
 import QuerystringCodec as QC
 import Scales exposing (RootNote, ScaleConfig, ScaleType)
 import Songs exposing (SongConfig)

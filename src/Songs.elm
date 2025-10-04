@@ -1,4 +1,4 @@
-module Songs exposing (SongConfig, allSongs, parseSong, twinkleSong)
+module Songs exposing (SongConfig, allSongs, parseSong)
 
 import Instruments exposing (PercType)
 

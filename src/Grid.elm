@@ -22,7 +22,7 @@ module Grid exposing
     )
 
 import Instruments exposing (PercType)
-import Scales exposing (RootNote, ScaleConfig, ScaleType)
+import Scales exposing (ScaleConfig)
 import Set exposing (Set)
 import Timing exposing (TimeConfig)
 
