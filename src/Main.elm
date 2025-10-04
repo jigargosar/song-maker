@@ -3,7 +3,7 @@ port module Main exposing (main)
 import Browser exposing (Document)
 import Browser.Navigation as Nav
 import Grid exposing (PercGrid, PercPos, PitchGrid, PitchPos)
-import Html as H exposing (Html, div, text)
+import Html as H exposing (Attribute, Html, div, text)
 import Html.Attributes as HA exposing (class, style)
 import Html.Events as HE
 import Html.Events.Extra.Pointer as PE
@@ -260,11 +260,7 @@ viewTitle =
 
 viewResetButton : Html Msg
 viewResetButton =
-    H.button
-        [ class "ml-auto bg-gray-700 text-white px-3 py-1 rounded hover:bg-gray-600 transition-colors"
-        , HE.onClick Reset
-        ]
-        [ text "Reset" ]
+    viewButton [ class "ml-auto" ] (Just Reset) "Reset"
 
 
 centerView : ViewModel -> Html Msg
@@ -531,31 +527,45 @@ viewBPMControl bpm =
 
 viewUndoButton : Bool -> Html Msg
 viewUndoButton canUndo =
-    H.button
-        [ class "bg-gray-700 text-white px-3 py-1 rounded disabled:opacity-50"
-        , HE.onClick Undo
-        , HA.disabled (not canUndo)
-        ]
-        [ text "↶ Undo" ]
+    viewButton [] (justIf canUndo Undo) "↶ Undo"
 
 
 viewRedoButton : Bool -> Html Msg
 viewRedoButton canRedo =
-    H.button
-        [ class "bg-gray-700 text-white px-3 py-1 rounded disabled:opacity-50"
-        , HE.onClick Redo
-        , HA.disabled (not canRedo)
-        ]
-        [ text "↷ Redo" ]
+    viewButton [] (justIf canRedo Redo) "↷ Redo"
+
+
+justIf : Bool -> a -> Maybe a
+justIf condition value =
+    if condition then
+        Just value
+
+    else
+        Nothing
 
 
 viewSaveButton : Html Msg
 viewSaveButton =
+    viewButton [] (Just Save) "Save"
+
+
+viewButton : List (Attribute Msg) -> Maybe Msg -> String -> Html Msg
+viewButton attrs maybeMsg label =
+    let
+        clickOrDisabled =
+            case maybeMsg of
+                Just msg ->
+                    HE.onClick msg
+
+                Nothing ->
+                    HA.disabled True
+    in
     H.button
-        [ class "bg-gray-700 text-white px-3 py-1 rounded hover:bg-gray-600 transition-colors"
-        , HE.onClick Save
-        ]
-        [ text "Save" ]
+        (class "bg-gray-700 text-white px-3 py-1 rounded hover:bg-gray-600 transition-colors disabled:opacity-50"
+            :: clickOrDisabled
+            :: attrs
+        )
+        [ text label ]
 
 
 
