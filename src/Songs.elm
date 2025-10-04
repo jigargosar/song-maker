@@ -168,7 +168,7 @@ odeToJoySong =
             ++ [ [ kick ], [], [ snare ], [], [ kick ], [], [ snare ], [] ]
             ++ [ [ kick ], [], [ snare ], [], [ kick ], [], [ snare ], [] ]
             ++ [ [ kick ], [], [ snare ], [], [ kick ], [], [ snare ], [] ]
-    , scaleType = Scales.Major
+    , scaleType = Scales.Chromatic
     , rootNote = Scales.C
     , bpm = 100
     , octaveStart = 3
