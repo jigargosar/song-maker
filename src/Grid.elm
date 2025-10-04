@@ -118,8 +118,8 @@ percPositionToTuple { percType, stepIdx } =
 -- Grid Transformations
 
 
-resizePitchGrid : ScaleConfig -> ScaleConfig -> TimeConfig -> PitchGrid -> PitchGrid
-resizePitchGrid oldConfig newConfig newTimeConfig existingGrid =
+resizePitchGrid : ScaleConfig -> TimeConfig -> PitchGrid -> PitchGrid
+resizePitchGrid newConfig newTimeConfig existingGrid =
     existingGrid
         |> Set.toList
         |> List.filterMap
@@ -240,8 +240,8 @@ deleteStep stepToDelete totalSteps pitchGrid percGrid =
 -- Grid Conversions
 
 
-convertMelodyToGrid : List (List String) -> ScaleConfig -> PitchGrid
-convertMelodyToGrid stepMelodies config =
+convertMelodyToGrid : List (List String) -> PitchGrid
+convertMelodyToGrid stepMelodies =
     stepMelodies
         |> List.indexedMap
             (\stepIdx noteNames ->

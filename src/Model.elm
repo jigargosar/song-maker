@@ -255,19 +255,11 @@ pushToHistory model =
 
 applySong : SongConfig -> Model -> Model
 applySong sc model =
-    let
-        songScaleConfig =
-            { scaleType = Scales.Major
-            , rootNote = Scales.C
-            , octaveStart = sc.octaveStart
-            , octaveCount = sc.octaveCount
-            }
-    in
     { model
-        | pitchGrid = Grid.convertMelodyToGrid sc.melody songScaleConfig
+        | pitchGrid = Grid.convertMelodyToGrid sc.melody
         , percGrid = Grid.convertPercussionToGrid sc.percussion
-        , scaleType = songScaleConfig.scaleType
-        , rootNote = songScaleConfig.rootNote
+        , scaleType = Scales.Major
+        , rootNote = Scales.C
         , bpm = sc.bpm
         , octaveStart = sc.octaveStart
         , octaveCount = sc.octaveCount
@@ -451,7 +443,7 @@ changeScaleType newScaleType model =
             { modelWithHistory | scaleType = newScaleType }
 
         newPitchGrid =
-            Grid.resizePitchGrid (scaleConfig modelWithHistory) (scaleConfig newModel) (timeConfig newModel) modelWithHistory.pitchGrid
+            Grid.resizePitchGrid (scaleConfig newModel) (timeConfig newModel) modelWithHistory.pitchGrid
     in
     { newModel | pitchGrid = newPitchGrid }
 
@@ -484,7 +476,7 @@ changeOctaveStart newStart model =
             { modelWithHistory | octaveStart = clampedStart }
 
         newPitchGrid =
-            Grid.resizePitchGrid (scaleConfig modelWithHistory) (scaleConfig newModel) (timeConfig newModel) modelWithHistory.pitchGrid
+            Grid.resizePitchGrid (scaleConfig newModel) (timeConfig newModel) modelWithHistory.pitchGrid
     in
     { newModel | pitchGrid = newPitchGrid }
 
@@ -502,7 +494,7 @@ changeOctaveCount newCount model =
             { modelWithHistory | octaveCount = clampedCount }
 
         newPitchGrid =
-            Grid.resizePitchGrid (scaleConfig modelWithHistory) (scaleConfig newModel) (timeConfig newModel) modelWithHistory.pitchGrid
+            Grid.resizePitchGrid (scaleConfig newModel) (timeConfig newModel) modelWithHistory.pitchGrid
     in
     { newModel | pitchGrid = newPitchGrid }
 
