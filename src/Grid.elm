@@ -25,7 +25,6 @@ import Instruments exposing (PercType)
 import Scales exposing (RootNote, ScaleConfig, ScaleType)
 import Set exposing (Set)
 import Timing exposing (TimeConfig)
-import Utils exposing (times)
 
 
 
@@ -34,11 +33,15 @@ import Utils exposing (times)
 
 type alias PitchPos =
     { pitchIdx : Int, stepIdx : Int }
+
+
 type alias MidiNote =
-   Int
-   
+    Int
+
+
 type alias StepIdx =
-   Int
+    Int
+
 
 type alias PitchGrid =
     Set ( MidiNote, StepIdx )
