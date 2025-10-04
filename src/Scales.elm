@@ -9,6 +9,7 @@ module Scales exposing
     , getScalePattern
     , getTotalPitches
     , midiToPitchIdx
+    , noteNameToMidi
     , noteNameToPitchIdx
     , notesPerOctave
     , parseRootNote
@@ -377,3 +378,60 @@ scaleDegreeToPitchIdx { scaleDegree, octave } config =
 
     else
         Nothing
+
+
+noteNameToMidi : String -> Maybe Int
+noteNameToMidi noteName =
+    let
+        parseNote str =
+            case String.uncons str of
+                Nothing ->
+                    Nothing
+
+                Just ( firstChar, rest ) ->
+                    let
+                        baseNote =
+                            String.fromChar firstChar
+
+                        modifier =
+                            if String.startsWith "#" rest then
+                                1
+
+                            else
+                                0
+
+                        octaveStr =
+                            String.dropLeft modifier rest
+
+                        noteOffset =
+                            case baseNote of
+                                "C" ->
+                                    Just 0
+
+                                "D" ->
+                                    Just 2
+
+                                "E" ->
+                                    Just 4
+
+                                "F" ->
+                                    Just 5
+
+                                "G" ->
+                                    Just 7
+
+                                "A" ->
+                                    Just 9
+
+                                "B" ->
+                                    Just 11
+
+                                _ ->
+                                    Nothing
+                    in
+                    Maybe.map2
+                        (\offset octave -> (octave + 1) * 12 + offset + modifier)
+                        noteOffset
+                        (String.toInt octaveStr)
+    in
+    parseNote noteName

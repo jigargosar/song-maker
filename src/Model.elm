@@ -368,7 +368,7 @@ getActiveNotesForStep stepIdx model =
                         position =
                             { pitchIdx = pitchIdx, stepIdx = stepIdx }
                     in
-                    if Grid.isPitchCellActive position model.pitchGrid then
+                    if Grid.isPitchCellActive position (scaleConfig model) model.pitchGrid then
                         Just
                             { webAudioFont = Instruments.tonalWebAudioFont model.currentTonalInstrument
                             , midi = Scales.pitchIdxToMidi pitchIdx (scaleConfig model)
@@ -600,7 +600,7 @@ startDrawingPitch position model =
                     pushToHistory model
 
                 currentlyActive =
-                    Grid.isPitchCellActive position model.pitchGrid
+                    Grid.isPitchCellActive position (scaleConfig model) model.pitchGrid
 
                 newDrawState =
                     if currentlyActive then
@@ -612,7 +612,7 @@ startDrawingPitch position model =
                 newModel =
                     { modelWithHistory
                         | drawState = newDrawState
-                        , pitchGrid = Grid.updatePitchCell position (not currentlyActive) modelWithHistory.pitchGrid
+                        , pitchGrid = Grid.updatePitchCell position (scaleConfig modelWithHistory) (not currentlyActive) modelWithHistory.pitchGrid
                     }
 
                 maybeNote =
@@ -639,7 +639,7 @@ continueDrawingPitch position model =
         DrawingPitch ->
             let
                 newModel =
-                    { model | pitchGrid = Grid.updatePitchCell position True model.pitchGrid }
+                    { model | pitchGrid = Grid.updatePitchCell position (scaleConfig model) True model.pitchGrid }
 
                 maybeNote =
                     Just
@@ -654,7 +654,7 @@ continueDrawingPitch position model =
         ErasingPitch ->
             let
                 newModel =
-                    { model | pitchGrid = Grid.updatePitchCell position False model.pitchGrid }
+                    { model | pitchGrid = Grid.updatePitchCell position (scaleConfig model) False model.pitchGrid }
             in
             ( newModel, Nothing )
 
@@ -879,7 +879,7 @@ toVm model =
     , canRedo = not (List.isEmpty model.redoStack)
     , isPlaying = model.playState /= Stopped
     , isStepCurrentlyPlaying = \stepIdx -> maybePlayingStepIdx == Just stepIdx
-    , isPitchCellActive = \position -> Grid.isPitchCellActive position model.pitchGrid
+    , isPitchCellActive = \position -> Grid.isPitchCellActive position scaleConfigValue model.pitchGrid
     , isPercCellActive = \position -> Grid.isPercCellActive position model.percGrid
     , isScaleSelected = \scale -> model.scaleType == scale
     , isRootNoteSelected = \rootNote -> model.rootNote == rootNote

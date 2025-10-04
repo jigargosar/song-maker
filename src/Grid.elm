@@ -34,10 +34,14 @@ import Utils exposing (times)
 
 type alias PitchPos =
     { pitchIdx : Int, stepIdx : Int }
-
+type alias MidiNote =
+   Int
+   
+type alias StepIdx =
+   Int
 
 type alias PitchGrid =
-    Set ( Int, Int )
+    Set ( MidiNote, StepIdx )
 
 
 type alias PercPos =
@@ -62,18 +66,26 @@ emptyPercGrid =
     Set.empty
 
 
-isPitchCellActive : PitchPos -> PitchGrid -> Bool
-isPitchCellActive { pitchIdx, stepIdx } pitchGrid =
-    Set.member ( pitchIdx, stepIdx ) pitchGrid
+isPitchCellActive : PitchPos -> ScaleConfig -> PitchGrid -> Bool
+isPitchCellActive { pitchIdx, stepIdx } config pitchGrid =
+    let
+        midiNote =
+            Scales.pitchIdxToMidi pitchIdx config
+    in
+    Set.member ( midiNote, stepIdx ) pitchGrid
 
 
-updatePitchCell : PitchPos -> Bool -> PitchGrid -> PitchGrid
-updatePitchCell { pitchIdx, stepIdx } isActive pitchGrid =
+updatePitchCell : PitchPos -> ScaleConfig -> Bool -> PitchGrid -> PitchGrid
+updatePitchCell { pitchIdx, stepIdx } config isActive pitchGrid =
+    let
+        midiNote =
+            Scales.pitchIdxToMidi pitchIdx config
+    in
     if isActive then
-        Set.insert ( pitchIdx, stepIdx ) pitchGrid
+        Set.insert ( midiNote, stepIdx ) pitchGrid
 
     else
-        Set.remove ( pitchIdx, stepIdx ) pitchGrid
+        Set.remove ( midiNote, stepIdx ) pitchGrid
 
 
 isPercCellActive : PercPos -> PercGrid -> Bool
@@ -108,15 +120,12 @@ resizePitchGrid oldConfig newConfig newTimeConfig existingGrid =
     existingGrid
         |> Set.toList
         |> List.filterMap
-            (\( pitchIdx, stepIdx ) ->
-                let
-                    midiPitch =
-                        Scales.pitchIdxToMidi pitchIdx oldConfig
-                in
-                case Scales.midiToPitchIdx midiPitch newConfig of
-                    Just newPitchIdx ->
-                        if newPitchIdx < Scales.getTotalPitches newConfig && stepIdx < Timing.getTotalSteps newTimeConfig then
-                            Just ( newPitchIdx, stepIdx )
+            (\( midiNote, stepIdx ) ->
+                -- Check if MIDI note is valid in new scale and step is within bounds
+                case Scales.midiToPitchIdx midiNote newConfig of
+                    Just _ ->
+                        if stepIdx < Timing.getTotalSteps newTimeConfig then
+                            Just ( midiNote, stepIdx )
 
                         else
                             Nothing
@@ -129,22 +138,13 @@ resizePitchGrid oldConfig newConfig newTimeConfig existingGrid =
 
 transposePitchGrid : ScaleConfig -> ScaleConfig -> PitchGrid -> PitchGrid
 transposePitchGrid oldConfig newConfig existingGrid =
+    let
+        -- Calculate semitone difference between old and new root
+        semitonesDelta =
+            Scales.getRootNoteOffset newConfig.rootNote - Scales.getRootNoteOffset oldConfig.rootNote
+    in
     existingGrid
-        |> Set.toList
-        |> List.filterMap
-            (\( pitchIdx, stepIdx ) ->
-                let
-                    scaleDegreeInfo =
-                        Scales.pitchIdxToScaleDegree pitchIdx oldConfig
-                in
-                case Scales.scaleDegreeToPitchIdx scaleDegreeInfo newConfig of
-                    Just newPitchIdx ->
-                        Just ( newPitchIdx, stepIdx )
-
-                    Nothing ->
-                        Nothing
-            )
-        |> Set.fromList
+        |> Set.map (\( midiNote, stepIdx ) -> ( midiNote + semitonesDelta, stepIdx ))
 
 
 shiftStepRight : Int -> Int -> PitchGrid -> PercGrid -> ( PitchGrid, PercGrid )
@@ -154,20 +154,20 @@ shiftStepRight fromStepIdx totalSteps pitchGrid percGrid =
             pitchGrid
                 |> Set.toList
                 |> List.filterMap
-                    (\( pitchIdx, stepIdx ) ->
+                    (\( midiNote, stepIdx ) ->
                         if stepIdx >= fromStepIdx then
                             let
                                 newStepIdx =
                                     stepIdx + 1
                             in
                             if newStepIdx < totalSteps then
-                                Just ( pitchIdx, newStepIdx )
+                                Just ( midiNote, newStepIdx )
 
                             else
                                 Nothing
 
                         else
-                            Just ( pitchIdx, stepIdx )
+                            Just ( midiNote, stepIdx )
                     )
                 |> Set.fromList
 
@@ -202,15 +202,15 @@ deleteStep stepToDelete totalSteps pitchGrid percGrid =
             pitchGrid
                 |> Set.toList
                 |> List.filterMap
-                    (\( pitchIdx, stepIdx ) ->
+                    (\( midiNote, stepIdx ) ->
                         if stepIdx == stepToDelete then
                             Nothing
 
                         else if stepIdx > stepToDelete then
-                            Just ( pitchIdx, stepIdx - 1 )
+                            Just ( midiNote, stepIdx - 1 )
 
                         else
-                            Just ( pitchIdx, stepIdx )
+                            Just ( midiNote, stepIdx )
                     )
                 |> Set.fromList
 
@@ -244,12 +244,8 @@ convertMelodyToGrid stepMelodies config =
             (\stepIdx noteNames ->
                 List.filterMap
                     (\noteName ->
-                        case Scales.noteNameToPitchIdx noteName config of
-                            Just pitchIdx ->
-                                Just ( pitchIdx, stepIdx )
-
-                            Nothing ->
-                                Nothing
+                        Scales.noteNameToMidi noteName
+                            |> Maybe.map (\midiNote -> ( midiNote, stepIdx ))
                     )
                     noteNames
             )
