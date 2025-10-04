@@ -26,6 +26,7 @@ allSongs =
     , happyBirthdaySong
     , maryHadALittleLambSong
     , odeToJoySong
+    , odeToJoyV2Song
     , jingleBellsSong
     ]
 
@@ -169,6 +170,35 @@ odeToJoySong =
             ++ [ [ kick ], [], [ snare ], [], [ kick ], [], [ snare ], [] ]
     , scaleType = Scales.Major
     , rootNote = Scales.D
+    , bpm = 100
+    , octaveStart = 3
+    , octaveCount = 2
+    , bars = 4
+    , beatsPerBar = 4
+    , subdivisions = 2
+    }
+
+
+odeToJoyV2Song : SongConfig
+odeToJoyV2Song =
+    { name = "ode-to-joy-v2"
+    , displayName = "Ode to Joy V2 (C Major)"
+    , melody =
+        -- Bar 1: C4 C4 D4 E4 | C4 E4 D4 --
+        [ [ "C4" ], [ "C4" ], [ "D4" ], [ "E4" ], [ "C4" ], [ "E4" ], [ "D4" ], [] ]
+            -- Bar 2: C4 C4 D4 E4 | C4 -- B3 --
+            ++ [ [ "C4" ], [ "C4" ], [ "D4" ], [ "E4" ], [ "C4" ], [], [ "B3" ], [] ]
+            -- Bar 3: C4 C4 D4 E4 | F4 E4 D4 C4
+            ++ [ [ "C4" ], [ "C4" ], [ "D4" ], [ "E4" ], [ "F4" ], [ "E4" ], [ "D4" ], [ "C4" ] ]
+            -- Bar 4: B3 G3 A3 B3 | C4 -- C4 --
+            ++ [ [ "B3" ], [ "G3" ], [ "A3" ], [ "B3" ], [ "C4" ], [], [ "C4" ], [] ]
+    , percussion =
+        [ [ kick ], [], [ snare ], [], [ kick ], [], [ snare ], [] ]
+            ++ [ [ kick ], [], [ snare ], [], [ kick ], [], [ snare ], [] ]
+            ++ [ [ kick ], [], [ snare ], [], [ kick ], [], [ snare ], [] ]
+            ++ [ [ kick ], [], [ snare ], [], [ kick ], [], [ snare ], [] ]
+    , scaleType = Scales.Major
+    , rootNote = Scales.C
     , bpm = 100
     , octaveStart = 3
     , octaveCount = 2
