@@ -126,7 +126,7 @@ parseTonal str =
             FluteSBLive
 
         _ ->
-            Debug.todo "unable to parse"
+            defaultTonalInstrument
 
 
 parseDrumKit : String -> DrumKit
