@@ -899,3 +899,49 @@ toVm model =
 {- TODO:
    - Reset undo/redo stacks in loadFromUrl to prevent stale history
 -}
+
+
+{- GRID REFACTORING PLAN
+
+GOAL:
+Simplify grid data model to use absolute MIDI notes instead of scale-relative pitch indices.
+Eliminate complex conversions and circular lookup logic.
+
+CURRENT PROBLEMS:
+- Grid stores Set (pitchIdx, stepIdx) where pitchIdx is relative to current scale
+- pitchIdx meaning changes when scale/root/octave changes, requiring complex conversions
+- Loading songs uses noteNameToPitchIdx which loops 24x per note to find matches
+- Circular logic: to find pitchIdx for "C4", generate all possible note names and compare
+
+PROPOSED DATA STRUCTURE:
+- Grid stores Set (MidiNote, StepIdx) where MidiNote is absolute MIDI number (60 = C4)
+- ScaleConfig (scaleType/rootNote/octaveStart/octaveCount) determines which MIDI notes are visible
+- TimeConfig (bars/beatsPerBar/subdivisions) determines total steps
+
+OPERATIONS:
+1. Load song: "C4" → MIDI 60, insert directly (no searching!)
+2. Click cell: Compute MIDI from row position, insert directly
+3. Root/octave change: Map over grid adding semitone delta: (midi, step) → (midi + Δ, step)
+4. Scale change: Filter grid, keep only MIDI notes valid in new scale (drop others, rely on undo)
+5. Render: Compute visible MIDI range from config, map grid notes to rows
+6. Play: Use MIDI values directly
+
+GRID DIMENSIONS:
+- Height: Computed from scaleType + rootNote + octaveStart + octaveCount
+  Example: C Major, octave 4, count 2 → [60,62,64,65,67,69,71,72,74,76,77,79,81,83] = 14 rows
+- Width: Computed from bars × beatsPerBar × subdivisions
+  Example: 4 bars × 4 beats × 2 subdivisions = 32 columns
+
+BENEFITS:
+- Simpler mental model (MIDI is universal, not scale-dependent)
+- Faster song loading (direct conversion, no searching)
+- Less code (eliminate pitchIdx conversions)
+- Easier to understand and maintain
+
+FILES TO MODIFY:
+- Grid.elm: Change PitchGrid type, simplify conversion functions
+- Scales.elm: Add functions to compute visible MIDI range, simplify existing functions
+- Model.elm: Update to work with new grid structure
+- QuerystringCodec.elm: May need updates for serialization
+
+-}
