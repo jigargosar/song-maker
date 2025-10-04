@@ -495,15 +495,29 @@ viewPercCell vm percType stepIdx =
 
 footerView : ViewModel -> Html Msg
 footerView vm =
-    div [ class "bg-gray-800 border-t border-gray-700 px-6 py-3 flex items-center gap-6" ]
+    div [ class "bg-gray-800 border-t border-gray-700 px-6 py-3 flex flex-wrap items-center gap-6" ]
         [ viewPlayStopButton vm
         , viewSongSelector
-        , viewTonalInstrumentSelector vm
-        , viewDrumKitSelector vm
+        , viewInstrumentControls vm
         , viewBPMControl vm.bpm
-        , viewUndoButton vm.canUndo
-        , viewRedoButton vm.canRedo
+        , viewHistoryControls vm
         , viewSaveButton
+        ]
+
+
+viewInstrumentControls : ViewModel -> Html Msg
+viewInstrumentControls vm =
+    div [ class "flex items-center gap-4" ]
+        [ viewTonalInstrumentSelector vm
+        , viewDrumKitSelector vm
+        ]
+
+
+viewHistoryControls : ViewModel -> Html Msg
+viewHistoryControls vm =
+    div [ class "flex items-center gap-2" ]
+        [ viewUndoButton vm.canUndo
+        , viewRedoButton vm.canRedo
         ]
 
 
