@@ -10,15 +10,12 @@ module Scales exposing
     , getTotalPitches
     , midiToPitchIdx
     , noteNameToMidi
-    , noteNameToPitchIdx
     , notesPerOctave
     , parseRootNote
     , parseScaleType
     , pitchIdxToMidi
     , pitchIdxToNoteName
-    , pitchIdxToScaleDegree
     , rootNoteToString
-    , scaleDegreeToPitchIdx
     , scaleLabel
     )
 
@@ -333,51 +330,6 @@ midiToPitchIdx targetMidi config =
     List.range 0 (totalPitches - 1)
         |> List.filter (\pitchIdx -> pitchIdxToMidi pitchIdx config == targetMidi)
         |> List.head
-
-
-noteNameToPitchIdx : String -> ScaleConfig -> Maybe Int
-noteNameToPitchIdx noteName config =
-    let
-        totalPitches =
-            getTotalPitches config
-    in
-    List.range 0 (totalPitches - 1)
-        |> List.filter (\pitchIdx -> pitchIdxToNoteName pitchIdx config == noteName)
-        |> List.head
-
-
-pitchIdxToScaleDegree : Int -> ScaleConfig -> { scaleDegree : Int, octave : Int }
-pitchIdxToScaleDegree pitchIdx config =
-    let
-        notesInScale =
-            notesPerOctave config.scaleType
-
-        octaveIdx =
-            pitchIdx // notesInScale
-
-        noteIdx =
-            modBy notesInScale pitchIdx
-
-        absoluteOctave =
-            config.octaveStart + octaveIdx
-    in
-    { scaleDegree = noteIdx, octave = absoluteOctave }
-
-
-scaleDegreeToPitchIdx : { scaleDegree : Int, octave : Int } -> ScaleConfig -> Maybe Int
-scaleDegreeToPitchIdx { scaleDegree, octave } config =
-    let
-        notesInScale =
-            notesPerOctave config.scaleType
-
-        octaveIdx =
-            octave - config.octaveStart
-    in
-    if octaveIdx >= 0 && octaveIdx < config.octaveCount && scaleDegree >= 0 && scaleDegree < notesInScale then
-        Just (octaveIdx * notesInScale + scaleDegree)
-
-    else
-        Nothing
 
 
 noteNameToMidi : String -> Maybe Int
