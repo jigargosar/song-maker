@@ -245,19 +245,15 @@ view model =
 
 viewHeader : ViewModel -> Html Msg
 viewHeader vm =
-    div [ class "bg-gray-800 z-20 shadow-2xl border-b border-gray-950 px-6 py-4" ]
-        [ div [ class "flex flex-wrap items-center justify-between" ]
-            [ div [ class "flex flex-wrap items-center gap-6" ]
-                [ div [ class "text-2xl font-bold text-white" ] [ text "Song Maker V2" ]
-                , viewScaleControls vm
-                , viewSequenceControls vm
-                ]
-            , H.button
-                [ class "bg-gray-700 text-white px-3 py-1 rounded hover:bg-gray-600 transition-colors"
-                , HE.onClick Reset
-                ]
-                [ text "Reset" ]
+    div [ class "bg-gray-800 z-20 shadow-2xl border-b border-gray-950 px-6 py-4 flex flex-wrap items-center gap-6" ]
+        [ div [ class "text-2xl font-bold text-white" ] [ text "Song Maker V2" ]
+        , viewScaleControls vm
+        , viewSequenceControls vm
+        , H.button
+            [ class "ml-auto bg-gray-700 text-white px-3 py-1 rounded hover:bg-gray-600 transition-colors"
+            , HE.onClick Reset
             ]
+            [ text "Reset" ]
         ]
 
 
