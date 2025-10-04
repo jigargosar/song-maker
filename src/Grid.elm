@@ -6,8 +6,8 @@ module Grid exposing
     , convertMelodyToGrid
     , convertPercussionToGrid
     , deleteStep
-    , emptyPercGrid
-    , emptyPitchGrid
+    , initialPercGrid
+    , initialPitchGrid
     , isPercCellActive
     , isPitchCellActive
     , parsePercGrid
@@ -59,13 +59,13 @@ type alias PercGrid =
 -- Basic Grid Operations
 
 
-emptyPitchGrid : PitchGrid
-emptyPitchGrid =
+initialPitchGrid : PitchGrid
+initialPitchGrid =
     Set.empty
 
 
-emptyPercGrid : PercGrid
-emptyPercGrid =
+initialPercGrid : PercGrid
+initialPercGrid =
     Set.empty
 
 

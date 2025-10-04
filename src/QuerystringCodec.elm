@@ -125,8 +125,8 @@ load url data =
 reset : QueryData a -> QueryData a
 reset data =
     { data
-        | pitchGrid = Grid.emptyPitchGrid
-        , percGrid = Grid.emptyPercGrid
+        | pitchGrid = Grid.initialPitchGrid
+        , percGrid = Grid.initialPercGrid
         , scaleType = Scales.Major
         , rootNote = Scales.C
         , octaveStart = 3
