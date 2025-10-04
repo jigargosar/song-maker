@@ -200,40 +200,44 @@ shiftStepRight fromStepIdx totalSteps pitchGrid percGrid =
 
 deleteStep : Int -> Int -> PitchGrid -> PercGrid -> ( PitchGrid, PercGrid )
 deleteStep stepToDelete totalSteps pitchGrid percGrid =
-    let
-        newPitchGrid =
-            pitchGrid
-                |> Set.toList
-                |> List.filterMap
-                    (\( midiNote, stepIdx ) ->
-                        if stepIdx == stepToDelete then
-                            Nothing
+    if stepToDelete < 0 || stepToDelete >= totalSteps then
+        ( pitchGrid, percGrid )
 
-                        else if stepIdx > stepToDelete then
-                            Just ( midiNote, stepIdx - 1 )
+    else
+        let
+            newPitchGrid =
+                pitchGrid
+                    |> Set.toList
+                    |> List.filterMap
+                        (\( midiNote, stepIdx ) ->
+                            if stepIdx == stepToDelete then
+                                Nothing
 
-                        else
-                            Just ( midiNote, stepIdx )
-                    )
-                |> Set.fromList
+                            else if stepIdx > stepToDelete then
+                                Just ( midiNote, stepIdx - 1 )
 
-        newPercGrid =
-            percGrid
-                |> Set.toList
-                |> List.filterMap
-                    (\( percRowIdx, stepIdx ) ->
-                        if stepIdx == stepToDelete then
-                            Nothing
+                            else
+                                Just ( midiNote, stepIdx )
+                        )
+                    |> Set.fromList
 
-                        else if stepIdx > stepToDelete then
-                            Just ( percRowIdx, stepIdx - 1 )
+            newPercGrid =
+                percGrid
+                    |> Set.toList
+                    |> List.filterMap
+                        (\( percRowIdx, stepIdx ) ->
+                            if stepIdx == stepToDelete then
+                                Nothing
 
-                        else
-                            Just ( percRowIdx, stepIdx )
-                    )
-                |> Set.fromList
-    in
-    ( newPitchGrid, newPercGrid )
+                            else if stepIdx > stepToDelete then
+                                Just ( percRowIdx, stepIdx - 1 )
+
+                            else
+                                Just ( percRowIdx, stepIdx )
+                        )
+                    |> Set.fromList
+        in
+        ( newPitchGrid, newPercGrid )
 
 
 
