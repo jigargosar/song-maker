@@ -495,35 +495,53 @@ viewPercCell vm percType stepIdx =
 
 footerView : ViewModel -> Html Msg
 footerView vm =
-    div [ class "bg-gray-800 border-t border-gray-700 px-6 py-3" ]
-        [ div [ class "flex items-center gap-6" ]
-            [ viewPlayStopButton vm
-            , viewSongSelector
-            , viewTonalInstrumentSelector vm
-            , viewDrumKitSelector vm
-            , div [ class "flex items-center gap-2" ]
-                [ H.label [ class "text-xs text-gray-400 font-medium" ] [ text "BPM" ]
-                , viewBPMInput vm.bpm
-                ]
-            , H.button
-                [ class "bg-gray-700 text-white px-3 py-1 rounded disabled:opacity-50"
-                , HE.onClick Undo
-                , HA.disabled (not vm.canUndo)
-                ]
-                [ text "↶ Undo" ]
-            , H.button
-                [ class "bg-gray-700 text-white px-3 py-1 rounded disabled:opacity-50"
-                , HE.onClick Redo
-                , HA.disabled (not vm.canRedo)
-                ]
-                [ text "↷ Redo" ]
-            , H.button
-                [ class "bg-gray-700 text-white px-3 py-1 rounded hover:bg-gray-600 transition-colors"
-                , HE.onClick Save
-                ]
-                [ text "Save" ]
-            ]
+    div [ class "bg-gray-800 border-t border-gray-700 px-6 py-3 flex items-center gap-6" ]
+        [ viewPlayStopButton vm
+        , viewSongSelector
+        , viewTonalInstrumentSelector vm
+        , viewDrumKitSelector vm
+        , viewBPMControl vm.bpm
+        , viewUndoButton vm.canUndo
+        , viewRedoButton vm.canRedo
+        , viewSaveButton
         ]
+
+
+viewBPMControl : Int -> Html Msg
+viewBPMControl bpm =
+    div [ class "flex items-center gap-2" ]
+        [ H.label [ class "text-xs text-gray-400 font-medium" ] [ text "BPM" ]
+        , viewBPMInput bpm
+        ]
+
+
+viewUndoButton : Bool -> Html Msg
+viewUndoButton canUndo =
+    H.button
+        [ class "bg-gray-700 text-white px-3 py-1 rounded disabled:opacity-50"
+        , HE.onClick Undo
+        , HA.disabled (not canUndo)
+        ]
+        [ text "↶ Undo" ]
+
+
+viewRedoButton : Bool -> Html Msg
+viewRedoButton canRedo =
+    H.button
+        [ class "bg-gray-700 text-white px-3 py-1 rounded disabled:opacity-50"
+        , HE.onClick Redo
+        , HA.disabled (not canRedo)
+        ]
+        [ text "↷ Redo" ]
+
+
+viewSaveButton : Html Msg
+viewSaveButton =
+    H.button
+        [ class "bg-gray-700 text-white px-3 py-1 rounded hover:bg-gray-600 transition-colors"
+        , HE.onClick Save
+        ]
+        [ text "Save" ]
 
 
 
