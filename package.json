@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "description": "A simple song maker app using Elm and Parcel",
   "scripts": {
-    "clean": "rm -rf .parcel-cache dist elm-stuff",
+    "clean": "rm -rf .parcel-cache dist prod elm-stuff",
     "start": "pnpm run clean && parcel --no-cache src/index.html",
     "build": "pnpm run clean && parcel build src/index.html"
   },
@@ -11,6 +11,14 @@
   "author": "",
   "license": "ISC",
   "packageManager": "pnpm@10.15.0",
+  "browserslist": [
+    "last 2 Chrome versions",
+    "last 2 Firefox versions",
+    "last 2 Safari versions",
+    "last 2 Edge versions",
+    "not dead",
+    "not IE > 0"
+  ],
   "postcss": {
     "plugins": {
       "@tailwindcss/postcss": {}
