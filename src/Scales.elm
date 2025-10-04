@@ -4,13 +4,10 @@ module Scales exposing
     , ScaleType(..)
     , allRootNotes
     , allScales
-    , chromaticNoteNames
     , getRootNoteOffset
-    , getScalePattern
     , getTotalPitches
     , midiToPitchIdx
     , noteNameToMidi
-    , notesPerOctave
     , parseRootNote
     , parseScaleType
     , pitchIdxToMidi
