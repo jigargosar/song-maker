@@ -2,6 +2,8 @@ module Utils exposing (..)
 
 -- BASIC UTILS
 
+import Set exposing (Set)
+
 
 format : String -> List ( String, String ) -> String
 format templateString replacements =
@@ -20,6 +22,19 @@ atLeast =
 atMost : comparable -> comparable -> comparable
 atMost =
     min
+
+
+
+-- Set Helpers
+
+
+setUpdate : Bool -> comparable -> Set comparable -> Set comparable
+setUpdate b =
+    if b then
+        Set.insert
+
+    else
+        Set.remove
 
 
 

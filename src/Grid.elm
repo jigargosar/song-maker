@@ -25,6 +25,7 @@ import Instruments exposing (PercType)
 import Scales exposing (RootNote, ScaleConfig)
 import Set exposing (Set)
 import Timing exposing (TimeConfig)
+import Utils exposing (setUpdate)
 
 
 
@@ -75,16 +76,8 @@ isPitchCellActive position config pitchGrid =
 
 
 setPitchCell : PitchPos -> ScaleConfig -> Bool -> PitchGrid -> PitchGrid
-setPitchCell position config isActive pitchGrid =
-    let
-        tuple =
-            pitchPositionToTuple position config
-    in
-    if isActive then
-        Set.insert tuple pitchGrid
-
-    else
-        Set.remove tuple pitchGrid
+setPitchCell position config isActive =
+    setUpdate isActive (pitchPositionToTuple position config)
 
 
 pitchPositionToTuple : PitchPos -> ScaleConfig -> ( Int, Int )
@@ -98,16 +91,8 @@ isPercCellActive position grid =
 
 
 setPercCell : PercPos -> Bool -> PercGrid -> PercGrid
-setPercCell position isActive grid =
-    let
-        tuple =
-            percPositionToTuple position
-    in
-    if isActive then
-        Set.insert tuple grid
-
-    else
-        Set.remove tuple grid
+setPercCell position isActive =
+    setUpdate isActive (percPositionToTuple position)
 
 
 percPositionToTuple : PercPos -> ( Int, Int )
