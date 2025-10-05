@@ -148,7 +148,8 @@ gridToString : Set ( Int, Int ) -> String
 gridToString grid =
     grid
         |> Set.toList
-        |> List.concatMap (\( row, step ) -> [ String.fromInt row, String.fromInt step ])
+        |> flattenPairs
+        |> List.map String.fromInt
         |> String.join ","
 
 
@@ -283,3 +284,8 @@ toPairs list =
 
         _ ->
             []
+
+
+flattenPairs : List ( a, a ) -> List a
+flattenPairs =
+    List.concatMap (\( x, y ) -> [ x, y ])
