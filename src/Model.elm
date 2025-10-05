@@ -297,33 +297,27 @@ reset model =
 
 
 shiftStepRight : Int -> Model -> Model
-shiftStepRight fromStepIdx model =
-    let
-        modelWithHistory =
-            pushToHistory model
-
-        totalSteps =
-            Timing.getTotalSteps (timeConfig model)
-
-        ( newPitchGrid, newPercGrid ) =
-            Grid.shiftStepRight fromStepIdx totalSteps modelWithHistory.pitchGrid modelWithHistory.percGrid
-    in
-    { modelWithHistory | pitchGrid = newPitchGrid, percGrid = newPercGrid }
+shiftStepRight fromStepIdx =
+    withHistory
+        (\model ->
+            let
+                ( newPitchGrid, newPercGrid ) =
+                    Grid.shiftStepRight fromStepIdx (Timing.getTotalSteps (timeConfig model)) model.pitchGrid model.percGrid
+            in
+            { model | pitchGrid = newPitchGrid, percGrid = newPercGrid }
+        )
 
 
 deleteStep : Int -> Model -> Model
-deleteStep stepToDelete model =
-    let
-        modelWithHistory =
-            pushToHistory model
-
-        totalSteps =
-            Timing.getTotalSteps (timeConfig model)
-
-        ( newPitchGrid, newPercGrid ) =
-            Grid.deleteStep stepToDelete totalSteps modelWithHistory.pitchGrid modelWithHistory.percGrid
-    in
-    { modelWithHistory | pitchGrid = newPitchGrid, percGrid = newPercGrid }
+deleteStep stepToDelete =
+    withHistory
+        (\model ->
+            let
+                ( newPitchGrid, newPercGrid ) =
+                    Grid.deleteStep stepToDelete (Timing.getTotalSteps (timeConfig model)) model.pitchGrid model.percGrid
+            in
+            { model | pitchGrid = newPitchGrid, percGrid = newPercGrid }
+        )
 
 
 
@@ -434,18 +428,15 @@ stopDrawing model =
 
 
 changeScaleType : ScaleType -> Model -> Model
-changeScaleType newScaleType model =
-    let
-        modelWithHistory =
-            pushToHistory model
-
-        newModel =
-            { modelWithHistory | scaleType = newScaleType }
-
-        newPitchGrid =
-            Grid.resizePitchGrid (scaleConfig newModel) (timeConfig newModel) modelWithHistory.pitchGrid
-    in
-    { newModel | pitchGrid = newPitchGrid }
+changeScaleType newScaleType =
+    withHistory
+        (\model ->
+            let
+                newModel =
+                    { model | scaleType = newScaleType }
+            in
+            { newModel | pitchGrid = Grid.resizePitchGrid (scaleConfig newModel) (timeConfig newModel) model.pitchGrid }
+        )
 
 
 changeRootNote : RootNote -> Model -> Model
@@ -465,39 +456,27 @@ withHistory transform model =
 
 
 changeOctaveStart : Int -> Model -> Model
-changeOctaveStart newStart model =
-    let
-        modelWithHistory =
-            pushToHistory model
-
-        clampedStart =
-            atLeast 1 newStart
-
-        newModel =
-            { modelWithHistory | octaveStart = clampedStart }
-
-        newPitchGrid =
-            Grid.resizePitchGrid (scaleConfig newModel) (timeConfig newModel) modelWithHistory.pitchGrid
-    in
-    { newModel | pitchGrid = newPitchGrid }
+changeOctaveStart newStart =
+    withHistory
+        (\model ->
+            let
+                newModel =
+                    { model | octaveStart = atLeast 1 newStart }
+            in
+            { newModel | pitchGrid = Grid.resizePitchGrid (scaleConfig newModel) (timeConfig newModel) model.pitchGrid }
+        )
 
 
 changeOctaveCount : Int -> Model -> Model
-changeOctaveCount newCount model =
-    let
-        modelWithHistory =
-            pushToHistory model
-
-        clampedCount =
-            atLeast 1 newCount
-
-        newModel =
-            { modelWithHistory | octaveCount = clampedCount }
-
-        newPitchGrid =
-            Grid.resizePitchGrid (scaleConfig newModel) (timeConfig newModel) modelWithHistory.pitchGrid
-    in
-    { newModel | pitchGrid = newPitchGrid }
+changeOctaveCount newCount =
+    withHistory
+        (\model ->
+            let
+                newModel =
+                    { model | octaveCount = atLeast 1 newCount }
+            in
+            { newModel | pitchGrid = Grid.resizePitchGrid (scaleConfig newModel) (timeConfig newModel) model.pitchGrid }
+        )
 
 
 startPlaying : Model -> Model
@@ -799,30 +778,18 @@ onTimeSync audioContextTime model =
 
 
 changeBars : Int -> Model -> Model
-changeBars newBars model =
-    let
-        modelWithHistory =
-            pushToHistory model
-    in
-    { modelWithHistory | bars = atLeast 1 newBars }
+changeBars newBars =
+    withHistory (\model -> { model | bars = atLeast 1 newBars })
 
 
 changeBeatsPerBar : Int -> Model -> Model
-changeBeatsPerBar newBeatsPerBar model =
-    let
-        modelWithHistory =
-            pushToHistory model
-    in
-    { modelWithHistory | beatsPerBar = atLeast 1 newBeatsPerBar }
+changeBeatsPerBar newBeatsPerBar =
+    withHistory (\model -> { model | beatsPerBar = atLeast 1 newBeatsPerBar })
 
 
 changeSubdivisions : Int -> Model -> Model
-changeSubdivisions newSubdivisions model =
-    let
-        modelWithHistory =
-            pushToHistory model
-    in
-    { modelWithHistory | subdivisions = atLeast 1 newSubdivisions }
+changeSubdivisions newSubdivisions =
+    withHistory (\model -> { model | subdivisions = atLeast 1 newSubdivisions })
 
 
 
