@@ -115,6 +115,76 @@ percPositionToTuple { percType, stepIdx } =
 
 
 
+-- Internal Helpers (not exposed)
+
+
+gridShift : Int -> Int -> Set ( Int, Int ) -> Set ( Int, Int )
+gridShift fromStepIdx totalSteps grid =
+    grid
+        |> Set.toList
+        |> List.filterMap
+            (\( rowId, stepIdx ) ->
+                if stepIdx >= fromStepIdx then
+                    let
+                        newStepIdx =
+                            stepIdx + 1
+                    in
+                    if newStepIdx < totalSteps then
+                        Just ( rowId, newStepIdx )
+
+                    else
+                        Nothing
+
+                else
+                    Just ( rowId, stepIdx )
+            )
+        |> Set.fromList
+
+
+gridDeleteStep : Int -> Int -> Set ( Int, Int ) -> Set ( Int, Int )
+gridDeleteStep stepToDelete totalSteps grid =
+    if stepToDelete < 0 || stepToDelete >= totalSteps then
+        grid
+
+    else
+        grid
+            |> Set.toList
+            |> List.filterMap
+                (\( rowId, stepIdx ) ->
+                    if stepIdx == stepToDelete then
+                        Nothing
+
+                    else if stepIdx > stepToDelete then
+                        Just ( rowId, stepIdx - 1 )
+
+                    else
+                        Just ( rowId, stepIdx )
+                )
+            |> Set.fromList
+
+
+gridToString : Set ( Int, Int ) -> String
+gridToString grid =
+    grid
+        |> Set.toList
+        |> List.concatMap (\( row, step ) -> [ String.fromInt row, String.fromInt step ])
+        |> String.join ","
+
+
+parseGrid : String -> Maybe (Set ( Int, Int ))
+parseGrid str =
+    if String.isEmpty str then
+        Just Set.empty
+
+    else
+        str
+            |> String.split ","
+            |> List.filterMap String.toInt
+            |> pairUp
+            |> Maybe.map Set.fromList
+
+
+
 -- Grid Transformations
 
 
@@ -152,92 +222,16 @@ transposePitchGrid { prev, next } existingGrid =
 
 shiftStepRight : Int -> Int -> PitchGrid -> PercGrid -> ( PitchGrid, PercGrid )
 shiftStepRight fromStepIdx totalSteps pitchGrid percGrid =
-    let
-        newPitchGrid =
-            pitchGrid
-                |> Set.toList
-                |> List.filterMap
-                    (\( midiNote, stepIdx ) ->
-                        if stepIdx >= fromStepIdx then
-                            let
-                                newStepIdx =
-                                    stepIdx + 1
-                            in
-                            if newStepIdx < totalSteps then
-                                Just ( midiNote, newStepIdx )
-
-                            else
-                                Nothing
-
-                        else
-                            Just ( midiNote, stepIdx )
-                    )
-                |> Set.fromList
-
-        newPercGrid =
-            percGrid
-                |> Set.toList
-                |> List.filterMap
-                    (\( percRowIdx, stepIdx ) ->
-                        if stepIdx >= fromStepIdx then
-                            let
-                                newStepIdx =
-                                    stepIdx + 1
-                            in
-                            if newStepIdx < totalSteps then
-                                Just ( percRowIdx, newStepIdx )
-
-                            else
-                                Nothing
-
-                        else
-                            Just ( percRowIdx, stepIdx )
-                    )
-                |> Set.fromList
-    in
-    ( newPitchGrid, newPercGrid )
+    ( gridShift fromStepIdx totalSteps pitchGrid
+    , gridShift fromStepIdx totalSteps percGrid
+    )
 
 
 deleteStep : Int -> Int -> PitchGrid -> PercGrid -> ( PitchGrid, PercGrid )
 deleteStep stepToDelete totalSteps pitchGrid percGrid =
-    if stepToDelete < 0 || stepToDelete >= totalSteps then
-        ( pitchGrid, percGrid )
-
-    else
-        let
-            newPitchGrid =
-                pitchGrid
-                    |> Set.toList
-                    |> List.filterMap
-                        (\( midiNote, stepIdx ) ->
-                            if stepIdx == stepToDelete then
-                                Nothing
-
-                            else if stepIdx > stepToDelete then
-                                Just ( midiNote, stepIdx - 1 )
-
-                            else
-                                Just ( midiNote, stepIdx )
-                        )
-                    |> Set.fromList
-
-            newPercGrid =
-                percGrid
-                    |> Set.toList
-                    |> List.filterMap
-                        (\( percRowIdx, stepIdx ) ->
-                            if stepIdx == stepToDelete then
-                                Nothing
-
-                            else if stepIdx > stepToDelete then
-                                Just ( percRowIdx, stepIdx - 1 )
-
-                            else
-                                Just ( percRowIdx, stepIdx )
-                        )
-                    |> Set.fromList
-        in
-        ( newPitchGrid, newPercGrid )
+    ( gridDeleteStep stepToDelete totalSteps pitchGrid
+    , gridDeleteStep stepToDelete totalSteps percGrid
+    )
 
 
 
@@ -282,51 +276,29 @@ convertPercussionToGrid stepPercussion =
 {-| Convert PitchGrid to comma-separated integers: "0,0,1,2,5,10"
 -}
 pitchGridToString : PitchGrid -> String
-pitchGridToString grid =
-    grid
-        |> Set.toList
-        |> List.concatMap (\( pitch, step ) -> [ String.fromInt pitch, String.fromInt step ])
-        |> String.join ","
+pitchGridToString =
+    gridToString
 
 
 {-| Parse comma-separated integers back to PitchGrid: "0,0,1,2,5,10"
 -}
 parsePitchGrid : String -> Maybe PitchGrid
-parsePitchGrid str =
-    if String.isEmpty str then
-        Just Set.empty
-
-    else
-        str
-            |> String.split ","
-            |> List.filterMap String.toInt
-            |> pairUp
-            |> Maybe.map Set.fromList
+parsePitchGrid =
+    parseGrid
 
 
 {-| Convert PercGrid to comma-separated integers: "0,0,1,2,5,10"
 -}
 percGridToString : PercGrid -> String
-percGridToString grid =
-    grid
-        |> Set.toList
-        |> List.concatMap (\( perc, step ) -> [ String.fromInt perc, String.fromInt step ])
-        |> String.join ","
+percGridToString =
+    gridToString
 
 
 {-| Parse comma-separated integers back to PercGrid: "0,0,1,2,5,10"
 -}
 parsePercGrid : String -> Maybe PercGrid
-parsePercGrid str =
-    if String.isEmpty str then
-        Just Set.empty
-
-    else
-        str
-            |> String.split ","
-            |> List.filterMap String.toInt
-            |> pairUp
-            |> Maybe.map Set.fromList
+parsePercGrid =
+    parseGrid
 
 
 {-| Group list into pairs: [0,0,1,2] -> [(0,0),(1,2)]
