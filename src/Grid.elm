@@ -70,25 +70,26 @@ initialPercGrid =
 
 
 isPitchCellActive : PitchPos -> ScaleConfig -> PitchGrid -> Bool
-isPitchCellActive { pitchIdx, stepIdx } config pitchGrid =
-    let
-        midiNote =
-            Scales.pitchIdxToMidi pitchIdx config
-    in
-    Set.member ( midiNote, stepIdx ) pitchGrid
+isPitchCellActive position config pitchGrid =
+    Set.member (pitchPositionToTuple position config) pitchGrid
 
 
 setPitchCell : PitchPos -> ScaleConfig -> Bool -> PitchGrid -> PitchGrid
-setPitchCell { pitchIdx, stepIdx } config isActive pitchGrid =
+setPitchCell position config isActive pitchGrid =
     let
-        midiNote =
-            Scales.pitchIdxToMidi pitchIdx config
+        tuple =
+            pitchPositionToTuple position config
     in
     if isActive then
-        Set.insert ( midiNote, stepIdx ) pitchGrid
+        Set.insert tuple pitchGrid
 
     else
-        Set.remove ( midiNote, stepIdx ) pitchGrid
+        Set.remove tuple pitchGrid
+
+
+pitchPositionToTuple : PitchPos -> ScaleConfig -> ( Int, Int )
+pitchPositionToTuple { pitchIdx, stepIdx } config =
+    ( Scales.pitchIdxToMidi pitchIdx config, stepIdx )
 
 
 isPercCellActive : PercPos -> PercGrid -> Bool
