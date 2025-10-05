@@ -15,10 +15,10 @@ module Grid exposing
     , percGridToString
     , pitchGridToString
     , resizePitchGrid
+    , setPercCell
+    , setPitchCell
     , shiftStepRight
     , transposePitchGrid
-    , updatePercCell
-    , updatePitchCell
     )
 
 import Instruments exposing (PercType)
@@ -78,8 +78,8 @@ isPitchCellActive { pitchIdx, stepIdx } config pitchGrid =
     Set.member ( midiNote, stepIdx ) pitchGrid
 
 
-updatePitchCell : PitchPos -> ScaleConfig -> Bool -> PitchGrid -> PitchGrid
-updatePitchCell { pitchIdx, stepIdx } config isActive pitchGrid =
+setPitchCell : PitchPos -> ScaleConfig -> Bool -> PitchGrid -> PitchGrid
+setPitchCell { pitchIdx, stepIdx } config isActive pitchGrid =
     let
         midiNote =
             Scales.pitchIdxToMidi pitchIdx config
@@ -96,8 +96,8 @@ isPercCellActive position grid =
     Set.member (percPositionToTuple position) grid
 
 
-updatePercCell : PercPos -> Bool -> PercGrid -> PercGrid
-updatePercCell position isActive grid =
+setPercCell : PercPos -> Bool -> PercGrid -> PercGrid
+setPercCell position isActive grid =
     let
         tuple =
             percPositionToTuple position

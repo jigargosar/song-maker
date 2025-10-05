@@ -584,7 +584,7 @@ startDrawingPitch position model_ =
 
                     else
                         DrawingPitch
-                , pitchGrid = Grid.updatePitchCell position sc (not isCellActive) model.pitchGrid
+                , pitchGrid = Grid.setPitchCell position sc (not isCellActive) model.pitchGrid
               }
             , if not isCellActive then
                 Just
@@ -611,7 +611,7 @@ continueDrawingPitch position model =
                     scaleConfig model
 
                 newModel =
-                    { model | pitchGrid = Grid.updatePitchCell position sc True model.pitchGrid }
+                    { model | pitchGrid = Grid.setPitchCell position sc True model.pitchGrid }
 
                 maybeNote =
                     Just
@@ -626,7 +626,7 @@ continueDrawingPitch position model =
         ErasingPitch ->
             let
                 newModel =
-                    { model | pitchGrid = Grid.updatePitchCell position (scaleConfig model) False model.pitchGrid }
+                    { model | pitchGrid = Grid.setPitchCell position (scaleConfig model) False model.pitchGrid }
             in
             ( newModel, Nothing )
 
@@ -655,7 +655,7 @@ startDrawingPerc position model =
                 newModel =
                     { modelWithHistory
                         | drawState = newDrawState
-                        , percGrid = Grid.updatePercCell position (not currentlyActive) modelWithHistory.percGrid
+                        , percGrid = Grid.setPercCell position (not currentlyActive) modelWithHistory.percGrid
                     }
 
                 maybeNote =
@@ -693,7 +693,7 @@ continueDrawingPerc position model =
         DrawingPerc ->
             let
                 newModel =
-                    { model | percGrid = Grid.updatePercCell position True model.percGrid }
+                    { model | percGrid = Grid.setPercCell position True model.percGrid }
 
                 drumConfig =
                     Instruments.drumKitConfig model.currentDrumKit
@@ -718,7 +718,7 @@ continueDrawingPerc position model =
         ErasingPerc ->
             let
                 newModel =
-                    { model | percGrid = Grid.updatePercCell position False model.percGrid }
+                    { model | percGrid = Grid.setPercCell position False model.percGrid }
             in
             ( newModel, Nothing )
 
