@@ -590,7 +590,7 @@ startDrawingPitch position model_ =
                 Just
                     { webAudioFont = Instruments.tonalWebAudioFont model.currentTonalInstrument
                     , midi = Scales.pitchIdxToMidi position.pitchIdx sc
-                    , duration = 0.5
+                    , duration = Timing.noteDuration (timeConfig model)
                     , volume = 0.7
                     }
 
@@ -607,14 +607,17 @@ continueDrawingPitch position model =
     case model.drawState of
         DrawingPitch ->
             let
+                sc =
+                    scaleConfig model
+
                 newModel =
-                    { model | pitchGrid = Grid.updatePitchCell position (scaleConfig model) True model.pitchGrid }
+                    { model | pitchGrid = Grid.updatePitchCell position sc True model.pitchGrid }
 
                 maybeNote =
                     Just
                         { webAudioFont = Instruments.tonalWebAudioFont model.currentTonalInstrument
-                        , midi = Scales.pitchIdxToMidi position.pitchIdx (scaleConfig model)
-                        , duration = 0.5
+                        , midi = Scales.pitchIdxToMidi position.pitchIdx sc
+                        , duration = Timing.noteDuration (timeConfig model)
                         , volume = 0.7
                         }
             in
@@ -671,7 +674,7 @@ startDrawingPerc position model =
                         Just
                             { webAudioFont = webAudioFontName
                             , midi = midiNote
-                            , duration = 0.5
+                            , duration = Timing.noteDuration (timeConfig model)
                             , volume = 0.8
                             }
 
@@ -706,7 +709,7 @@ continueDrawingPerc position model =
                     Just
                         { webAudioFont = webAudioFontName
                         , midi = midiNote
-                        , duration = 0.5
+                        , duration = Timing.noteDuration (timeConfig model)
                         , volume = 0.8
                         }
             in
