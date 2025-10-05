@@ -564,45 +564,42 @@ redo model =
 
 
 startDrawingPitch : PitchPos -> Model -> ( Model, Maybe NoteToPlay )
-startDrawingPitch position model =
-    case model.drawState of
+startDrawingPitch position model_ =
+    case model_.drawState of
         NotDrawing ->
             let
-                modelWithHistory =
-                    pushToHistory model
+                model =
+                    pushToHistory model_
 
-                currentlyActive =
-                    Grid.isPitchCellActive position (scaleConfig model) model.pitchGrid
+                sc =
+                    scaleConfig model
 
-                newDrawState =
-                    if currentlyActive then
+                isCellActive =
+                    Grid.isPitchCellActive position sc model.pitchGrid
+            in
+            ( { model
+                | drawState =
+                    if isCellActive then
                         ErasingPitch
 
                     else
                         DrawingPitch
-
-                newModel =
-                    { modelWithHistory
-                        | drawState = newDrawState
-                        , pitchGrid = Grid.updatePitchCell position (scaleConfig modelWithHistory) (not currentlyActive) modelWithHistory.pitchGrid
+                , pitchGrid = Grid.updatePitchCell position sc (not isCellActive) model.pitchGrid
+              }
+            , if not isCellActive then
+                Just
+                    { webAudioFont = Instruments.tonalWebAudioFont model.currentTonalInstrument
+                    , midi = Scales.pitchIdxToMidi position.pitchIdx sc
+                    , duration = 0.5
+                    , volume = 0.7
                     }
 
-                maybeNote =
-                    if not currentlyActive then
-                        Just
-                            { webAudioFont = Instruments.tonalWebAudioFont model.currentTonalInstrument
-                            , midi = Scales.pitchIdxToMidi position.pitchIdx (scaleConfig model)
-                            , duration = 0.5
-                            , volume = 0.7
-                            }
-
-                    else
-                        Nothing
-            in
-            ( newModel, maybeNote )
+              else
+                Nothing
+            )
 
         _ ->
-            ( model, Nothing )
+            ( model_, Nothing )
 
 
 continueDrawingPitch : PitchPos -> Model -> ( Model, Maybe NoteToPlay )
