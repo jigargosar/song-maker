@@ -36,27 +36,31 @@ type alias PitchGrid =
     Set ( MidiNote, StepIdx )
 
 
-type alias PercGrid =
-    Set ( PercRowIdx, StepIdx )
-
-
-type alias PitchPos =
-    { pitchIdx : Int, stepIdx : Int }
-
-
-type alias PercPos =
-    { percType : PercType, stepIdx : Int }
-
-
 type alias MidiNote =
     Int
 
 
-type alias StepIdx =
+type alias PitchPos =
+    { pitchIdx : PitchIdx, stepIdx : StepIdx }
+
+
+type alias PitchIdx =
     Int
 
 
+type alias PercGrid =
+    Set ( PercRowIdx, StepIdx )
+
+
 type alias PercRowIdx =
+    Int
+
+
+type alias PercPos =
+    { percType : PercType, stepIdx : StepIdx }
+
+
+type alias StepIdx =
     Int
 
 
