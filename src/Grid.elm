@@ -32,8 +32,20 @@ import Utils exposing (..)
 -- Grid Types
 
 
+type alias PitchGrid =
+    Set ( MidiNote, StepIdx )
+
+
+type alias PercGrid =
+    Set ( PercRowIdx, StepIdx )
+
+
 type alias PitchPos =
     { pitchIdx : Int, stepIdx : Int }
+
+
+type alias PercPos =
+    { percType : PercType, stepIdx : Int }
 
 
 type alias MidiNote =
@@ -46,18 +58,6 @@ type alias StepIdx =
 
 type alias PercRowIdx =
     Int
-
-
-type alias PitchGrid =
-    Set ( MidiNote, StepIdx )
-
-
-type alias PercPos =
-    { percType : PercType, stepIdx : Int }
-
-
-type alias PercGrid =
-    Set ( PercRowIdx, StepIdx )
 
 
 
