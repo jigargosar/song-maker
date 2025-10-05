@@ -449,18 +449,19 @@ changeScaleType newScaleType model =
 
 
 changeRootNote : RootNote -> Model -> Model
-changeRootNote newRootNote model =
-    let
-        modelWithHistory =
-            pushToHistory model
+changeRootNote newRootNote =
+    withHistory
+        (\model ->
+            { model
+                | rootNote = newRootNote
+                , pitchGrid = Grid.transposePitchGrid { prev = model.rootNote, next = newRootNote } model.pitchGrid
+            }
+        )
 
-        newModel =
-            { modelWithHistory | rootNote = newRootNote }
 
-        newPitchGrid =
-            Grid.transposePitchGrid (scaleConfig modelWithHistory) (scaleConfig newModel) modelWithHistory.pitchGrid
-    in
-    { newModel | pitchGrid = newPitchGrid }
+withHistory : (Model -> Model) -> Model -> Model
+withHistory transform model =
+    transform (pushToHistory model)
 
 
 changeOctaveStart : Int -> Model -> Model

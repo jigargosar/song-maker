@@ -22,7 +22,7 @@ module Grid exposing
     )
 
 import Instruments exposing (PercType)
-import Scales exposing (ScaleConfig)
+import Scales exposing (RootNote, ScaleConfig)
 import Set exposing (Set)
 import Timing exposing (TimeConfig)
 
@@ -139,12 +139,12 @@ resizePitchGrid newConfig newTimeConfig existingGrid =
         |> Set.fromList
 
 
-transposePitchGrid : ScaleConfig -> ScaleConfig -> PitchGrid -> PitchGrid
-transposePitchGrid oldConfig newConfig existingGrid =
+transposePitchGrid : { prev : RootNote, next : RootNote } -> PitchGrid -> PitchGrid
+transposePitchGrid { prev, next } existingGrid =
     let
         -- Calculate semitone difference between old and new root
         semitonesDelta =
-            Scales.getRootNoteOffset newConfig.rootNote - Scales.getRootNoteOffset oldConfig.rootNote
+            Scales.getRootNoteOffset next - Scales.getRootNoteOffset prev
     in
     existingGrid
         |> Set.map (\( midiNote, stepIdx ) -> ( midiNote + semitonesDelta, stepIdx ))
