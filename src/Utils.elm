@@ -37,6 +37,14 @@ setUpdate b =
         Set.remove
 
 
+setFilterMap : (a -> Maybe comparable) -> Set a -> Set comparable
+setFilterMap fn set =
+    set
+        |> Set.toList
+        |> List.filterMap fn
+        |> Set.fromList
+
+
 
 -- BASIC VIEW UTILS
 

@@ -25,7 +25,7 @@ import Instruments exposing (PercType)
 import Scales exposing (RootNote, ScaleConfig)
 import Set exposing (Set)
 import Timing exposing (TimeConfig)
-import Utils exposing (setUpdate)
+import Utils exposing (..)
 
 
 
@@ -105,26 +105,24 @@ percPositionToTuple { percType, stepIdx } =
 
 
 gridShift : Int -> Int -> Set ( Int, Int ) -> Set ( Int, Int )
-gridShift fromStepIdx totalSteps grid =
-    grid
-        |> Set.toList
-        |> List.filterMap
-            (\( rowId, stepIdx ) ->
-                if stepIdx >= fromStepIdx then
-                    let
-                        newStepIdx =
-                            stepIdx + 1
-                    in
-                    if newStepIdx < totalSteps then
-                        Just ( rowId, newStepIdx )
-
-                    else
-                        Nothing
+gridShift fromStepIdx totalSteps  =
+    setFilterMap
+        (\( rowId, stepIdx ) ->
+            if stepIdx >= fromStepIdx then
+                let
+                    newStepIdx =
+                        stepIdx + 1
+                in
+                if newStepIdx < totalSteps then
+                    Just ( rowId, newStepIdx )
 
                 else
-                    Just ( rowId, stepIdx )
-            )
-        |> Set.fromList
+                    Nothing
+
+            else
+                Just ( rowId, stepIdx )
+        )
+
 
 
 gridDeleteStep : Int -> Int -> Set ( Int, Int ) -> Set ( Int, Int )
@@ -133,20 +131,18 @@ gridDeleteStep stepToDelete totalSteps grid =
         grid
 
     else
-        grid
-            |> Set.toList
-            |> List.filterMap
-                (\( rowId, stepIdx ) ->
-                    if stepIdx == stepToDelete then
-                        Nothing
+        setFilterMap
+            (\( rowId, stepIdx ) ->
+                if stepIdx == stepToDelete then
+                    Nothing
 
-                    else if stepIdx > stepToDelete then
-                        Just ( rowId, stepIdx - 1 )
+                else if stepIdx > stepToDelete then
+                    Just ( rowId, stepIdx - 1 )
 
-                    else
-                        Just ( rowId, stepIdx )
-                )
-            |> Set.fromList
+                else
+                    Just ( rowId, stepIdx )
+            )
+            grid
 
 
 gridToString : Set ( Int, Int ) -> String
@@ -159,15 +155,11 @@ gridToString grid =
 
 parseGrid : String -> Maybe (Set ( Int, Int ))
 parseGrid str =
-    if String.isEmpty str then
-        Just Set.empty
-
-    else
-        str
-            |> String.split ","
-            |> List.filterMap String.toInt
-            |> pairUp
-            |> Maybe.map Set.fromList
+    str
+        |> String.split ","
+        |> List.filterMap String.toInt
+        |> pairUp
+        |> Maybe.map Set.fromList
 
 
 
@@ -175,24 +167,21 @@ parseGrid str =
 
 
 resizePitchGrid : ScaleConfig -> TimeConfig -> PitchGrid -> PitchGrid
-resizePitchGrid newConfig newTimeConfig existingGrid =
-    existingGrid
-        |> Set.toList
-        |> List.filterMap
-            (\( midiNote, stepIdx ) ->
-                -- Check if MIDI note is valid in new scale and step is within bounds
-                case Scales.midiToPitchIdx midiNote newConfig of
-                    Just _ ->
-                        if stepIdx < Timing.getTotalSteps newTimeConfig then
-                            Just ( midiNote, stepIdx )
+resizePitchGrid newConfig newTimeConfig =
+    setFilterMap
+        (\( midiNote, stepIdx ) ->
+            -- Check if MIDI note is valid in new scale and step is within bounds
+            case Scales.midiToPitchIdx midiNote newConfig of
+                Just _ ->
+                    if stepIdx < Timing.getTotalSteps newTimeConfig then
+                        Just ( midiNote, stepIdx )
 
-                        else
-                            Nothing
-
-                    Nothing ->
+                    else
                         Nothing
-            )
-        |> Set.fromList
+
+                Nothing ->
+                    Nothing
+        )
 
 
 transposePitchGrid : { prev : RootNote, next : RootNote } -> PitchGrid -> PitchGrid
