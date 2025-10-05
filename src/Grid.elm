@@ -105,68 +105,6 @@ percPositionToTuple { percType, stepIdx } =
 
 
 
--- Internal Helpers (not exposed)
-
-
-gridShift : Int -> Int -> Set ( Int, Int ) -> Set ( Int, Int )
-gridShift fromStepIdx totalSteps =
-    setFilterMap
-        (\( rowId, stepIdx ) ->
-            if stepIdx >= fromStepIdx then
-                let
-                    newStepIdx =
-                        stepIdx + 1
-                in
-                if newStepIdx < totalSteps then
-                    Just ( rowId, newStepIdx )
-
-                else
-                    Nothing
-
-            else
-                Just ( rowId, stepIdx )
-        )
-
-
-gridDeleteStep : Int -> Int -> Set ( Int, Int ) -> Set ( Int, Int )
-gridDeleteStep stepToDelete totalSteps grid =
-    if stepToDelete < 0 || stepToDelete >= totalSteps then
-        grid
-
-    else
-        setFilterMap
-            (\( rowId, stepIdx ) ->
-                if stepIdx == stepToDelete then
-                    Nothing
-
-                else if stepIdx > stepToDelete then
-                    Just ( rowId, stepIdx - 1 )
-
-                else
-                    Just ( rowId, stepIdx )
-            )
-            grid
-
-
-gridToString : Set ( Int, Int ) -> String
-gridToString grid =
-    grid
-        |> Set.toList
-        |> flattenPairs
-        |> List.map String.fromInt
-        |> String.join ","
-
-
-parseGrid : String -> Set ( Int, Int )
-parseGrid str =
-    str
-        |> String.split ","
-        |> List.filterMap String.toInt
-        |> toPairs
-        |> Set.fromList
-
-
-
 -- Grid Transformations
 
 
@@ -206,11 +144,51 @@ shiftStepRight fromStepIdx totalSteps pitchGrid percGrid =
     )
 
 
+gridShift : Int -> Int -> Set ( Int, Int ) -> Set ( Int, Int )
+gridShift fromStepIdx totalSteps =
+    setFilterMap
+        (\( rowId, stepIdx ) ->
+            if stepIdx >= fromStepIdx then
+                let
+                    newStepIdx =
+                        stepIdx + 1
+                in
+                if newStepIdx < totalSteps then
+                    Just ( rowId, newStepIdx )
+
+                else
+                    Nothing
+
+            else
+                Just ( rowId, stepIdx )
+        )
+
+
 deleteStep : Int -> Int -> PitchGrid -> PercGrid -> ( PitchGrid, PercGrid )
 deleteStep stepToDelete totalSteps pitchGrid percGrid =
     ( gridDeleteStep stepToDelete totalSteps pitchGrid
     , gridDeleteStep stepToDelete totalSteps percGrid
     )
+
+
+gridDeleteStep : Int -> Int -> Set ( Int, Int ) -> Set ( Int, Int )
+gridDeleteStep stepToDelete totalSteps grid =
+    if stepToDelete < 0 || stepToDelete >= totalSteps then
+        grid
+
+    else
+        setFilterMap
+            (\( rowId, stepIdx ) ->
+                if stepIdx == stepToDelete then
+                    Nothing
+
+                else if stepIdx > stepToDelete then
+                    Just ( rowId, stepIdx - 1 )
+
+                else
+                    Just ( rowId, stepIdx )
+            )
+            grid
 
 
 
@@ -278,6 +256,28 @@ percGridToString =
 parsePercGrid : String -> PercGrid
 parsePercGrid =
     parseGrid
+
+
+gridToString : Set ( Int, Int ) -> String
+gridToString grid =
+    grid
+        |> Set.toList
+        |> flattenPairs
+        |> List.map String.fromInt
+        |> String.join ","
+
+
+parseGrid : String -> Set ( Int, Int )
+parseGrid str =
+    str
+        |> String.split ","
+        |> List.filterMap String.toInt
+        |> toPairs
+        |> Set.fromList
+
+
+
+-- Generic Utilities
 
 
 toPairs : List a -> List ( a, a )
