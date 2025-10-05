@@ -105,7 +105,7 @@ percPositionToTuple { percType, stepIdx } =
 
 
 gridShift : Int -> Int -> Set ( Int, Int ) -> Set ( Int, Int )
-gridShift fromStepIdx totalSteps  =
+gridShift fromStepIdx totalSteps =
     setFilterMap
         (\( rowId, stepIdx ) ->
             if stepIdx >= fromStepIdx then
@@ -122,7 +122,6 @@ gridShift fromStepIdx totalSteps  =
             else
                 Just ( rowId, stepIdx )
         )
-
 
 
 gridDeleteStep : Int -> Int -> Set ( Int, Int ) -> Set ( Int, Int )
@@ -153,13 +152,13 @@ gridToString grid =
         |> String.join ","
 
 
-parseGrid : String -> Maybe (Set ( Int, Int ))
+parseGrid : String -> Set ( Int, Int )
 parseGrid str =
     str
         |> String.split ","
         |> List.filterMap String.toInt
         |> pairUp
-        |> Maybe.map Set.fromList
+        |> Set.fromList
 
 
 
@@ -257,7 +256,7 @@ pitchGridToString =
 
 {-| Parse comma-separated integers back to PitchGrid: "0,0,1,2,5,10"
 -}
-parsePitchGrid : String -> Maybe PitchGrid
+parsePitchGrid : String -> PitchGrid
 parsePitchGrid =
     parseGrid
 
@@ -271,22 +270,19 @@ percGridToString =
 
 {-| Parse comma-separated integers back to PercGrid: "0,0,1,2,5,10"
 -}
-parsePercGrid : String -> Maybe PercGrid
+parsePercGrid : String -> PercGrid
 parsePercGrid =
     parseGrid
 
 
 {-| Group list into pairs: [0,0,1,2] -> [(0,0),(1,2)]
 -}
-pairUp : List Int -> Maybe (List ( Int, Int ))
+pairUp : List Int -> List ( Int, Int )
 pairUp list =
     case list of
-        [] ->
-            Just []
-
         x :: y :: rest ->
             pairUp rest
-                |> Maybe.map (\pairs -> ( x, y ) :: pairs)
+                |> (\pairs -> ( x, y ) :: pairs)
 
         _ ->
-            Nothing
+            []
