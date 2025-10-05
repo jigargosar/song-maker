@@ -44,6 +44,10 @@ type alias StepIdx =
     Int
 
 
+type alias PercRowIdx =
+    Int
+
+
 type alias PitchGrid =
     Set ( MidiNote, StepIdx )
 
@@ -53,7 +57,7 @@ type alias PercPos =
 
 
 type alias PercGrid =
-    Set ( Int, Int )
+    Set ( PercRowIdx, StepIdx )
 
 
 
@@ -80,7 +84,7 @@ setPitchCell position config isActive =
     setUpdate isActive (pitchPositionToTuple position config)
 
 
-pitchPositionToTuple : PitchPos -> ScaleConfig -> ( Int, Int )
+pitchPositionToTuple : PitchPos -> ScaleConfig -> ( MidiNote, StepIdx )
 pitchPositionToTuple { pitchIdx, stepIdx } config =
     ( Scales.pitchIdxToMidi pitchIdx config, stepIdx )
 
@@ -95,7 +99,7 @@ setPercCell position isActive =
     setUpdate isActive (percPositionToTuple position)
 
 
-percPositionToTuple : PercPos -> ( Int, Int )
+percPositionToTuple : PercPos -> ( PercRowIdx, StepIdx )
 percPositionToTuple { percType, stepIdx } =
     ( Instruments.percRowIdx percType, stepIdx )
 
