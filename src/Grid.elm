@@ -157,7 +157,7 @@ parseGrid str =
     str
         |> String.split ","
         |> List.filterMap String.toInt
-        |> pairUp
+        |> toPairs
         |> Set.fromList
 
 
@@ -275,14 +275,11 @@ parsePercGrid =
     parseGrid
 
 
-{-| Group list into pairs: [0,0,1,2] -> [(0,0),(1,2)]
--}
-pairUp : List Int -> List ( Int, Int )
-pairUp list =
+toPairs : List a -> List ( a, a )
+toPairs list =
     case list of
         x :: y :: rest ->
-            pairUp rest
-                |> (\pairs -> ( x, y ) :: pairs)
+            ( x, y ) :: toPairs rest
 
         _ ->
             []
