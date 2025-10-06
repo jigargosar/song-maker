@@ -59,7 +59,7 @@ type Msg
     | TimeSync Float
     | ChangeScaleType ScaleType
     | ChangeRootNote RootNote
-    | ChangeOctaveStart Int
+    | ChangeStartingOctave Int
     | ChangeTotalOctaves Int
     | ChangeBPM Int
     | ChangeTonalInstrument TonalInstrument
@@ -153,8 +153,8 @@ update msg model =
         ChangeRootNote newRootNote ->
             ( Model.changeRootNote newRootNote model, Cmd.none )
 
-        ChangeOctaveStart newStart ->
-            ( Model.changeOctaveStart newStart model, Cmd.none )
+        ChangeStartingOctave newStart ->
+            ( Model.changeStartingOctave newStart model, Cmd.none )
 
         ChangeTotalOctaves newCount ->
             ( Model.changeTotalOctaves newCount model, Cmd.none )
@@ -677,7 +677,7 @@ viewScaleControls vm =
     div [ class "flex items-center gap-4" ]
         [ viewControlGroup "Scale" (viewScaleTypeSelector vm)
         , viewControlGroup "Root" (viewRootNoteSelector vm)
-        , viewControlGroup "Start" (viewOctaveStartInput vm.octaveStart)
+        , viewControlGroup "Start" (viewStartingOctaveInput vm.startingOctave)
         , viewControlGroup "Count" (viewTotalOctavesInput vm.totalOctaves)
         ]
 
@@ -729,13 +729,13 @@ viewRootNoteOption vm rootNote =
         [ text (Scales.rootNoteToString rootNote) ]
 
 
-viewOctaveStartInput : Int -> Html Msg
-viewOctaveStartInput currentStart =
+viewStartingOctaveInput : Int -> Html Msg
+viewStartingOctaveInput currentStart =
     H.input
         [ HA.type_ "number"
         , class "bg-gray-700 text-white text-sm border border-gray-600 rounded px-2 py-1 w-16 text-center hover:bg-gray-600 transition-colors"
         , HA.value (String.fromInt currentStart)
-        , HE.onInput (String.toInt >> Maybe.withDefault 4 >> ChangeOctaveStart)
+        , HE.onInput (String.toInt >> Maybe.withDefault 4 >> ChangeStartingOctave)
         ]
         []
 

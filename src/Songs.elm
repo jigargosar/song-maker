@@ -9,7 +9,7 @@ type alias SongConfig =
     , melody : List (List String) -- Each step can have multiple notes
     , percussion : List (List PercType) -- Each step can have multiple drums
     , bpm : Int
-    , octaveStart : Int
+    , startingOctave : Int
     , totalOctaves : Int
     , bars : Int
     , beatsPerBar : Int
@@ -80,7 +80,7 @@ twinkleSong =
             -- "sky (end)"
             ++ [ [ kick ], [], [ snare ], [] ]
     , bpm = 90
-    , octaveStart = 3
+    , startingOctave = 3
     , totalOctaves = 3
     , bars = 4
     , beatsPerBar = 4
@@ -107,7 +107,7 @@ happyBirthdaySong =
             ++ [ [ kick ], [], [ snare ], [], [ kick ], [], [ snare ], [] ]
             ++ [ [ kick ], [], [ snare ], [], [ kick ], [], [], [] ]
     , bpm = 120
-    , octaveStart = 4
+    , startingOctave = 4
     , totalOctaves = 2
     , bars = 4
     , beatsPerBar = 4
@@ -134,7 +134,7 @@ maryHadALittleLambSong =
             ++ [ [ kick ], [], [ snare ], [], [ kick ], [], [ snare ], [] ]
             ++ [ [ kick ], [], [ snare ], [], [ kick ], [], [], [] ]
     , bpm = 120
-    , octaveStart = 4
+    , startingOctave = 4
     , totalOctaves = 1
     , bars = 4
     , beatsPerBar = 4
@@ -159,7 +159,7 @@ odeToJoySong =
             ++ [ [ kick ], [], [ snare ], [], [ kick ], [], [ snare ], [] ]
             ++ [ [ kick ], [], [ snare ], [], [ kick ], [], [ snare ], [] ]
     , bpm = 100
-    , octaveStart = 3
+    , startingOctave = 3
     , totalOctaves = 2
     , bars = 4
     , beatsPerBar = 4
@@ -182,7 +182,7 @@ jingleBellsSong =
             ++ [ [ snare ], [], [ kick ], [], [ snare ], [], [ kick ], [] ]
             ++ [ [ snare ], [], [ kick ], [], [ snare ], [], [ kick ], [] ]
     , bpm = 120
-    , octaveStart = 4
+    , startingOctave = 4
     , totalOctaves = 1
     , bars = 4
     , beatsPerBar = 4

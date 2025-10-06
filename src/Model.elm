@@ -8,7 +8,7 @@ module Model exposing
     , changeBars
     , changeBeatsPerBar
     , changeTotalOctaves
-    , changeOctaveStart
+    , changeStartingOctave
     , changeRootNote
     , changeScaleType
     , changeSubdivisions
@@ -58,7 +58,7 @@ init _ url key =
         initialModel =
             { scaleType = Scales.Major
             , rootNote = Scales.C
-            , octaveStart = 3
+            , startingOctave = 3
             , totalOctaves = 3
             , bars = 8
             , beatsPerBar = 4
@@ -108,7 +108,7 @@ type alias HistoryState =
     , percGrid : PercGrid
     , scaleType : ScaleType
     , rootNote : RootNote
-    , octaveStart : Int
+    , startingOctave : Int
     , totalOctaves : Int
     , bars : Int
     , beatsPerBar : Int
@@ -152,7 +152,7 @@ type alias Model =
     , percGrid : PercGrid
     , scaleType : ScaleType
     , rootNote : RootNote
-    , octaveStart : Int
+    , startingOctave : Int
     , totalOctaves : Int
     , bars : Int
     , beatsPerBar : Int
@@ -178,7 +178,7 @@ scaleConfig : Model -> ScaleConfig
 scaleConfig model =
     { scaleType = model.scaleType
     , rootNote = model.rootNote
-    , octaveStart = model.octaveStart
+    , startingOctave = model.startingOctave
     , totalOctaves = model.totalOctaves
     }
 
@@ -206,7 +206,7 @@ toHistoryState model =
     , percGrid = model.percGrid
     , scaleType = model.scaleType
     , rootNote = model.rootNote
-    , octaveStart = model.octaveStart
+    , startingOctave = model.startingOctave
     , totalOctaves = model.totalOctaves
     , bars = model.bars
     , beatsPerBar = model.beatsPerBar
@@ -226,7 +226,7 @@ updateModelFromHistoryState historyState model =
         , percGrid = historyState.percGrid
         , scaleType = historyState.scaleType
         , rootNote = historyState.rootNote
-        , octaveStart = historyState.octaveStart
+        , startingOctave = historyState.startingOctave
         , totalOctaves = historyState.totalOctaves
         , bars = historyState.bars
         , beatsPerBar = historyState.beatsPerBar
@@ -261,7 +261,7 @@ applySong sc model =
         , scaleType = Scales.Major
         , rootNote = Scales.C
         , bpm = sc.bpm
-        , octaveStart = sc.octaveStart
+        , startingOctave = sc.startingOctave
         , totalOctaves = sc.totalOctaves
         , bars = sc.bars
         , beatsPerBar = sc.beatsPerBar
@@ -455,13 +455,13 @@ withHistory transform model =
     transform (pushToHistory model)
 
 
-changeOctaveStart : Int -> Model -> Model
-changeOctaveStart newStart =
+changeStartingOctave : Int -> Model -> Model
+changeStartingOctave newStart =
     withHistory
         (\model ->
             let
                 newModel =
-                    { model | octaveStart = atLeast 1 newStart }
+                    { model | startingOctave = atLeast 1 newStart }
             in
             { newModel | pitchGrid = Grid.resizePitchGrid (scaleConfig newModel) (timeConfig newModel) model.pitchGrid }
         )
@@ -811,7 +811,7 @@ type alias ViewModel =
     , isDrumKitSelected : DrumKit -> Bool
     , pitchIdxToNoteName : Int -> String
     , bpm : Int
-    , octaveStart : Int
+    , startingOctave : Int
     , totalOctaves : Int
     , bars : Int
     , beatsPerBar : Int
@@ -847,7 +847,7 @@ toVm model =
     , isDrumKitSelected = \drumKit -> model.currentDrumKit == drumKit
     , pitchIdxToNoteName = \pitchIdx -> Scales.pitchIdxToNoteName pitchIdx scaleConfigValue
     , bpm = model.bpm
-    , octaveStart = model.octaveStart
+    , startingOctave = model.startingOctave
     , totalOctaves = model.totalOctaves
     , bars = model.bars
     , beatsPerBar = model.beatsPerBar

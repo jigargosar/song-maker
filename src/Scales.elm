@@ -33,7 +33,7 @@ type alias Semitone =
     Int
 
 
-type alias OctaveNumber =
+type alias OctaveIdx =
     Int
 
 
@@ -250,7 +250,7 @@ parseRootNote str =
 type alias ScaleConfig =
     { scaleType : ScaleType
     , rootNote : RootNote
-    , octaveStart : OctaveNumber
+    , startingOctave : OctaveIdx
     , totalOctaves : Int
     }
 
@@ -283,7 +283,7 @@ pitchIdxToMidi pitchIdx config =
             modBy notesInScale pitchIdx
 
         octave =
-            config.octaveStart + octaveIdx
+            config.startingOctave + octaveIdx
 
         semitone =
             Maybe.withDefault 0 (List.drop noteIdx scalePattern |> List.head)
@@ -320,7 +320,7 @@ pitchIdxToNoteName pitchIdx config =
             modBy notesInScale pitchIdx
 
         octave =
-            config.octaveStart + octaveIdx
+            config.startingOctave + octaveIdx
 
         semitone =
             Maybe.withDefault 0 (List.drop noteIdx scalePattern |> List.head)
