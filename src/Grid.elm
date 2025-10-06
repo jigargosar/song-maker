@@ -22,9 +22,9 @@ module Grid exposing
     )
 
 import Instruments exposing (PercType)
-import Scales exposing (RootNote, ScaleConfig)
+import Scales exposing (MidiNote, RootNote, ScaleConfig)
 import Set exposing (Set)
-import Timing exposing (TimeConfig)
+import Timing exposing (StepIdx, TimeConfig)
 import Utils exposing (..)
 
 
@@ -33,11 +33,11 @@ import Utils exposing (..)
 
 
 type alias PitchGrid =
-    Set ( MidiNote, StepIdx )
+    Set PitchCell
 
 
-type alias MidiNote =
-    Int
+type alias PitchCell =
+    ( MidiNote, StepIdx )
 
 
 type alias PitchPos =
@@ -58,10 +58,6 @@ type alias PercRowIdx =
 
 type alias PercPos =
     { percType : PercType, stepIdx : StepIdx }
-
-
-type alias StepIdx =
-    Int
 
 
 
@@ -114,20 +110,12 @@ percPositionToTuple { percType, stepIdx } =
 
 resizePitchGrid : ScaleConfig -> TimeConfig -> PitchGrid -> PitchGrid
 resizePitchGrid sc tc =
-    setFilterMap
-        (\( midiNote, stepIdx ) ->
-            -- Check if MIDI note is valid in new scale and step is within bounds
-            case Scales.midiToPitchIdx midiNote sc of
-                Just _ ->
-                    if stepIdx < Timing.getTotalSteps tc then
-                        Just ( midiNote, stepIdx )
-
-                    else
-                        Nothing
-
-                Nothing ->
-                    Nothing
-        )
+    let
+        validateCell : PitchCell -> Maybe PitchCell
+        validateCell ( midiNote, stepIdx ) =
+            Maybe.map2 Tuple.pair (Scales.validateMidi midiNote sc) (Timing.validateStep stepIdx tc)
+    in
+    setFilterMap validateCell
 
 
 transposePitchGrid : { prev : RootNote, next : RootNote } -> PitchGrid -> PitchGrid

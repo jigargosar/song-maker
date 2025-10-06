@@ -1,12 +1,12 @@
 module Scales exposing
-    ( RootNote(..)
+    ( MidiNote
+    , RootNote(..)
     , ScaleConfig
     , ScaleType(..)
     , allRootNotes
     , allScales
     , getRootNoteOffset
     , getTotalPitches
-    , midiToPitchIdx
     , noteNameToMidi
     , parseRootNote
     , parseScaleType
@@ -14,9 +14,14 @@ module Scales exposing
     , pitchIdxToNoteName
     , rootNoteToString
     , scaleLabel
+    , validateMidi
     )
 
 import Utils exposing (..)
+
+
+type alias MidiNote =
+    Int
 
 
 type ScaleType
@@ -320,8 +325,8 @@ pitchIdxToNoteName pitchIdx config =
         "C4"
 
 
-midiToPitchIdx : Int -> ScaleConfig -> Maybe Int
-midiToPitchIdx targetMidi sc =
+validateMidi : Int -> ScaleConfig -> Maybe Int
+validateMidi targetMidi sc =
     getTotalPitches sc
         |> indices
         |> findFirst (\pitchIdx -> pitchIdxToMidi pitchIdx sc == targetMidi)

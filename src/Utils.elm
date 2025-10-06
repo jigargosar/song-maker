@@ -45,6 +45,15 @@ findFirst predicate list =
                 findFirst predicate xs
 
 
+justIf : Bool -> a -> Maybe a
+justIf condition value =
+    if condition then
+        Just value
+
+    else
+        Nothing
+
+
 
 -- Set Helpers
 

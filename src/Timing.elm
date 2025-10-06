@@ -1,11 +1,14 @@
 module Timing exposing
-    ( TimeConfig
+    ( StepIdx
+    , TimeConfig
     , getTotalSteps
     , noteDuration
+    , validateStep
     )
 
-
 -- Timing Configuration
+
+import Utils exposing (justIf)
 
 
 type alias TimeConfig =
@@ -16,7 +19,17 @@ type alias TimeConfig =
     }
 
 
+type alias StepIdx =
+    Int
+
+
+
 -- Timing Calculations
+
+
+validateStep : StepIdx -> TimeConfig -> Maybe StepIdx
+validateStep stepIdx tc =
+    justIf (stepIdx < getTotalSteps tc) stepIdx
 
 
 getTotalSteps : TimeConfig -> Int

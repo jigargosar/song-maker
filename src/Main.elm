@@ -535,15 +535,6 @@ viewRedoButton canRedo =
     viewButton [] (justIf canRedo Redo) "↷ Redo"
 
 
-justIf : Bool -> a -> Maybe a
-justIf condition value =
-    if condition then
-        Just value
-
-    else
-        Nothing
-
-
 viewSaveButton : Html Msg
 viewSaveButton =
     viewButton [] (Just Save) "Save"
