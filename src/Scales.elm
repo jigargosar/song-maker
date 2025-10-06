@@ -251,7 +251,7 @@ type alias ScaleConfig =
     { scaleType : ScaleType
     , rootNote : RootNote
     , octaveStart : OctaveNumber
-    , octaveCount : Int
+    , totalOctaves : Int
     }
 
 
@@ -261,7 +261,7 @@ type alias ScaleConfig =
 
 getTotalPitches : ScaleConfig -> Int
 getTotalPitches config =
-    notesPerOctave config.scaleType * config.octaveCount
+    notesPerOctave config.scaleType * config.totalOctaves
 
 
 pitchIdxToMidi : PitchIdx -> ScaleConfig -> MidiNote
@@ -294,7 +294,7 @@ pitchIdxToMidi pitchIdx config =
         midiC4 =
             60
     in
-    if octaveIdx < config.octaveCount then
+    if octaveIdx < config.totalOctaves then
         baseC0 + (octave * 12) + rootOffset + semitone
 
     else
@@ -331,7 +331,7 @@ pitchIdxToNoteName pitchIdx config =
         noteName =
             Maybe.withDefault "?" (List.drop chromaticIndex chromaticNoteNames |> List.head)
     in
-    if octaveIdx < config.octaveCount then
+    if octaveIdx < config.totalOctaves then
         noteName ++ String.fromInt octave
 
     else

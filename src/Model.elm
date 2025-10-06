@@ -7,7 +7,7 @@ module Model exposing
     , ViewModel
     , changeBars
     , changeBeatsPerBar
-    , changeOctaveCount
+    , changeTotalOctaves
     , changeOctaveStart
     , changeRootNote
     , changeScaleType
@@ -59,7 +59,7 @@ init _ url key =
             { scaleType = Scales.Major
             , rootNote = Scales.C
             , octaveStart = 3
-            , octaveCount = 3
+            , totalOctaves = 3
             , bars = 8
             , beatsPerBar = 4
             , subdivisions = 2
@@ -109,7 +109,7 @@ type alias HistoryState =
     , scaleType : ScaleType
     , rootNote : RootNote
     , octaveStart : Int
-    , octaveCount : Int
+    , totalOctaves : Int
     , bars : Int
     , beatsPerBar : Int
     , subdivisions : Int
@@ -153,7 +153,7 @@ type alias Model =
     , scaleType : ScaleType
     , rootNote : RootNote
     , octaveStart : Int
-    , octaveCount : Int
+    , totalOctaves : Int
     , bars : Int
     , beatsPerBar : Int
     , subdivisions : Int
@@ -179,7 +179,7 @@ scaleConfig model =
     { scaleType = model.scaleType
     , rootNote = model.rootNote
     , octaveStart = model.octaveStart
-    , octaveCount = model.octaveCount
+    , totalOctaves = model.totalOctaves
     }
 
 
@@ -207,7 +207,7 @@ toHistoryState model =
     , scaleType = model.scaleType
     , rootNote = model.rootNote
     , octaveStart = model.octaveStart
-    , octaveCount = model.octaveCount
+    , totalOctaves = model.totalOctaves
     , bars = model.bars
     , beatsPerBar = model.beatsPerBar
     , subdivisions = model.subdivisions
@@ -227,7 +227,7 @@ updateModelFromHistoryState historyState model =
         , scaleType = historyState.scaleType
         , rootNote = historyState.rootNote
         , octaveStart = historyState.octaveStart
-        , octaveCount = historyState.octaveCount
+        , totalOctaves = historyState.totalOctaves
         , bars = historyState.bars
         , beatsPerBar = historyState.beatsPerBar
         , subdivisions = historyState.subdivisions
@@ -262,7 +262,7 @@ applySong sc model =
         , rootNote = Scales.C
         , bpm = sc.bpm
         , octaveStart = sc.octaveStart
-        , octaveCount = sc.octaveCount
+        , totalOctaves = sc.totalOctaves
         , bars = sc.bars
         , beatsPerBar = sc.beatsPerBar
         , subdivisions = sc.subdivisions
@@ -467,13 +467,13 @@ changeOctaveStart newStart =
         )
 
 
-changeOctaveCount : Int -> Model -> Model
-changeOctaveCount newCount =
+changeTotalOctaves : Int -> Model -> Model
+changeTotalOctaves newCount =
     withHistory
         (\model ->
             let
                 newModel =
-                    { model | octaveCount = atLeast 1 newCount }
+                    { model | totalOctaves = atLeast 1 newCount }
             in
             { newModel | pitchGrid = Grid.resizePitchGrid (scaleConfig newModel) (timeConfig newModel) model.pitchGrid }
         )
@@ -812,7 +812,7 @@ type alias ViewModel =
     , pitchIdxToNoteName : Int -> String
     , bpm : Int
     , octaveStart : Int
-    , octaveCount : Int
+    , totalOctaves : Int
     , bars : Int
     , beatsPerBar : Int
     , subdivisions : Int
@@ -848,7 +848,7 @@ toVm model =
     , pitchIdxToNoteName = \pitchIdx -> Scales.pitchIdxToNoteName pitchIdx scaleConfigValue
     , bpm = model.bpm
     , octaveStart = model.octaveStart
-    , octaveCount = model.octaveCount
+    , totalOctaves = model.totalOctaves
     , bars = model.bars
     , beatsPerBar = model.beatsPerBar
     , subdivisions = model.subdivisions

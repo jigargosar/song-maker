@@ -60,7 +60,7 @@ type Msg
     | ChangeScaleType ScaleType
     | ChangeRootNote RootNote
     | ChangeOctaveStart Int
-    | ChangeOctaveCount Int
+    | ChangeTotalOctaves Int
     | ChangeBPM Int
     | ChangeTonalInstrument TonalInstrument
     | ChangeDrumKit DrumKit
@@ -156,8 +156,8 @@ update msg model =
         ChangeOctaveStart newStart ->
             ( Model.changeOctaveStart newStart model, Cmd.none )
 
-        ChangeOctaveCount newCount ->
-            ( Model.changeOctaveCount newCount model, Cmd.none )
+        ChangeTotalOctaves newCount ->
+            ( Model.changeTotalOctaves newCount model, Cmd.none )
 
         ChangeBPM newBPM ->
             ( Model.setBPM newBPM model, Cmd.none )
@@ -678,7 +678,7 @@ viewScaleControls vm =
         [ viewControlGroup "Scale" (viewScaleTypeSelector vm)
         , viewControlGroup "Root" (viewRootNoteSelector vm)
         , viewControlGroup "Start" (viewOctaveStartInput vm.octaveStart)
-        , viewControlGroup "Count" (viewOctaveCountInput vm.octaveCount)
+        , viewControlGroup "Count" (viewTotalOctavesInput vm.totalOctaves)
         ]
 
 
@@ -740,13 +740,13 @@ viewOctaveStartInput currentStart =
         []
 
 
-viewOctaveCountInput : Int -> Html Msg
-viewOctaveCountInput currentCount =
+viewTotalOctavesInput : Int -> Html Msg
+viewTotalOctavesInput currentCount =
     H.input
         [ HA.type_ "number"
         , class "bg-gray-700 text-white text-sm border border-gray-600 rounded px-2 py-1 w-16 text-center hover:bg-gray-600 transition-colors"
         , HA.value (String.fromInt currentCount)
-        , HE.onInput (String.toInt >> Maybe.withDefault 2 >> ChangeOctaveCount)
+        , HE.onInput (String.toInt >> Maybe.withDefault 2 >> ChangeTotalOctaves)
         ]
         []
 

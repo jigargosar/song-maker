@@ -19,7 +19,7 @@ type alias QueryData a =
     { a
         | bpm : Int
         , octaveStart : Int
-        , octaveCount : Int
+        , totalOctaves : Int
         , pitchGrid : PitchGrid
         , percGrid : PercGrid
         , scaleType : ScaleType
@@ -35,7 +35,7 @@ type alias QueryData a =
 type alias QueryParams =
     { bpm : Maybe Int
     , octaveStart : Maybe Int
-    , octaveCount : Maybe Int
+    , totalOctaves : Maybe Int
     , pitchGrid : Maybe PitchGrid
     , percGrid : Maybe PercGrid
     , scaleType : Maybe ScaleType
@@ -53,7 +53,7 @@ queryParser =
     Pipeline.succeed QueryParams
         |> Pipeline.optional (Query.int "bpm")
         |> Pipeline.optional (Query.int "octaveStart")
-        |> Pipeline.optional (Query.int "octaveCount")
+        |> Pipeline.optional (Query.int "totalOctaves")
         |> Pipeline.optional (Query.string "pitchGrid" |> Query.map (Maybe.map Grid.parsePitchGrid))
         |> Pipeline.optional (Query.string "percGrid" |> Query.map (Maybe.map Grid.parsePercGrid))
         |> Pipeline.optional (Query.string "scale" |> Query.map (Maybe.map Scales.parseScaleType))
@@ -81,7 +81,7 @@ buildQueryString data =
         []
         [ UB.int "bpm" data.bpm
         , UB.int "octaveStart" data.octaveStart
-        , UB.int "octaveCount" data.octaveCount
+        , UB.int "totalOctaves" data.totalOctaves
         , UB.string "pitchGrid" (Grid.pitchGridToString data.pitchGrid)
         , UB.string "percGrid" (Grid.percGridToString data.percGrid)
         , UB.string "scale" (Scales.scaleLabel data.scaleType)
@@ -106,7 +106,7 @@ load url data =
             { data
                 | bpm = Maybe.withDefault data.bpm params.bpm
                 , octaveStart = Maybe.withDefault data.octaveStart params.octaveStart
-                , octaveCount = Maybe.withDefault data.octaveCount params.octaveCount
+                , totalOctaves = Maybe.withDefault data.totalOctaves params.totalOctaves
                 , pitchGrid = Maybe.withDefault data.pitchGrid params.pitchGrid
                 , percGrid = Maybe.withDefault data.percGrid params.percGrid
                 , scaleType = Maybe.withDefault data.scaleType params.scaleType
@@ -130,7 +130,7 @@ reset data =
         , scaleType = Scales.Major
         , rootNote = Scales.C
         , octaveStart = 3
-        , octaveCount = 3
+        , totalOctaves = 3
         , bars = 8
         , beatsPerBar = 4
         , subdivisions = 2
