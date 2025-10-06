@@ -7,7 +7,8 @@
     "start": "pnpm run clean && parcel --no-cache src/index.html",
     "build": "parcel build src/index.html",
     "clean:build": "pnpm run clean && pnpm run build",
-    "elm-review" : "elm-review"
+    "elm-review" : "elm-review",
+    "elm-review:watch" : "elm-review --watch"
   },
   "keywords": [],
   "author": "",
