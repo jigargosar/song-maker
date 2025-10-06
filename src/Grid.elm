@@ -22,7 +22,7 @@ module Grid exposing
     )
 
 import Instruments exposing (PercType)
-import Scales exposing (MidiNote, RootNote, ScaleConfig)
+import Scales exposing (MidiNote, PitchIdx, RootNote, ScaleConfig)
 import Set exposing (Set)
 import Timing exposing (StepIdx, TimeConfig)
 import Utils exposing (..)
@@ -42,10 +42,6 @@ type alias PitchCell =
 
 type alias PitchPos =
     { pitchIdx : PitchIdx, stepIdx : StepIdx }
-
-
-type alias PitchIdx =
-    Int
 
 
 type alias PercGrid =

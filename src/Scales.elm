@@ -1,5 +1,6 @@
 module Scales exposing
     ( MidiNote
+    , PitchIdx
     , RootNote(..)
     , ScaleConfig
     , ScaleType(..)
@@ -21,6 +22,18 @@ import Utils exposing (..)
 
 
 type alias MidiNote =
+    Int
+
+
+type alias PitchIdx =
+    Int
+
+
+type alias Semitone =
+    Int
+
+
+type alias OctaveNumber =
     Int
 
 
@@ -48,7 +61,7 @@ scaleLabel scale =
             "Chromatic"
 
 
-getScalePattern : ScaleType -> List Int
+getScalePattern : ScaleType -> List Semitone
 getScalePattern scaleType =
     case scaleType of
         Major ->
@@ -76,7 +89,7 @@ type RootNote
     | B
 
 
-getRootNoteOffset : RootNote -> Int
+getRootNoteOffset : RootNote -> Semitone
 getRootNoteOffset rootNote =
     case rootNote of
         C ->
@@ -237,7 +250,7 @@ parseRootNote str =
 type alias ScaleConfig =
     { scaleType : ScaleType
     , rootNote : RootNote
-    , octaveStart : Int
+    , octaveStart : OctaveNumber
     , octaveCount : Int
     }
 
@@ -251,7 +264,7 @@ getTotalPitches config =
     notesPerOctave config.scaleType * config.octaveCount
 
 
-pitchIdxToMidi : Int -> ScaleConfig -> Int
+pitchIdxToMidi : PitchIdx -> ScaleConfig -> MidiNote
 pitchIdxToMidi pitchIdx config =
     let
         scalePattern =
@@ -288,7 +301,7 @@ pitchIdxToMidi pitchIdx config =
         midiC4
 
 
-pitchIdxToNoteName : Int -> ScaleConfig -> String
+pitchIdxToNoteName : PitchIdx -> ScaleConfig -> String
 pitchIdxToNoteName pitchIdx config =
     let
         scalePattern =
@@ -325,14 +338,14 @@ pitchIdxToNoteName pitchIdx config =
         "C4"
 
 
-validateMidi : Int -> ScaleConfig -> Maybe Int
+validateMidi : MidiNote -> ScaleConfig -> Maybe MidiNote
 validateMidi targetMidi sc =
     getTotalPitches sc
         |> indices
         |> findFirst (\pitchIdx -> pitchIdxToMidi pitchIdx sc == targetMidi)
 
 
-noteNameToMidi : String -> Maybe Int
+noteNameToMidi : String -> Maybe MidiNote
 noteNameToMidi noteName =
     let
         parseNote str =
