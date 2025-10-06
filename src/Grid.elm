@@ -113,13 +113,13 @@ percPositionToTuple { percType, stepIdx } =
 
 
 resizePitchGrid : ScaleConfig -> TimeConfig -> PitchGrid -> PitchGrid
-resizePitchGrid newConfig newTimeConfig =
+resizePitchGrid sc tc =
     setFilterMap
         (\( midiNote, stepIdx ) ->
             -- Check if MIDI note is valid in new scale and step is within bounds
-            case Scales.midiToPitchIdx midiNote newConfig of
+            case Scales.midiToPitchIdx midiNote sc of
                 Just _ ->
-                    if stepIdx < Timing.getTotalSteps newTimeConfig then
+                    if stepIdx < Timing.getTotalSteps tc then
                         Just ( midiNote, stepIdx )
 
                     else
