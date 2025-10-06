@@ -16,6 +16,8 @@ module Scales exposing
     , scaleLabel
     )
 
+import Utils exposing (..)
+
 
 type ScaleType
     = Major
@@ -319,14 +321,10 @@ pitchIdxToNoteName pitchIdx config =
 
 
 midiToPitchIdx : Int -> ScaleConfig -> Maybe Int
-midiToPitchIdx targetMidi config =
-    let
-        totalPitches =
-            getTotalPitches config
-    in
-    List.range 0 (totalPitches - 1)
-        |> List.filter (\pitchIdx -> pitchIdxToMidi pitchIdx config == targetMidi)
-        |> List.head
+midiToPitchIdx targetMidi sc =
+    getTotalPitches sc
+        |> indices
+        |> findFirst (\pitchIdx -> pitchIdxToMidi pitchIdx sc == targetMidi)
 
 
 noteNameToMidi : String -> Maybe Int

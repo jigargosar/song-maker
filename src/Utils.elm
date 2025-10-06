@@ -1,8 +1,10 @@
 module Utils exposing (..)
 
--- BASIC UTILS
-
 import Set exposing (Set)
+
+
+
+-- BASIC UTILS
 
 
 format : String -> List ( String, String ) -> String
@@ -22,6 +24,25 @@ atLeast =
 atMost : comparable -> comparable -> comparable
 atMost =
     min
+
+
+indices : Int -> List Int
+indices n =
+    List.range 0 (n - 1)
+
+
+findFirst : (a -> Bool) -> List a -> Maybe a
+findFirst predicate list =
+    case list of
+        [] ->
+            Nothing
+
+        x :: xs ->
+            if predicate x then
+                Just x
+
+            else
+                findFirst predicate xs
 
 
 
