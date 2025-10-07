@@ -385,10 +385,10 @@ getActiveNotesForStep stepIdx model =
                                 case percType of
                                     _ ->
                                         if percType == Instruments.perc1 then
-                                            ( drumConfig.kickWebAudioFont, drumConfig.kickMidi )
+                                            ( drumConfig.bassWebAudioFont, drumConfig.bassMidi )
 
                                         else
-                                            ( drumConfig.snareWebAudioFont, drumConfig.snareMidi )
+                                            ( drumConfig.accentWebAudioFont, drumConfig.accentMidi )
                         in
                         if Grid.isPercCellActive position model.percGrid then
                             Just
@@ -668,10 +668,10 @@ startDrawingPerc position model =
 
                             ( webAudioFontName, midiNote ) =
                                 if position.percType == Instruments.perc1 then
-                                    ( drumConfig.kickWebAudioFont, drumConfig.kickMidi )
+                                    ( drumConfig.bassWebAudioFont, drumConfig.bassMidi )
 
                                 else
-                                    ( drumConfig.snareWebAudioFont, drumConfig.snareMidi )
+                                    ( drumConfig.accentWebAudioFont, drumConfig.accentMidi )
                         in
                         Just
                             { webAudioFont = webAudioFontName
@@ -702,10 +702,10 @@ continueDrawingPerc position model =
 
                 ( webAudioFontName, midiNote ) =
                     if position.percType == Instruments.perc1 then
-                        ( drumConfig.kickWebAudioFont, drumConfig.kickMidi )
+                        ( drumConfig.bassWebAudioFont, drumConfig.bassMidi )
 
                     else
-                        ( drumConfig.snareWebAudioFont, drumConfig.snareMidi )
+                        ( drumConfig.accentWebAudioFont, drumConfig.accentMidi )
 
                 maybeNote =
                     Just

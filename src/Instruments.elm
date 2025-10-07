@@ -1,5 +1,6 @@
 module Instruments exposing
-    ( DrumKit
+    ( DrumConfig
+    , DrumKit
     , PercType
     , TonalInstrument
     , allDrumKits
@@ -106,25 +107,33 @@ allDrumKits =
 
 
 type PercType
-    = Perc1
-    | Perc2
+    = Accent
+    | Bass
 
 
-drumKitConfig : DrumKit -> { kickWebAudioFont : String, kickMidi : Int, snareWebAudioFont : String, snareMidi : Int }
+type alias DrumConfig =
+    { accentMidi : Int
+    , accentWebAudioFont : String
+    , bassMidi : Int
+    , bassWebAudioFont : String
+    }
+
+
+drumKitConfig : DrumKit -> DrumConfig
 drumKitConfig kit =
     case kit of
         ElectronicKit ->
-            { kickWebAudioFont = "_drum_36_0_SBLive_sf2"
-            , kickMidi = 36
-            , snareWebAudioFont = "_drum_38_0_SBLive_sf2"
-            , snareMidi = 38
+            { accentMidi = 38
+            , accentWebAudioFont = "_drum_38_0_SBLive_sf2"
+            , bassMidi = 36
+            , bassWebAudioFont = "_drum_36_0_SBLive_sf2"
             }
 
         BlockKit ->
-            { kickWebAudioFont = "_drum_36_0_SBLive_sf2"
-            , kickMidi = 36
-            , snareWebAudioFont = "_drum_38_0_SBLive_sf2"
-            , snareMidi = 38
+            { accentMidi = 38
+            , accentWebAudioFont = "_drum_38_0_SBLive_sf2"
+            , bassMidi = 36
+            , bassWebAudioFont = "_drum_36_0_SBLive_sf2"
             }
 
 
@@ -153,7 +162,7 @@ drumKitLabel drumKit =
 
 allPercTypes : List PercType
 allPercTypes =
-    [ Perc1, Perc2 ]
+    [ Accent, Bass ]
 
 
 percLabel : DrumKit -> PercType -> String
@@ -161,28 +170,28 @@ percLabel kit percType =
     case kit of
         ElectronicKit ->
             case percType of
-                Perc1 ->
-                    "Kick"
-
-                Perc2 ->
+                Accent ->
                     "Snare"
+
+                Bass ->
+                    "Kick"
 
         BlockKit ->
             case percType of
-                Perc1 ->
-                    "Low"
+                Accent ->
+                    "Click"
 
-                Perc2 ->
-                    "High"
+                Bass ->
+                    "Thud"
 
 
 percRowIdx : PercType -> Int
 percRowIdx percType =
     case percType of
-        Perc2 ->
+        Accent ->
             0
 
-        Perc1 ->
+        Bass ->
             1
 
 
@@ -193,12 +202,12 @@ defaultDrumKit =
 
 perc1 : PercType
 perc1 =
-    Perc1
+    Bass
 
 
 perc2 : PercType
 perc2 =
-    Perc2
+    Accent
 
 
 
