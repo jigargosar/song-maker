@@ -27,6 +27,12 @@
       "@tailwindcss/postcss": {}
     }
   },
+  "prettier": {
+    "semi": false,
+    "singleQuote": true,
+    "trailingComma": "all",
+    "endOfLine": "lf"
+  },
   "devDependencies": {
     "@parcel/macros": "^2.16.0",
     "@parcel/transformer-elm": "2.16.0",
@@ -36,6 +42,7 @@
     "elm-review": "^2.13.4",
     "parcel": "2.16.0",
     "postcss": "^8.5.6",
+    "prettier": "^3.6.2",
     "tailwind-scrollbar": "^4.0.2",
     "tailwindcss": "^4.1.13"
   },
