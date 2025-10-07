@@ -154,7 +154,7 @@ parseDrumKit str =
         "Blocks" ->
             BlockKit
 
-        "Acoustic" ->
+        "Kit" ->
             AcousticKit
 
         _ ->
@@ -171,7 +171,7 @@ drumKitLabel drumKit =
             "Blocks"
 
         AcousticKit ->
-            "Acoustic"
+            "Kit"
 
 
 allPercTypes : List PercType
