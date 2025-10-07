@@ -99,11 +99,12 @@ tonalWebAudioFont instrument =
 type DrumKit
     = ElectronicKit
     | BlockKit
+    | AcousticKit
 
 
 allDrumKits : List DrumKit
 allDrumKits =
-    [ ElectronicKit, BlockKit ]
+    [ ElectronicKit, BlockKit, AcousticKit ]
 
 
 type PercType
@@ -136,6 +137,13 @@ drumKitConfig kit =
             , bassWebAudioFont = "_drum_77_0_SBLive_sf2"
             }
 
+        AcousticKit ->
+            { accentMidi = 40
+            , accentWebAudioFont = "_drum_40_0_SBLive_sf2"
+            , bassMidi = 35
+            , bassWebAudioFont = "_drum_35_0_SBLive_sf2"
+            }
+
 
 parseDrumKit : String -> DrumKit
 parseDrumKit str =
@@ -145,6 +153,9 @@ parseDrumKit str =
 
         "Blocks" ->
             BlockKit
+
+        "Acoustic" ->
+            AcousticKit
 
         _ ->
             ElectronicKit
@@ -158,6 +169,9 @@ drumKitLabel drumKit =
 
         BlockKit ->
             "Blocks"
+
+        AcousticKit ->
+            "Acoustic"
 
 
 allPercTypes : List PercType
@@ -183,6 +197,14 @@ percLabel kit percType =
 
                 Bass ->
                     "Thud"
+
+        AcousticKit ->
+            case percType of
+                Accent ->
+                    "Snare"
+
+                Bass ->
+                    "Kick"
 
 
 percRowIdx : PercType -> Int

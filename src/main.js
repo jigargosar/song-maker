@@ -42,14 +42,24 @@ const instruments = [
   },
   // Percussion instruments
   {
+    url: '12835_0_SBLive_sf2.js',
+    globalVar: '_drum_35_0_SBLive_sf2',
+    label: 'bass drum 2',
+  },
+  {
     url: '12836_0_SBLive_sf2.js',
     globalVar: '_drum_36_0_SBLive_sf2',
-    label: 'kick',
+    label: 'bass drum 1',
   },
   {
     url: '12838_0_SBLive_sf2.js',
     globalVar: '_drum_38_0_SBLive_sf2',
-    label: 'snare',
+    label: 'snare drum 1',
+  },
+  {
+    url: '12840_0_SBLive_sf2.js',
+    globalVar: '_drum_40_0_SBLive_sf2',
+    label: 'snare drum 2',
   },
   {
     url: '12876_0_SBLive_sf2.js',
