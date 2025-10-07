@@ -147,14 +147,24 @@ allPercTypes =
     [ Perc1, Perc2 ]
 
 
-percLabel : PercType -> String
-percLabel percType =
-    case percType of
-        Perc1 ->
-            "Kick"
+percLabel : DrumKit -> PercType -> String
+percLabel kit percType =
+    case kit of
+        ElectronicKit ->
+            case percType of
+                Perc1 ->
+                    "Kick"
 
-        Perc2 ->
-            "Snare"
+                Perc2 ->
+                    "Snare"
+
+        RockKit ->
+            case percType of
+                Perc1 ->
+                    "Foo"
+
+                Perc2 ->
+                    "Bar"
 
 
 percRowIdx : PercType -> Int

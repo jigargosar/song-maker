@@ -420,7 +420,7 @@ viewPercRow : ViewModel -> PercType -> List (Html Msg)
 viewPercRow vm percType =
     let
         percTypeName =
-            Instruments.percLabel percType
+            vm.percLabel percType
 
         stickyClass =
             case percType of

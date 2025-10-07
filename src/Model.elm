@@ -38,7 +38,7 @@ module Model exposing
 
 import Browser.Navigation as Nav
 import Grid exposing (PercGrid, PercPos, PitchGrid, PitchPos)
-import Instruments exposing (DrumKit, TonalInstrument)
+import Instruments exposing (DrumKit, PercType, TonalInstrument)
 import QuerystringCodec as QC
 import Scales exposing (RootNote, ScaleConfig, ScaleType)
 import Songs exposing (SongConfig)
@@ -812,6 +812,7 @@ type alias ViewModel =
     , isTonalInstrumentSelected : TonalInstrument -> Bool
     , isDrumKitSelected : DrumKit -> Bool
     , pitchIdxToNoteName : Int -> String
+    , percLabel : PercType -> String
     , bpm : Int
     , startingOctave : Int
     , totalOctaves : Int
@@ -848,6 +849,7 @@ toVm model =
     , isTonalInstrumentSelected = \instrument -> model.currentTonalInstrument == instrument
     , isDrumKitSelected = \drumKit -> model.currentDrumKit == drumKit
     , pitchIdxToNoteName = \pitchIdx -> Scales.pitchIdxToNoteName pitchIdx scaleConfigValue
+    , percLabel = \percType -> Instruments.percLabel model.currentDrumKit percType
     , bpm = model.bpm
     , startingOctave = model.startingOctave
     , totalOctaves = model.totalOctaves
