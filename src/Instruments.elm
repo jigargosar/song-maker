@@ -130,10 +130,10 @@ drumKitConfig kit =
             }
 
         BlockKit ->
-            { accentMidi = 38
-            , accentWebAudioFont = "_drum_38_0_SBLive_sf2"
-            , bassMidi = 36
-            , bassWebAudioFont = "_drum_36_0_SBLive_sf2"
+            { accentMidi = 76
+            , accentWebAudioFont = "_drum_76_0_SBLive_sf2"
+            , bassMidi = 77
+            , bassWebAudioFont = "_drum_77_0_SBLive_sf2"
             }
 
 

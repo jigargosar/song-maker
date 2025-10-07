@@ -51,6 +51,16 @@ const instruments = [
     globalVar: '_drum_38_0_SBLive_sf2',
     label: 'snare',
   },
+  {
+    url: '12876_0_SBLive_sf2.js',
+    globalVar: '_drum_76_0_SBLive_sf2',
+    label: 'high woodblock',
+  },
+  {
+    url: '12877_0_SBLive_sf2.js',
+    globalVar: '_drum_77_0_SBLive_sf2',
+    label: 'low woodblock',
+  },
 ]
 
 const urlPrefix = 'https://surikov.github.io/webaudiofontdata/sound/'
