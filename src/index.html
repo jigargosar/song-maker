@@ -1,94 +1,96 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Song Maker V2</title>
-    <link rel="stylesheet" href="styles.css">
-</head>
-<body>
-<div id="root"></div>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div id="root"></div>
 
+    <!-- Load individual percussion sounds from CDN kick snare default drum-kit-->
+    <script src="https://surikov.github.io/webaudiofontdata/sound/12836_0_SBLive_sf2.js"></script>
+    <script src="https://surikov.github.io/webaudiofontdata/sound/12838_0_SBLive_sf2.js"></script>
 
-<!-- Load individual percussion sounds from CDN kick snare default drum-kit-->
-<script src='https://surikov.github.io/webaudiofontdata/sound/12836_0_SBLive_sf2.js'></script>
-<script src='https://surikov.github.io/webaudiofontdata/sound/12838_0_SBLive_sf2.js'></script>
+    <!-- Tonal Instruments -->
+    <!-- piano -->
+    <script src="https://surikov.github.io/webaudiofontdata/sound/0000_SBLive_sf2.js"></script>
+    <!-- marimba -->
+    <script src="https://surikov.github.io/webaudiofontdata/sound/0120_SBLive_sf2.js"></script>
+    <!-- strings -->
+    <script src="https://surikov.github.io/webaudiofontdata/sound/0400_SBLive_sf2.js"></script>
+    <script src="https://surikov.github.io/webaudiofontdata/sound/0450_SBLive_sf2.js"></script>
+    <!-- flute -->
+    <script src="https://surikov.github.io/webaudiofontdata/sound/0730_SBLive_sf2.js"></script>
+    <script src="https://surikov.github.io/webaudiofontdata/sound/0730_Aspirin_sf2_file.js"></script>
 
-<!-- Tonal Instruments -->
-<!-- piano -->
-<script src='https://surikov.github.io/webaudiofontdata/sound/0000_SBLive_sf2.js'></script>
-<!-- marimba -->
-<script src='https://surikov.github.io/webaudiofontdata/sound/0120_SBLive_sf2.js'></script>
-<!-- strings -->
-<script src='https://surikov.github.io/webaudiofontdata/sound/0400_SBLive_sf2.js'></script>
-<script src='https://surikov.github.io/webaudiofontdata/sound/0450_SBLive_sf2.js'></script>
-<!-- flute -->
-<script src='https://surikov.github.io/webaudiofontdata/sound/0730_SBLive_sf2.js'></script>
-<script src='https://surikov.github.io/webaudiofontdata/sound/0730_Aspirin_sf2_file.js'></script>
+    <!-- Load WebAudioFont player from CDN -->
+    <script src="https://surikov.github.io/webaudiofont/npm/dist/WebAudioFontPlayer.js"></script>
 
+    <script type="module">
+      import { Elm } from './Main.elm'
 
-<!-- Load WebAudioFont player from CDN -->
-<script src='https://surikov.github.io/webaudiofont/npm/dist/WebAudioFontPlayer.js'></script>
+      // Initialize Elm
+      const app = Elm.Main.init({ node: document.getElementById('root') })
 
-<script type="module">
-    import { Elm } from "./Main.elm";
+      // Initialize WebAudioFont
+      const audioContext = new AudioContext()
+      const player = new WebAudioFontPlayer()
 
-    // Initialize Elm
-    const app = Elm.Main.init({ node: document.getElementById("root") });
+      /* tones */
+      player.loader.decodeAfterLoading(audioContext, '_tone_0000_SBLive_sf2') // piano
+      player.loader.decodeAfterLoading(audioContext, '_tone_0120_SBLive_sf2') // marimba 1
+      player.loader.decodeAfterLoading(audioContext, '_tone_0400_SBLive_sf2') // strings
+      player.loader.decodeAfterLoading(audioContext, '_tone_0450_SBLive_sf2') // strings
+      player.loader.decodeAfterLoading(audioContext, '_tone_0730_SBLive_sf2') // flute
+      player.loader.decodeAfterLoading(
+        audioContext,
+        '_tone_0730_Aspirin_sf2_file',
+      ) // flute
 
-    // Initialize WebAudioFont
-    const audioContext = new AudioContext();
-    const player = new WebAudioFontPlayer();
+      /* percussion */
+      player.loader.decodeAfterLoading(audioContext, '_drum_36_0_SBLive_sf2') // kick
+      player.loader.decodeAfterLoading(audioContext, '_drum_38_0_SBLive_sf2') // snare
 
-    /* tones */
-    player.loader.decodeAfterLoading(audioContext, '_tone_0000_SBLive_sf2'); // piano
-    player.loader.decodeAfterLoading(audioContext, '_tone_0120_SBLive_sf2'); // marimba 1
-    player.loader.decodeAfterLoading(audioContext, '_tone_0400_SBLive_sf2'); // strings
-    player.loader.decodeAfterLoading(audioContext, '_tone_0450_SBLive_sf2'); // strings
-    player.loader.decodeAfterLoading(audioContext, '_tone_0730_SBLive_sf2'); // flute
-    player.loader.decodeAfterLoading(audioContext, '_tone_0730_Aspirin_sf2_file'); // flute
-
-    /* percussion */
-    player.loader.decodeAfterLoading(audioContext, '_drum_36_0_SBLive_sf2'); // kick
-    player.loader.decodeAfterLoading(audioContext, '_drum_38_0_SBLive_sf2'); // snare
-
-
-    // Handle unified note playback
-    app.ports.playNote.subscribe((data) => {
-        const { webAudioFont, midi, duration, volume } = data;
-        const when = audioContext.currentTime;
+      // Handle unified note playback
+      app.ports.playNote.subscribe((data) => {
+        const { webAudioFont, midi, duration, volume } = data
+        const when = audioContext.currentTime
 
         // Look up WebAudioFont instrument by name from window object
-        const instrumentSample = window[webAudioFont];
+        const instrumentSample = window[webAudioFont]
 
         if (instrumentSample) {
-            player.queueWaveTable(
-                audioContext,
-                audioContext.destination,
-                instrumentSample,
-                when,
-                midi,
-                duration,
-                volume
-            );
+          player.queueWaveTable(
+            audioContext,
+            audioContext.destination,
+            instrumentSample,
+            when,
+            midi,
+            duration,
+            volume,
+          )
         } else {
-            console.warn(`WebAudioFont instrument not found: ${webAudioFont}`);
+          console.warn(`WebAudioFont instrument not found: ${webAudioFont}`)
         }
-    });
+      })
 
-    // Send timeSync updates using setInterval (works in background)
-    setInterval(() => {
+      // Send timeSync updates using setInterval (works in background)
+      setInterval(() => {
         if (app.ports.timeSync) {
-            app.ports.timeSync.send(audioContext.currentTime);
+          app.ports.timeSync.send(audioContext.currentTime)
         }
-    }, 16); // ~60fps
+      }, 16) // ~60fps
 
-    // Wake audio context on first click
-    document.addEventListener('click', () => {
-        if (audioContext.state === 'suspended') {
-            audioContext.resume();
-        }
-    }, { once: true });
-</script>
-</body>
+      // Wake audio context on first click
+      document.addEventListener(
+        'click',
+        () => {
+          if (audioContext.state === 'suspended') audioContext.resume()
+        },
+        { once: true },
+      )
+    </script>
+  </body>
 </html>
