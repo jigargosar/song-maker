@@ -384,7 +384,7 @@ getActiveNotesForStep stepIdx model =
                             ( webAudioFontName, midiNote ) =
                                 case percType of
                                     _ ->
-                                        if percType == Instruments.percKick then
+                                        if percType == Instruments.perc1 then
                                             ( drumConfig.kickWebAudioFont, drumConfig.kickMidi )
 
                                         else
@@ -667,7 +667,7 @@ startDrawingPerc position model =
                                 Instruments.drumKitConfig model.currentDrumKit
 
                             ( webAudioFontName, midiNote ) =
-                                if position.percType == Instruments.percKick then
+                                if position.percType == Instruments.perc1 then
                                     ( drumConfig.kickWebAudioFont, drumConfig.kickMidi )
 
                                 else
@@ -701,7 +701,7 @@ continueDrawingPerc position model =
                     Instruments.drumKitConfig model.currentDrumKit
 
                 ( webAudioFontName, midiNote ) =
-                    if position.percType == Instruments.percKick then
+                    if position.percType == Instruments.perc1 then
                         ( drumConfig.kickWebAudioFont, drumConfig.kickMidi )
 
                     else

@@ -294,8 +294,8 @@ viewGrid vm =
         ([ {- Empty corner cell -} div [ class labelBgColorAndClass, class "border-b border-gray-600", class "sticky top-0 left-0 z-20" ] [] ]
             ++ {- Step Labels row -} times (\stepIdx -> viewStepLabel stepIdx (vm.isStepCurrentlyPlaying stepIdx)) vm.totalSteps
             ++ {- Pitch rows -} (times (viewPitchRow vm) vm.totalPitches |> List.concat)
-            ++ {- Perc Snare row -} viewPercRow vm Instruments.percSnare
-            ++ {- Perc Kick row -} viewPercRow vm Instruments.percKick
+            ++ {- Perc Snare row -} viewPercRow vm Instruments.perc2
+            ++ {- Perc Kick row -} viewPercRow vm Instruments.perc1
         )
 
 
@@ -425,7 +425,7 @@ viewPercRow vm percType =
         stickyClass =
             case percType of
                 _ ->
-                    if percType == Instruments.percSnare then
+                    if percType == Instruments.perc2 then
                         "sticky bottom-12 h-12 z-10 border-t-3"
 
                     else
@@ -453,7 +453,7 @@ viewPercCell vm percType stepIdx =
         stickyClass =
             case percType of
                 _ ->
-                    if percType == Instruments.percSnare then
+                    if percType == Instruments.perc2 then
                         "sticky bottom-12 h-12 z-10  border-t-3"
 
                     else
@@ -620,7 +620,7 @@ viewPercSymbol isActive percType =
     if isActive then
         case percType of
             _ ->
-                if percType == Instruments.percKick then
+                if percType == Instruments.perc1 then
                     -- Circle symbol
                     div [ class "w-6 h-6 rounded-full", class accentBgColor ] []
 

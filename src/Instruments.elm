@@ -11,10 +11,10 @@ module Instruments exposing
     , drumKitLabel
     , parseDrumKit
     , parseTonal
-    , percKick
+    , perc1
+    , perc2
     , percLabel
     , percRowIdx
-    , percSnare
     , tonalLabel
       -- Constructors
     , tonalWebAudioFont
@@ -34,8 +34,8 @@ type DrumKit
 
 
 type PercType
-    = Kick
-    | Snare
+    = Perc1
+    | Perc2
 
 
 tonalWebAudioFont : TonalInstrument -> String
@@ -144,26 +144,26 @@ parseDrumKit str =
 
 allPercTypes : List PercType
 allPercTypes =
-    [ Kick, Snare ]
+    [ Perc1, Perc2 ]
 
 
 percLabel : PercType -> String
 percLabel percType =
     case percType of
-        Kick ->
+        Perc1 ->
             "Kick"
 
-        Snare ->
+        Perc2 ->
             "Snare"
 
 
 percRowIdx : PercType -> Int
 percRowIdx percType =
     case percType of
-        Snare ->
+        Perc2 ->
             0
 
-        Kick ->
+        Perc1 ->
             1
 
 
@@ -181,11 +181,11 @@ defaultDrumKit =
     ElectronicKit
 
 
-percKick : PercType
-percKick =
-    Kick
+perc1 : PercType
+perc1 =
+    Perc1
 
 
-percSnare : PercType
-percSnare =
-    Snare
+perc2 : PercType
+perc2 =
+    Perc2

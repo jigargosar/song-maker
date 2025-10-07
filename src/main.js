@@ -58,7 +58,7 @@ const urlPrefix = 'https://surikov.github.io/webaudiofontdata/sound/'
 // Load all instruments dynamically
 instruments.forEach((instrument) => {
   const url = urlPrefix + instrument.url
-  console.log(`Loading instrument: ${instrument.label} from ${url}`)
+  // console.log(`Loading instrument: ${instrument.label} from ${url}`)
   player.loader.startLoad(
     audioContext,
     url,
