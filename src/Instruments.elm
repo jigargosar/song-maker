@@ -28,16 +28,6 @@ type TonalInstrument
     | FluteSBLive
 
 
-type DrumKit
-    = ElectronicKit
-    | RockKit
-
-
-type PercType
-    = Perc1
-    | Perc2
-
-
 tonalWebAudioFont : TonalInstrument -> String
 tonalWebAudioFont instrument =
     case instrument of
@@ -56,6 +46,21 @@ tonalWebAudioFont instrument =
             "_tone_0730_Aspirin_sf2_file"
 
 
+type DrumKit
+    = ElectronicKit
+    | BlockKit
+
+
+allDrumKits : List DrumKit
+allDrumKits =
+    [ ElectronicKit, BlockKit ]
+
+
+type PercType
+    = Perc1
+    | Perc2
+
+
 drumKitConfig : DrumKit -> { kickWebAudioFont : String, kickMidi : Int, snareWebAudioFont : String, snareMidi : Int }
 drumKitConfig kit =
     case kit of
@@ -66,7 +71,7 @@ drumKitConfig kit =
             , snareMidi = 38
             }
 
-        RockKit ->
+        BlockKit ->
             { kickWebAudioFont = "_drum_36_0_SBLive_sf2"
             , kickMidi = 36
             , snareWebAudioFont = "_drum_38_0_SBLive_sf2"
@@ -74,14 +79,67 @@ drumKitConfig kit =
             }
 
 
+parseDrumKit : String -> DrumKit
+parseDrumKit str =
+    case str of
+        "Electronic" ->
+            ElectronicKit
+
+        "Blocks" ->
+            BlockKit
+
+        _ ->
+            ElectronicKit
+
+
+drumKitLabel : DrumKit -> String
+drumKitLabel drumKit =
+    case drumKit of
+        ElectronicKit ->
+            "Electronic"
+
+        BlockKit ->
+            "Blocks"
+
+
+allPercTypes : List PercType
+allPercTypes =
+    [ Perc1, Perc2 ]
+
+
+percLabel : DrumKit -> PercType -> String
+percLabel kit percType =
+    case kit of
+        ElectronicKit ->
+            case percType of
+                Perc1 ->
+                    "Kick"
+
+                Perc2 ->
+                    "Snare"
+
+        BlockKit ->
+            case percType of
+                Perc1 ->
+                    "Low"
+
+                Perc2 ->
+                    "High"
+
+
+percRowIdx : PercType -> Int
+percRowIdx percType =
+    case percType of
+        Perc2 ->
+            0
+
+        Perc1 ->
+            1
+
+
 allTonal : List TonalInstrument
 allTonal =
     [ GrandPianoSBLive, MarimbaSBLLive, StringsSBLive, FluteSBLive ]
-
-
-allDrumKits : List DrumKit
-allDrumKits =
-    [ ElectronicKit, RockKit ]
 
 
 tonalLabel : TonalInstrument -> String
@@ -98,16 +156,6 @@ tonalLabel instrument =
 
         FluteSBLive ->
             "Flute"
-
-
-drumKitLabel : DrumKit -> String
-drumKitLabel drumKit =
-    case drumKit of
-        ElectronicKit ->
-            "Electronic"
-
-        RockKit ->
-            "Rock"
 
 
 parseTonal : String -> TonalInstrument
@@ -127,54 +175,6 @@ parseTonal str =
 
         _ ->
             defaultTonalInstrument
-
-
-parseDrumKit : String -> DrumKit
-parseDrumKit str =
-    case str of
-        "Electronic" ->
-            ElectronicKit
-
-        "Rock" ->
-            RockKit
-
-        _ ->
-            ElectronicKit
-
-
-allPercTypes : List PercType
-allPercTypes =
-    [ Perc1, Perc2 ]
-
-
-percLabel : DrumKit -> PercType -> String
-percLabel kit percType =
-    case kit of
-        ElectronicKit ->
-            case percType of
-                Perc1 ->
-                    "Kick"
-
-                Perc2 ->
-                    "Snare"
-
-        RockKit ->
-            case percType of
-                Perc1 ->
-                    "Foo"
-
-                Perc2 ->
-                    "Bar"
-
-
-percRowIdx : PercType -> Int
-percRowIdx percType =
-    case percType of
-        Perc2 ->
-            0
-
-        Perc1 ->
-            1
 
 
 
