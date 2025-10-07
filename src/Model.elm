@@ -341,6 +341,24 @@ type alias NoteToPlay =
     { webAudioFont : String, midi : Int, duration : Float, volume : Float }
 
 
+
+-- Audio Configuration
+
+
+pitchVolume : Float
+pitchVolume =
+    0.7
+
+
+percVolume : Float
+percVolume =
+    0.8
+
+
+
+-- Sequencer Functions
+
+
 getActiveNotesForStep : Int -> Model -> List NoteToPlay
 getActiveNotesForStep stepIdx model =
     let
@@ -363,7 +381,7 @@ getActiveNotesForStep stepIdx model =
                                 { webAudioFont = Instruments.tonalWebAudioFont model.currentTonalInstrument
                                 , midi = Scales.pitchIdxToMidi pitchIdx sc
                                 , duration = duration
-                                , volume = 0.7
+                                , volume = pitchVolume
                                 }
 
                         else
@@ -395,7 +413,7 @@ getActiveNotesForStep stepIdx model =
                                 { webAudioFont = webAudioFontName
                                 , midi = midiNote
                                 , duration = duration
-                                , volume = 0.8
+                                , volume = percVolume
                                 }
 
                         else
@@ -593,7 +611,7 @@ startDrawingPitch position model_ =
                     { webAudioFont = Instruments.tonalWebAudioFont model.currentTonalInstrument
                     , midi = Scales.pitchIdxToMidi position.pitchIdx sc
                     , duration = Timing.noteDuration (timeConfig model)
-                    , volume = 0.7
+                    , volume = pitchVolume
                     }
 
               else
@@ -620,7 +638,7 @@ continueDrawingPitch position model =
                         { webAudioFont = Instruments.tonalWebAudioFont model.currentTonalInstrument
                         , midi = Scales.pitchIdxToMidi position.pitchIdx sc
                         , duration = Timing.noteDuration (timeConfig model)
-                        , volume = 0.7
+                        , volume = pitchVolume
                         }
             in
             ( newModel, maybeNote )
@@ -677,7 +695,7 @@ startDrawingPerc position model =
                             { webAudioFont = webAudioFontName
                             , midi = midiNote
                             , duration = Timing.noteDuration (timeConfig model)
-                            , volume = 0.8
+                            , volume = percVolume
                             }
 
                     else
@@ -712,7 +730,7 @@ continueDrawingPerc position model =
                         { webAudioFont = webAudioFontName
                         , midi = midiNote
                         , duration = Timing.noteDuration (timeConfig model)
-                        , volume = 0.8
+                        , volume = percVolume
                         }
             in
             ( newModel, maybeNote )
