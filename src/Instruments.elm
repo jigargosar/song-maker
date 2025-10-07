@@ -199,3 +199,34 @@ perc1 =
 perc2 : PercType
 perc2 =
     Perc2
+
+
+{- REFACTORING PLAN - Percussion System Redesign
+
+GOAL: Semantic percussion types with consistent visual layout across all kits
+- Rename Perc1/Perc2 → Bass/Accent (semantic types)
+- Bass = bottom row, heavy, low frequency, foundation
+- Accent = top row, light, high frequency, articulation
+
+CURRENT REFACTORING (In Progress):
+1. Rename PercType: Perc1 → Bass, Perc2 → Accent
+2. Fix percRowIdx: Bass → 1 (bottom), Accent → 0 (top)
+3. Update percLabel with kit-specific names:
+   - ElectronicKit: Bass → "Kick", Accent → "Snare"
+   - BlockKit: Bass → "Thud", Accent → "Click"
+4. Rename drumKitConfig fields: kick*/snare* → bass*/accent* (remove semantic confusion)
+5. Update BlockKit sounds: MIDI 36/38 → 77/76 (low/high woodblock)
+6. Update Model.elm (3 locations): drumConfig.kick* → drumConfig.bass*
+7. Update Main.elm: swap view order (perc1/perc2 → accent/bass)
+8. Update main.js: add woodblock samples (_drum_76_0_SBLive_sf2, _drum_77_0_SBLive_sf2)
+
+PERCUSSION INSTRUMENT LOADING (main.js):
+- WebAudioFont uses global variables with unpredictable names
+- Explicit URL→globalVar mapping required in instruments array
+- Pattern: URL "12836_0_SBLive_sf2.js" → globalVar "_drum_36_0_SBLive_sf2"
+- Use player.loader.startLoad(audioContext, url, globalVar) to load dynamically
+
+FUTURE CONSIDERATIONS:
+- Add more drum kits with different sounds per track
+- Potentially support >2 percussion tracks (requires UI refactoring)
+-}
