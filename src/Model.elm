@@ -7,11 +7,11 @@ module Model exposing
     , ViewModel
     , changeBars
     , changeBeatsPerBar
-    , changeTotalOctaves
-    , changeStartingOctave
     , changeRootNote
     , changeScaleType
+    , changeStartingOctave
     , changeSubdivisions
+    , changeTotalOctaves
     , continueDrawingPerc
     , continueDrawingPitch
     , deleteStep
@@ -347,26 +347,28 @@ getActiveNotesForStep stepIdx model =
         duration =
             Timing.noteDuration (timeConfig model)
 
-        pitchNotes =
-            times
-                (\pitchIdx ->
-                    let
-                        position =
-                            { pitchIdx = pitchIdx, stepIdx = stepIdx }
-                    in
-                    if Grid.isPitchCellActive position (scaleConfig model) model.pitchGrid then
-                        Just
-                            { webAudioFont = Instruments.tonalWebAudioFont model.currentTonalInstrument
-                            , midi = Scales.pitchIdxToMidi pitchIdx (scaleConfig model)
-                            , duration = duration
-                            , volume = 0.7
-                            }
+        sc =
+            scaleConfig model
 
-                    else
-                        Nothing
-                )
-                (Scales.getTotalPitches (scaleConfig model))
-                |> List.filterMap identity
+        isActive pitchIdx =
+            Grid.isPitchCellActive (Grid.pitchPos pitchIdx stepIdx) sc model.pitchGrid
+
+        pitchNotes =
+            Scales.getTotalPitches sc
+                |> indices
+                |> List.filterMap
+                    (\pitchIdx ->
+                        if isActive pitchIdx then
+                            Just
+                                { webAudioFont = Instruments.tonalWebAudioFont model.currentTonalInstrument
+                                , midi = Scales.pitchIdxToMidi pitchIdx sc
+                                , duration = duration
+                                , volume = 0.7
+                                }
+
+                        else
+                            Nothing
+                    )
 
         drumConfig =
             Instruments.drumKitConfig model.currentDrumKit

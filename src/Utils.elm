@@ -1,5 +1,6 @@
 module Utils exposing (..)
 
+import Basics.Extra as BE
 import Set exposing (Set)
 
 
@@ -12,37 +13,23 @@ format templateString replacements =
     List.foldr (\( a, b ) -> String.replace a b) templateString replacements
 
 
-times fn i =
-    List.range 0 (i - 1) |> List.map fn
-
-
-atLeast : comparable -> comparable -> comparable
-atLeast =
-    max
-
-
-atMost : comparable -> comparable -> comparable
-atMost =
-    min
-
-
 indices : Int -> List Int
 indices n =
     List.range 0 (n - 1)
 
 
-findFirst : (a -> Bool) -> List a -> Maybe a
-findFirst predicate list =
-    case list of
-        [] ->
-            Nothing
+times fn i =
+    indices i |> List.map fn
 
-        x :: xs ->
-            if predicate x then
-                Just x
 
-            else
-                findFirst predicate xs
+atLeast : comparable -> comparable -> comparable
+atLeast =
+    BE.atLeast
+
+
+atMost : comparable -> comparable -> comparable
+atMost =
+    BE.atMost
 
 
 justIf : Bool -> a -> Maybe a

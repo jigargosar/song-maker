@@ -14,6 +14,7 @@ module Grid exposing
     , parsePitchGrid
     , percGridToString
     , pitchGridToString
+    , pitchPos
     , resizePitchGrid
     , setPercCell
     , setPitchCell
@@ -42,6 +43,11 @@ type alias PitchCell =
 
 type alias PitchPos =
     { pitchIdx : PitchIdx, stepIdx : StepIdx }
+
+
+pitchPos : PitchIdx -> StepIdx -> PitchPos
+pitchPos pitchIdx stepIdx =
+    { pitchIdx = pitchIdx, stepIdx = stepIdx }
 
 
 type alias PercGrid =

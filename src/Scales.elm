@@ -18,6 +18,7 @@ module Scales exposing
     , validateMidi
     )
 
+import List.Extra as List
 import Utils exposing (..)
 
 
@@ -342,8 +343,7 @@ validateMidi : MidiNote -> ScaleConfig -> Maybe MidiNote
 validateMidi targetMidi sc =
     getTotalPitches sc
         |> indices
-        |> findFirst (\pitchIdx -> pitchIdxToMidi pitchIdx sc == targetMidi)
-        |> Maybe.map (\_ -> targetMidi)
+        |> List.findMap (\pitchIdx -> justIf (pitchIdxToMidi pitchIdx sc == targetMidi) targetMidi)
 
 
 noteNameToMidi : String -> Maybe MidiNote
