@@ -71,6 +71,16 @@ const instruments = [
     globalVar: '_drum_77_0_SBLive_sf2',
     label: 'low woodblock',
   },
+  {
+    url: '12863_0_SBLive_sf2.js',
+    globalVar: '_drum_63_0_SBLive_sf2',
+    label: 'open high conga',
+  },
+  {
+    url: '12864_0_SBLive_sf2.js',
+    globalVar: '_drum_64_0_SBLive_sf2',
+    label: 'low conga',
+  },
 ]
 
 const urlPrefix = 'https://surikov.github.io/webaudiofontdata/sound/'

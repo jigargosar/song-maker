@@ -100,11 +100,12 @@ type DrumKit
     = ElectronicKit
     | BlockKit
     | AcousticKit
+    | CongaKit
 
 
 allDrumKits : List DrumKit
 allDrumKits =
-    [ ElectronicKit, BlockKit, AcousticKit ]
+    [ ElectronicKit, BlockKit, AcousticKit, CongaKit ]
 
 
 type PercType
@@ -144,6 +145,13 @@ drumKitConfig kit =
             , bassWebAudioFont = "_drum_35_0_SBLive_sf2"
             }
 
+        CongaKit ->
+            { accentMidi = 63
+            , accentWebAudioFont = "_drum_63_0_SBLive_sf2"
+            , bassMidi = 64
+            , bassWebAudioFont = "_drum_64_0_SBLive_sf2"
+            }
+
 
 parseDrumKit : String -> DrumKit
 parseDrumKit str =
@@ -156,6 +164,9 @@ parseDrumKit str =
 
         "Kit" ->
             AcousticKit
+
+        "Conga" ->
+            CongaKit
 
         _ ->
             ElectronicKit
@@ -172,6 +183,9 @@ drumKitLabel drumKit =
 
         AcousticKit ->
             "Kit"
+
+        CongaKit ->
+            "Conga"
 
 
 allPercTypes : List PercType
@@ -205,6 +219,14 @@ percLabel kit percType =
 
                 Bass ->
                     "Kick"
+
+        CongaKit ->
+            case percType of
+                Accent ->
+                    "High"
+
+                Bass ->
+                    "Low"
 
 
 percRowIdx : PercType -> Int
