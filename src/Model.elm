@@ -347,12 +347,12 @@ type alias NoteToPlay =
 
 pitchVolume : Float
 pitchVolume =
-    0.7
+    0.5
 
 
 percVolume : Float
 percVolume =
-    0.8
+    0.7
 
 
 
