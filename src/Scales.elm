@@ -343,6 +343,7 @@ validateMidi targetMidi sc =
     getTotalPitches sc
         |> indices
         |> findFirst (\pitchIdx -> pitchIdxToMidi pitchIdx sc == targetMidi)
+        |> Maybe.map (\_ -> targetMidi)
 
 
 noteNameToMidi : String -> Maybe MidiNote
