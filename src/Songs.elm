@@ -33,12 +33,12 @@ parseSong name =
         |> List.head
 
 
-perc1 =
-    Instruments.perc1
+bass =
+    Instruments.bass
 
 
-perc2 =
-    Instruments.perc2
+accent =
+    Instruments.accent
 
 
 twinkleSong : SongConfig
@@ -64,21 +64,21 @@ twinkleSong =
             ++ [ [ "C4", "C3", "E4" ], [], [], [] ]
     , percussion =
         -- "Twinkle twinkle little star"
-        [ [ perc1 ], [], [ perc2 ], [] ]
+        [ [ bass ], [], [ accent ], [] ]
             -- "how I wonder what"
-            ++ [ [ perc1 ], [], [ perc2 ], [] ]
+            ++ [ [ bass ], [], [ accent ], [] ]
             -- "what you are so"
-            ++ [ [ perc1 ], [], [ perc2 ], [] ]
+            ++ [ [ bass ], [], [ accent ], [] ]
             -- "far above the world"
-            ++ [ [ perc1 ], [], [ perc2 ], [] ]
+            ++ [ [ bass ], [], [ accent ], [] ]
             -- "Up above the world"
-            ++ [ [ perc1 ], [], [ perc2 ], [] ]
+            ++ [ [ bass ], [], [ accent ], [] ]
             -- "so high like a"
-            ++ [ [ perc1 ], [], [ perc2 ], [] ]
+            ++ [ [ bass ], [], [ accent ], [] ]
             -- "diamond in the"
-            ++ [ [ perc1 ], [], [ perc2 ], [] ]
+            ++ [ [ bass ], [], [ accent ], [] ]
             -- "sky (end)"
-            ++ [ [ perc1 ], [], [ perc2 ], [] ]
+            ++ [ [ bass ], [], [ accent ], [] ]
     , bpm = 90
     , startingOctave = 3
     , totalOctaves = 3
@@ -102,10 +102,10 @@ happyBirthdaySong =
             -- Happy birthday to you
             ++ [ [ "A#4" ], [ "A#4" ], [ "A4" ], [ "F4" ], [ "G4" ], [ "F4" ], [], [] ]
     , percussion =
-        [ [ perc1 ], [], [ perc2 ], [], [ perc1 ], [], [], [] ]
-            ++ [ [ perc1 ], [], [ perc2 ], [], [ perc1 ], [], [], [] ]
-            ++ [ [ perc1 ], [], [ perc2 ], [], [ perc1 ], [], [ perc2 ], [] ]
-            ++ [ [ perc1 ], [], [ perc2 ], [], [ perc1 ], [], [], [] ]
+        [ [ bass ], [], [ accent ], [], [ bass ], [], [], [] ]
+            ++ [ [ bass ], [], [ accent ], [], [ bass ], [], [], [] ]
+            ++ [ [ bass ], [], [ accent ], [], [ bass ], [], [ accent ], [] ]
+            ++ [ [ bass ], [], [ accent ], [], [ bass ], [], [], [] ]
     , bpm = 120
     , startingOctave = 4
     , totalOctaves = 2
@@ -129,10 +129,10 @@ maryHadALittleLambSong =
             -- Its fleece was white as snow
             ++ [ [ "D4" ], [ "D4" ], [ "E4" ], [ "D4" ], [ "C4" ], [], [], [] ]
     , percussion =
-        [ [ perc1 ], [], [ perc2 ], [], [ perc1 ], [], [ perc2 ], [] ]
-            ++ [ [ perc1 ], [], [ perc2 ], [], [ perc1 ], [], [ perc2 ], [] ]
-            ++ [ [ perc1 ], [], [ perc2 ], [], [ perc1 ], [], [ perc2 ], [] ]
-            ++ [ [ perc1 ], [], [ perc2 ], [], [ perc1 ], [], [], [] ]
+        [ [ bass ], [], [ accent ], [], [ bass ], [], [ accent ], [] ]
+            ++ [ [ bass ], [], [ accent ], [], [ bass ], [], [ accent ], [] ]
+            ++ [ [ bass ], [], [ accent ], [], [ bass ], [], [ accent ], [] ]
+            ++ [ [ bass ], [], [ accent ], [], [ bass ], [], [], [] ]
     , bpm = 120
     , startingOctave = 4
     , totalOctaves = 1
@@ -154,10 +154,10 @@ odeToJoySong =
             ++ [ [ "C4" ], [ "C4" ], [ "D4" ], [ "E4" ], [ "F4" ], [ "E4" ], [ "D4" ], [ "C4" ] ]
             ++ [ [ "B3" ], [ "G3" ], [ "A3" ], [ "B3" ], [ "C4" ], [], [ "C4" ], [] ]
     , percussion =
-        [ [ perc1 ], [], [ perc2 ], [], [ perc1 ], [], [ perc2 ], [] ]
-            ++ [ [ perc1 ], [], [ perc2 ], [], [ perc1 ], [], [ perc2 ], [] ]
-            ++ [ [ perc1 ], [], [ perc2 ], [], [ perc1 ], [], [ perc2 ], [] ]
-            ++ [ [ perc1 ], [], [ perc2 ], [], [ perc1 ], [], [ perc2 ], [] ]
+        [ [ bass ], [], [ accent ], [], [ bass ], [], [ accent ], [] ]
+            ++ [ [ bass ], [], [ accent ], [], [ bass ], [], [ accent ], [] ]
+            ++ [ [ bass ], [], [ accent ], [], [ bass ], [], [ accent ], [] ]
+            ++ [ [ bass ], [], [ accent ], [], [ bass ], [], [ accent ], [] ]
     , bpm = 100
     , startingOctave = 3
     , totalOctaves = 2
@@ -177,10 +177,10 @@ jingleBellsSong =
             ++ [ [ "F4" ], [ "F4" ], [ "F4" ], [ "F4" ], [ "F4" ], [ "E4" ], [ "E4" ], [ "E4" ] ]
             ++ [ [ "E4" ], [ "D4" ], [ "D4" ], [ "E4" ], [ "D4" ], [], [ "G4" ], [] ]
     , percussion =
-        [ [ perc2 ], [], [ perc1 ], [], [ perc2 ], [], [ perc1 ], [] ]
-            ++ [ [ perc2 ], [], [ perc1 ], [], [ perc2 ], [], [ perc1 ], [] ]
-            ++ [ [ perc2 ], [], [ perc1 ], [], [ perc2 ], [], [ perc1 ], [] ]
-            ++ [ [ perc2 ], [], [ perc1 ], [], [ perc2 ], [], [ perc1 ], [] ]
+        [ [ accent ], [], [ bass ], [], [ accent ], [], [ bass ], [] ]
+            ++ [ [ accent ], [], [ bass ], [], [ accent ], [], [ bass ], [] ]
+            ++ [ [ accent ], [], [ bass ], [], [ accent ], [], [ bass ], [] ]
+            ++ [ [ accent ], [], [ bass ], [], [ accent ], [], [ bass ], [] ]
     , bpm = 120
     , startingOctave = 4
     , totalOctaves = 1
