@@ -1978,10 +1978,11 @@ Main → Session, History, Drawing, Sequencer, Codec (OK: orchestrator → every
 
 ### Questions to Resolve Before Implementation
 
-1. **Grid serialization format**
+1. **Grid serialization format** ✅ RESOLVED
    - Current: Flat comma-separated: "60,0,62,1,64,2" (midi,step,midi,step,...)
-   - Keep current format for backward compatibility?
-   - **Decision needed:** Keep current format or use JSON?
+   - Used in URL query parameters: `/?pitchGrid=60,0,62,1,64,2`
+   - **Decision:** Keep current flat comma-separated format
+   - **Rationale:** Perfect for URLs - compact, readable, no encoding needed. JSON would create ugly URLs requiring encoding.
 
 2. **Session opaqueness**
    - Should Session be fully opaque, or expose fields via getters only?
