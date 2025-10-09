@@ -527,4 +527,25 @@ subscriptions : Model -> Sub Msg
 
 ---
 
-**End of Architecture Design**
+## Open Questions
+
+###  View Model
+- **Decision needed:** Where should ViewModel conversion live?
+- **Options:**
+  - Stay in Session (as query functions)
+  - Move to Main (view-specific)
+  - Separate View module
+- **Current:** Model.elm has `toVm` function
+
+###  PercType extensibility
+- **Decision needed:** Keep PercType as custom type (Accent | Bass)?
+- **Rationale:** Only 2 values, unlikely to grow, custom type is fine
+
+###  Song loading
+- **Decision needed:** What should Songs module return?
+- **Options:**
+  - Return SongConfig (current approach)
+  - Return Session directly
+  - Return builder/function
+- **Impact:** How Session.loadSong is implemented
+
