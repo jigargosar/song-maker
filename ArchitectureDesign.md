@@ -537,10 +537,6 @@ subscriptions : Model -> Sub Msg
   - Separate View module
 - **Current:** Model.elm has `toVm` function
 
-###  PercType extensibility
-- **Decision needed:** Keep PercType as custom type (Accent | Bass)?
-- **Rationale:** Only 2 values, unlikely to grow, custom type is fine
-
 ###  Song loading
 - **Decision needed:** What should Songs module return?
 - **Options:**
