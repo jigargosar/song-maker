@@ -16,15 +16,12 @@
   - PitchGrid: melody domain, supports transpose
   - PercGrid: rhythm domain, no transpose
   - Sharing (Int,Int) internally is implementation detail
-- **PitchGrid owns**: grid + scaleConfig + tonalInstrument
-- **PercGrid owns**: grid + drumKit
+- **PitchGrid encapsulates**: grid + scaleConfig + tonalInstrument
+- **PercGrid encapsulates**: grid + drumKit
 
 ### Session Module
-- **Type**: Opaque coordinator
-- **Owns**: pitchGrid + percGrid + timeConfig
-- **Role**: Coordinates cohesive modules, not god object
-- **Serialization**: Session owns serialization, delegates to child modules
-- **Rationale**: Session already has all dependencies, avoids duplication
+- **Encapsulates**: pitchGrid + percGrid + timeConfig
+- **Rationale**: Groups modules related to history management and serialization and delegates them
 
 ### Root Model Structure
 - **Location**: Main.elm
