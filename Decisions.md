@@ -24,6 +24,17 @@
 - **Serialization**: Session owns its serialization (no separate Codec module)
 - **Rationale**: Session already has all dependencies, avoids duplication
 
+### Root Model Structure
+- **Location**: Main.elm
+- **Fields**:
+  - `session : History Session` - Undoable editing state
+  - `sequencer : Sequencer` - Playback state machine
+  - `drawing : Drawing` - Drawing state machine
+  - `audioContextTime : Float` - Ephemeral playback time
+  - `url : Url` - Browser URL state
+  - `key : Nav.Key` - Navigation key
+- **Rationale**: Only Session is history-tracked; sequencer/drawing are state machines; infrastructure (time, url, key) is ephemeral
+
 ### Instrument Modules
 - **Decision**: Split into TonalInstruments + PercussionInstruments
 - **Rationale**: Symmetry with PitchGrid/PercGrid split
