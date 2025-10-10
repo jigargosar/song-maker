@@ -66,11 +66,11 @@
 
 ## Implementation Strategy
 
-Start with highest value, least disruption:
-1. **PercussionInstruments module** - Self-contained, minimal cross-module impact
-2. **TonalInstruments module** - Similar structure to PercussionInstruments
-3. **Config grouping** (ScaleConfig/TimeConfig) - Requires Model/HistoryState updates
-4. **PitchGrid/PercGrid modules** - Major refactoring, touches serialization and history
+Recommended order (highest value within each disruption tier):
+1. **PercussionInstruments module** - Low disruption, type safety + config separation
+2. **TonalInstruments module** - Low disruption, similar benefits
+3. **Config grouping** (ScaleConfig/TimeConfig) - Medium disruption, reduces duplication
+4. **PitchGrid/PercGrid modules** - High disruption, eliminates cross-module chains
 
 ## Benefits Over Current Implementation
 
