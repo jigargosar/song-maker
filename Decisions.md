@@ -1,5 +1,7 @@
 # Architecture Decisions
 
+**Goal:** Document the planned architecture - what modules exist, their responsibilities, and design rationale.
+
 ## Module Structure
 
 ### Grid Module
