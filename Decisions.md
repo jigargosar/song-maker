@@ -56,3 +56,15 @@
 ### History Module
 - **Decision**: Generic `History state` wrapper
 - **Rationale**: Avoid duplicating Model structure in HistoryState
+
+## Benefits Over Current Implementation
+
+1. Eliminates cross-module chains (Model → Scales + Timing + Grid)
+2. Modules operate on data they encapsulate (PitchGrid owns scaleConfig)
+3. Adding field to PitchGrid doesn't require updating Model
+4. Serialization delegated to child modules (reduces duplication)
+5. History wraps only Session (not entire 19-field Model)
+6. ScaleConfig/TimeConfig grouped (passed as unit, not 4 separate params)
+7. Grid operations don't require external config parameters
+8. State machines (Drawing, Sequencer) separated from domain state
+9. Type system enforces history tracking (can't modify Session without History)
