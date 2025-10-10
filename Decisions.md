@@ -45,9 +45,3 @@
 ### History Module
 - **Decision**: Generic `History state` wrapper
 - **Rationale**: Avoid duplicating Model structure in HistoryState
-
-## Open Questions
-1. Backwards compatibility for URLs
-2. PercType extensibility (keep as custom type vs data-driven)
-3. Song loading (what should Songs module return)
-4. Testing strategy
