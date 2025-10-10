@@ -74,18 +74,15 @@ Start with highest value, least disruption:
 
 ## Benefits Over Current Implementation
 
-Reordered by impact:
+**High impact (eliminate cross-module chains):**
+1. Grid operations no longer require external config parameters (Model → Grid → Scales eliminated)
+2. Modules encapsulate their dependencies (PitchGrid owns scaleConfig, operations self-contained)
 
-High impact (directly address core goals):
-1. Eliminates cross-module chains (Model → Scales + Timing + Grid)
-2. Modules operate on data they encapsulate (PitchGrid owns scaleConfig)
-3. Operations work on encapsulated data (no external config passing)
+**Medium impact (reduce duplication/coupling):**
+3. HistoryState reduces from 12 flat fields to 3 grouped fields
+4. Module serialization eliminates QuerystringCodec duplication
+5. Adding grid-related field touches one module instead of Model + History + serialization
 
-Medium impact (reduce complexity/coupling):
-4. ScaleConfig/TimeConfig grouped (passed as unit, not 4 separate params)
-5. Serialization delegated to child modules (reduces duplication)
-
-Low impact (organizational improvements):
-6. Adding field to PitchGrid doesn't require updating Model
-7. State machines (Drawing, Sequencer) separated from domain state
-8. HistoryState has 3 grouped fields instead of 12 flat fields
+**Low impact (organizational improvements):**
+6. Opaque instrument types prevent invalid ID construction
+7. Domain config separated from view presentation (DrumConfig vs DrumKitVM)
