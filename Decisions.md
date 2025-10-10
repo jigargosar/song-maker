@@ -23,7 +23,7 @@
 - **Type**: Opaque coordinator
 - **Owns**: pitchGrid + percGrid + timeConfig
 - **Role**: Coordinates cohesive modules, not god object
-- **Serialization**: Session owns its serialization (no separate Codec module)
+- **Serialization**: Session owns serialization, delegates to child modules
 - **Rationale**: Session already has all dependencies, avoids duplication
 
 ### Root Model Structure
