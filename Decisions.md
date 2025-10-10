@@ -40,12 +40,17 @@
 - **Fields**: pitchGrid, percGrid, timeConfig
 - **Rationale**: Mirrors Model's domain fields (3 grouped instead of 12 flat); still duplication but much reduced
 
-### Instrument Modules
-- **Decision**: Split into TonalInstruments + PercussionInstruments
-- **Rationale**: Symmetry with PitchGrid/PercGrid split
-- **Implementation**: Data-driven with `allTonalData` and `allDrumKitData` lists
-- **Adding instrument**: One entry in data list vs 5 case expression updates
-- **PercType**: Expose constructors `PercType(..)` - view needs pattern matching for symbols/positioning
+### PercussionInstruments Module
+- **Type**: Opaque `type DrumKit`
+- **Structure**: DrumConfig (domain), DrumKitVM (view labels/icon shape)
+- **Implementation**: Data-driven with internal `allDrumKitData` list
+- **API**: Query functions `getDrumKitConfig`, `getDrumKitVM`
+- **Icon**: DrumKitVM may contain `type IconShape = Circle | Rect | Triangle` for view case expression. instead of inlining svg 
+- **PercType**: Expose constructors `PercType(..)` for view pattern matching
+- **Rationale**: Single modification point, opaque type prevents invalid IDs
+
+### TonalInstruments Module
+- **Decision**: TBD (likely following same structure as PercussionInstruments)
 
 ### Config Grouping
 - **ScaleConfig**: Grouped (rootNote, scaleType, numPitches, startingOctave)

@@ -39,9 +39,10 @@
 - Root module holds all state references
 - "Owns data" = module defines opaque type, controls access, hides implementation
 
-## Data-Driven Design
-- Replace case expressions with data lookups
-- Single source of truth (adding entry vs modifying multiple locations)
+## Type-Driven Design
+- Prefer custom types with compiler-enforced exhaustiveness over data lookups
+- Multiple modification points acceptable when compiler catches missing cases
+- Data-driven approach (single modification point) only when compiler enforcement unavailable
 
 ## Coordinator Pattern
 - When a module references 2+ encapsulated types, it acts as coordinator
