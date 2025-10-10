@@ -29,6 +29,7 @@
 - **Rationale**: Symmetry with PitchGrid/PercGrid split
 - **Implementation**: Data-driven with `allTonalData` and `allDrumKitData` lists
 - **Adding instrument**: One entry in data list vs 5 case expression updates
+- **PercType**: Expose constructors `PercType(..)` - view needs pattern matching for symbols/positioning
 
 ### Config Grouping
 - **ScaleConfig**: Grouped (rootNote, scaleType, numPitches, startingOctave)
