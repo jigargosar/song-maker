@@ -17,7 +17,6 @@ module Instruments exposing
     , percLabel
     , percRowIdx
     , tonalLabel
-      -- Constructors
     , tonalWebAudioFont
     )
 
@@ -252,49 +251,3 @@ bass =
 accent : PercType
 accent =
     Accent
-
-
-
-{- NEXT REFACTORING PLAN (NOT YET IMPLEMENTED)
-
-   GOAL: Convert DrumKit from custom type to data-driven type alias approach
-
-   CURRENT STATE:
-   - DrumKit is custom type: ElectronicKit | BlockKit | AcousticKit | CongaKit
-   - Functions use case expressions (lines 124-153, 156-172, 175-188, 196-229)
-   - Adding new kit requires changes in 5 locations
-
-   PLANNED STATE:
-   - type alias DrumKit = String (internal IDs: "electronic", "blocks", "kit", "conga")
-   - type alias DrumKitData = { id, label, config, accentLabel, bassLabel } (NOT exported)
-   - allDrumKitsData : List DrumKitData (internal only, single source of truth)
-   - Public API unchanged: allDrumKits : List DrumKit (returns List.map .id allDrumKitsData)
-   - Functions become lookups with defaultDrumKit fallback (no hardcoded values)
-
-   ENCAPSULATION PRINCIPLE:
-   - Module provides API as if DrumKit were opaque type
-   - Clients treat DrumKit as opaque (no field access, no pattern matching on IDs)
-   - Don't export DrumKitData - keep it internal
-
-   FILES TO UPDATE:
-   - src/Instruments.elm (this file): Refactor custom type to data-driven
-   - src/Main.elm: Should work unchanged (uses allDrumKits, drumKitLabel, etc.)
-   - src/Model.elm: Should work unchanged (uses drumKitConfig, percLabel, etc.)
-
-   BENEFIT: Adding new kit = one entry in allDrumKitsData list
--}
-{- TODO: Extract duplicate NoteToPlay creation code (NOT YET IMPLEMENTED)
-
-   CURRENT STATE:
-   - Model.elm has duplicate NoteToPlay creation pattern across ~6 functions
-   - 3 pitch functions and 3 perc functions repeat similar record construction
-   - Changes to NoteToPlay structure require updates in multiple places
-
-   PLAN:
-   - Extract helper functions for creating NoteToPlay records
-   - Reduce duplication and centralize NoteToPlay creation logic
-   - Need to read Model.elm to identify exact duplication patterns
-
-   FILES TO AUDIT:
-   - src/Model.elm: Locate NoteToPlay creation patterns
--}
