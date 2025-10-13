@@ -37,8 +37,9 @@ module Model exposing
     )
 
 import Browser.Navigation as Nav
-import Grid exposing (PercGrid, PercPos, PitchGrid, PitchPos)
 import Instruments exposing (DrumKit, PercType, TonalInstrument)
+import PercGrid exposing (PercGrid, PercPos)
+import TonalGrid exposing (PitchPos, TonalGrid)
 import QuerystringCodec as QC
 import Scales exposing (RootNote, ScaleConfig, ScaleType)
 import Songs exposing (SongConfig)
@@ -63,8 +64,8 @@ init _ url key =
             , bars = 8
             , beatsPerBar = 4
             , subdivisions = 2
-            , pitchGrid = Grid.initialPitchGrid
-            , percGrid = Grid.initialPercGrid
+            , pitchGrid = TonalGrid.initial
+            , percGrid = PercGrid.initial
             , drawState = NotDrawing
             , playState = Stopped
             , audioContextTime = 0.0
@@ -104,7 +105,7 @@ type DrawState
 
 
 type alias HistoryState =
-    { pitchGrid : PitchGrid
+    { pitchGrid : TonalGrid
     , percGrid : PercGrid
     , scaleType : ScaleType
     , rootNote : RootNote
@@ -148,7 +149,7 @@ When adding/modifying a function that mutates history-tracked fields:
 
 -}
 type alias Model =
-    { pitchGrid : PitchGrid
+    { pitchGrid : TonalGrid
     , percGrid : PercGrid
     , scaleType : ScaleType
     , rootNote : RootNote
@@ -256,8 +257,8 @@ pushToHistory model =
 applySong : SongConfig -> Model -> Model
 applySong sc model =
     { model
-        | pitchGrid = Grid.convertMelodyToGrid sc.melody
-        , percGrid = Grid.convertPercussionToGrid sc.percussion
+        | pitchGrid = TonalGrid.convertMelodyToGrid sc.melody
+        , percGrid = PercGrid.convertPercussionToGrid sc.percussion
         , scaleType = Scales.Major
         , rootNote = Scales.C
         , bpm = sc.bpm
@@ -301,8 +302,14 @@ shiftStepRight fromStepIdx =
     withHistory
         (\model ->
             let
-                ( newPitchGrid, newPercGrid ) =
-                    Grid.shiftStepRight fromStepIdx (Timing.getTotalSteps (timeConfig model)) model.pitchGrid model.percGrid
+                totalSteps =
+                    Timing.getTotalSteps (timeConfig model)
+
+                newPitchGrid =
+                    TonalGrid.shiftStepRight fromStepIdx totalSteps model.pitchGrid
+
+                newPercGrid =
+                    PercGrid.shiftStepRight fromStepIdx totalSteps model.percGrid
             in
             { model | pitchGrid = newPitchGrid, percGrid = newPercGrid }
         )
@@ -313,8 +320,14 @@ deleteStep stepToDelete =
     withHistory
         (\model ->
             let
-                ( newPitchGrid, newPercGrid ) =
-                    Grid.deleteStep stepToDelete (Timing.getTotalSteps (timeConfig model)) model.pitchGrid model.percGrid
+                totalSteps =
+                    Timing.getTotalSteps (timeConfig model)
+
+                newPitchGrid =
+                    TonalGrid.deleteStep stepToDelete totalSteps model.pitchGrid
+
+                newPercGrid =
+                    PercGrid.deleteStep stepToDelete totalSteps model.percGrid
             in
             { model | pitchGrid = newPitchGrid, percGrid = newPercGrid }
         )
@@ -369,7 +382,7 @@ getActiveNotesForStep stepIdx model =
             scaleConfig model
 
         isActive pitchIdx =
-            Grid.isPitchCellActive (Grid.pitchPos pitchIdx stepIdx) sc model.pitchGrid
+            TonalGrid.isActive (TonalGrid.pitchPos pitchIdx stepIdx) sc model.pitchGrid
 
         pitchNotes =
             Scales.getTotalPitches sc
@@ -407,7 +420,7 @@ getActiveNotesForStep stepIdx model =
                                     Instruments.Accent ->
                                         ( drumConfig.accentWebAudioFont, drumConfig.accentMidi )
                         in
-                        if Grid.isPercCellActive position model.percGrid then
+                        if PercGrid.isActive position model.percGrid then
                             Just
                                 { webAudioFont = webAudioFontName
                                 , midi = midiNote
@@ -454,7 +467,7 @@ changeScaleType newScaleType =
                 newModel =
                     { model | scaleType = newScaleType }
             in
-            { newModel | pitchGrid = Grid.resizePitchGrid (scaleConfig newModel) (timeConfig newModel) model.pitchGrid }
+            { newModel | pitchGrid = TonalGrid.resize (scaleConfig newModel) (timeConfig newModel) model.pitchGrid }
         )
 
 
@@ -464,7 +477,7 @@ changeRootNote newRootNote =
         (\model ->
             { model
                 | rootNote = newRootNote
-                , pitchGrid = Grid.transposePitchGrid { prev = model.rootNote, next = newRootNote } model.pitchGrid
+                , pitchGrid = TonalGrid.transpose { prev = model.rootNote, next = newRootNote } model.pitchGrid
             }
         )
 
@@ -482,7 +495,7 @@ changeStartingOctave newStart =
                 newModel =
                     { model | startingOctave = atLeast 1 newStart }
             in
-            { newModel | pitchGrid = Grid.resizePitchGrid (scaleConfig newModel) (timeConfig newModel) model.pitchGrid }
+            { newModel | pitchGrid = TonalGrid.resize (scaleConfig newModel) (timeConfig newModel) model.pitchGrid }
         )
 
 
@@ -494,7 +507,7 @@ changeTotalOctaves newCount =
                 newModel =
                     { model | totalOctaves = atLeast 1 newCount }
             in
-            { newModel | pitchGrid = Grid.resizePitchGrid (scaleConfig newModel) (timeConfig newModel) model.pitchGrid }
+            { newModel | pitchGrid = TonalGrid.resize (scaleConfig newModel) (timeConfig newModel) model.pitchGrid }
         )
 
 
@@ -594,7 +607,7 @@ startDrawingPitch position model_ =
                     scaleConfig model
 
                 isCellActive =
-                    Grid.isPitchCellActive position sc model.pitchGrid
+                    TonalGrid.isActive position sc model.pitchGrid
             in
             ( { model
                 | drawState =
@@ -603,7 +616,7 @@ startDrawingPitch position model_ =
 
                     else
                         DrawingPitch
-                , pitchGrid = Grid.setPitchCell position sc (not isCellActive) model.pitchGrid
+                , pitchGrid = TonalGrid.setCell position sc (not isCellActive) model.pitchGrid
               }
             , if not isCellActive then
                 Just
@@ -630,7 +643,7 @@ continueDrawingPitch position model =
                     scaleConfig model
 
                 newModel =
-                    { model | pitchGrid = Grid.setPitchCell position sc True model.pitchGrid }
+                    { model | pitchGrid = TonalGrid.setCell position sc True model.pitchGrid }
 
                 maybeNote =
                     Just
@@ -645,7 +658,7 @@ continueDrawingPitch position model =
         ErasingPitch ->
             let
                 newModel =
-                    { model | pitchGrid = Grid.setPitchCell position (scaleConfig model) False model.pitchGrid }
+                    { model | pitchGrid = TonalGrid.setCell position (scaleConfig model) False model.pitchGrid }
             in
             ( newModel, Nothing )
 
@@ -662,7 +675,7 @@ startDrawingPerc position model =
                     pushToHistory model
 
                 currentlyActive =
-                    Grid.isPercCellActive position model.percGrid
+                    PercGrid.isActive position model.percGrid
 
                 newDrawState =
                     if currentlyActive then
@@ -674,7 +687,7 @@ startDrawingPerc position model =
                 newModel =
                     { modelWithHistory
                         | drawState = newDrawState
-                        , percGrid = Grid.setPercCell position (not currentlyActive) modelWithHistory.percGrid
+                        , percGrid = PercGrid.setCell position (not currentlyActive) modelWithHistory.percGrid
                     }
 
                 maybeNote =
@@ -713,7 +726,7 @@ continueDrawingPerc position model =
         DrawingPerc ->
             let
                 newModel =
-                    { model | percGrid = Grid.setPercCell position True model.percGrid }
+                    { model | percGrid = PercGrid.setCell position True model.percGrid }
 
                 drumConfig =
                     Instruments.drumKitConfig model.currentDrumKit
@@ -739,7 +752,7 @@ continueDrawingPerc position model =
         ErasingPerc ->
             let
                 newModel =
-                    { model | percGrid = Grid.setPercCell position False model.percGrid }
+                    { model | percGrid = PercGrid.setCell position False model.percGrid }
             in
             ( newModel, Nothing )
 
@@ -861,8 +874,8 @@ toVm model =
     , canRedo = not (List.isEmpty model.redoStack)
     , isPlaying = model.playState /= Stopped
     , isStepCurrentlyPlaying = \stepIdx -> maybePlayingStepIdx == Just stepIdx
-    , isPitchCellActive = \position -> Grid.isPitchCellActive position scaleConfigValue model.pitchGrid
-    , isPercCellActive = \position -> Grid.isPercCellActive position model.percGrid
+    , isPitchCellActive = \position -> TonalGrid.isActive position scaleConfigValue model.pitchGrid
+    , isPercCellActive = \position -> PercGrid.isActive position model.percGrid
     , isScaleSelected = \scale -> model.scaleType == scale
     , isRootNoteSelected = \rootNote -> model.rootNote == rootNote
     , isTonalInstrumentSelected = \instrument -> model.currentTonalInstrument == instrument

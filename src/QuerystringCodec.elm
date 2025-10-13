@@ -5,8 +5,9 @@ module QuerystringCodec exposing
     , serialize
     )
 
-import Grid exposing (PercGrid, PitchGrid)
 import Instruments exposing (DrumKit, TonalInstrument)
+import PercGrid exposing (PercGrid)
+import TonalGrid exposing (TonalGrid)
 import Scales exposing (RootNote, ScaleType)
 import Url exposing (Url)
 import Url.Builder as UB
@@ -20,7 +21,7 @@ type alias QueryData a =
         | bpm : Int
         , startingOctave : Int
         , totalOctaves : Int
-        , pitchGrid : PitchGrid
+        , pitchGrid : TonalGrid
         , percGrid : PercGrid
         , scaleType : ScaleType
         , rootNote : RootNote
@@ -36,7 +37,7 @@ type alias QueryParams =
     { bpm : Maybe Int
     , startingOctave : Maybe Int
     , totalOctaves : Maybe Int
-    , pitchGrid : Maybe PitchGrid
+    , pitchGrid : Maybe TonalGrid
     , percGrid : Maybe PercGrid
     , scaleType : Maybe ScaleType
     , rootNote : Maybe RootNote
@@ -54,8 +55,8 @@ queryParser =
         |> Pipeline.optional (Query.int "bpm")
         |> Pipeline.optional (Query.int "startingOctave")
         |> Pipeline.optional (Query.int "totalOctaves")
-        |> Pipeline.optional (Query.string "pitchGrid" |> Query.map (Maybe.map Grid.parsePitchGrid))
-        |> Pipeline.optional (Query.string "percGrid" |> Query.map (Maybe.map Grid.parsePercGrid))
+        |> Pipeline.optional (Query.string "pitchGrid" |> Query.map (Maybe.map TonalGrid.parse))
+        |> Pipeline.optional (Query.string "percGrid" |> Query.map (Maybe.map PercGrid.parse))
         |> Pipeline.optional (Query.string "scale" |> Query.map (Maybe.map Scales.parseScaleType))
         |> Pipeline.optional (Query.string "root" |> Query.map (Maybe.map Scales.parseRootNote))
         |> Pipeline.optional (Query.int "bars")
@@ -82,8 +83,8 @@ buildQueryString data =
         [ UB.int "bpm" data.bpm
         , UB.int "startingOctave" data.startingOctave
         , UB.int "totalOctaves" data.totalOctaves
-        , UB.string "pitchGrid" (Grid.pitchGridToString data.pitchGrid)
-        , UB.string "percGrid" (Grid.percGridToString data.percGrid)
+        , UB.string "pitchGrid" (TonalGrid.serialize data.pitchGrid)
+        , UB.string "percGrid" (PercGrid.serialize data.percGrid)
         , UB.string "scale" (Scales.scaleLabel data.scaleType)
         , UB.string "root" (Scales.rootNoteToString data.rootNote)
         , UB.int "bars" data.bars
@@ -125,8 +126,8 @@ load url data =
 reset : QueryData a -> QueryData a
 reset data =
     { data
-        | pitchGrid = Grid.initialPitchGrid
-        , percGrid = Grid.initialPercGrid
+        | pitchGrid = TonalGrid.initial
+        , percGrid = PercGrid.initial
         , scaleType = Scales.Major
         , rootNote = Scales.C
         , startingOctave = 3

@@ -2,7 +2,8 @@ port module Main exposing (main)
 
 import Browser exposing (Document)
 import Browser.Navigation as Nav
-import Grid exposing (PercPos, PitchPos)
+import PercGrid exposing (PercPos)
+import TonalGrid exposing (PitchPos)
 import Html as H exposing (Attribute, Html, div, text)
 import Html.Attributes as HA exposing (class, style)
 import Html.Events as HE
