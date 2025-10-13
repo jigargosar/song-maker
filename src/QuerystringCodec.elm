@@ -7,8 +7,8 @@ module QuerystringCodec exposing
 
 import Instruments exposing (DrumKit, TonalInstrument)
 import PercGrid exposing (PercGrid)
-import Scales
-import TonalGrid exposing (RootNote, ScaleType, TonalGrid)
+import Scales exposing (RootNote, ScaleType)
+import TonalGrid exposing (TonalGrid)
 import Url exposing (Url)
 import Url.Builder as UB
 import Url.Parser as Parser exposing ((<?>))
@@ -19,8 +19,12 @@ import Url.Query.Pipeline as Pipeline
 type alias QueryData a =
     { a
         | bpm : Int
+        , startingOctave : Int
+        , totalOctaves : Int
         , tonalGrid : TonalGrid
         , percGrid : PercGrid
+        , scaleType : ScaleType
+        , rootNote : RootNote
         , bars : Int
         , beatsPerBar : Int
         , subdivisions : Int
@@ -31,12 +35,12 @@ type alias QueryData a =
 
 type alias QueryParams =
     { bpm : Maybe Int
-    , pitchGrid : Maybe String
+    , startingOctave : Maybe Int
+    , totalOctaves : Maybe Int
+    , pitchGrid : Maybe TonalGrid
     , percGrid : Maybe PercGrid
     , scaleType : Maybe ScaleType
     , rootNote : Maybe RootNote
-    , startingOctave : Maybe Int
-    , totalOctaves : Maybe Int
     , bars : Maybe Int
     , beatsPerBar : Maybe Int
     , subdivisions : Maybe Int
@@ -49,12 +53,12 @@ queryParser : Query.Parser (Maybe QueryParams)
 queryParser =
     Pipeline.succeed QueryParams
         |> Pipeline.optional (Query.int "bpm")
-        |> Pipeline.optional (Query.string "pitchGrid")
+        |> Pipeline.optional (Query.int "startingOctave")
+        |> Pipeline.optional (Query.int "totalOctaves")
+        |> Pipeline.optional (Query.string "pitchGrid" |> Query.map (Maybe.map TonalGrid.parse))
         |> Pipeline.optional (Query.string "percGrid" |> Query.map (Maybe.map PercGrid.parse))
         |> Pipeline.optional (Query.string "scale" |> Query.map (Maybe.map Scales.parseScaleType))
         |> Pipeline.optional (Query.string "root" |> Query.map (Maybe.map Scales.parseRootNote))
-        |> Pipeline.optional (Query.int "startingOctave")
-        |> Pipeline.optional (Query.int "totalOctaves")
         |> Pipeline.optional (Query.int "bars")
         |> Pipeline.optional (Query.int "beatsPerBar")
         |> Pipeline.optional (Query.int "subdivisions")
@@ -77,12 +81,12 @@ buildQueryString data =
     UB.absolute
         []
         [ UB.int "bpm" data.bpm
-        , UB.int "startingOctave" (TonalGrid.getStartingOctave data.tonalGrid)
-        , UB.int "totalOctaves" (TonalGrid.getTotalOctaves data.tonalGrid)
+        , UB.int "startingOctave" data.startingOctave
+        , UB.int "totalOctaves" data.totalOctaves
         , UB.string "pitchGrid" (TonalGrid.serialize data.tonalGrid)
         , UB.string "percGrid" (PercGrid.serialize data.percGrid)
-        , UB.string "scale" (Scales.scaleLabel (TonalGrid.getScaleType data.tonalGrid))
-        , UB.string "root" (Scales.rootNoteToString (TonalGrid.getRootNote data.tonalGrid))
+        , UB.string "scale" (Scales.scaleLabel data.scaleType)
+        , UB.string "root" (Scales.rootNoteToString data.rootNote)
         , UB.int "bars" data.bars
         , UB.int "beatsPerBar" data.beatsPerBar
         , UB.int "subdivisions" data.subdivisions
@@ -100,31 +104,14 @@ load : Url -> QueryData a -> QueryData a
 load url data =
     case parseQueryParams url of
         Just params ->
-            let
-                scaleType =
-                    Maybe.withDefault (TonalGrid.getScaleType data.tonalGrid) params.scaleType
-
-                rootNote =
-                    Maybe.withDefault (TonalGrid.getRootNote data.tonalGrid) params.rootNote
-
-                startingOctave =
-                    Maybe.withDefault (TonalGrid.getStartingOctave data.tonalGrid) params.startingOctave
-
-                totalOctaves =
-                    Maybe.withDefault (TonalGrid.getTotalOctaves data.tonalGrid) params.totalOctaves
-
-                tonalGrid =
-                    case params.pitchGrid of
-                        Just gridStr ->
-                            TonalGrid.parse gridStr scaleType rootNote startingOctave totalOctaves
-
-                        Nothing ->
-                            data.tonalGrid
-            in
             { data
                 | bpm = Maybe.withDefault data.bpm params.bpm
-                , tonalGrid = tonalGrid
+                , startingOctave = Maybe.withDefault data.startingOctave params.startingOctave
+                , totalOctaves = Maybe.withDefault data.totalOctaves params.totalOctaves
+                , tonalGrid = Maybe.withDefault data.tonalGrid params.pitchGrid
                 , percGrid = Maybe.withDefault data.percGrid params.percGrid
+                , scaleType = Maybe.withDefault data.scaleType params.scaleType
+                , rootNote = Maybe.withDefault data.rootNote params.rootNote
                 , bars = Maybe.withDefault data.bars params.bars
                 , beatsPerBar = Maybe.withDefault data.beatsPerBar params.beatsPerBar
                 , subdivisions = Maybe.withDefault data.subdivisions params.subdivisions
@@ -139,8 +126,12 @@ load url data =
 reset : QueryData a -> QueryData a
 reset data =
     { data
-        | tonalGrid = TonalGrid.initial Scales.Major Scales.C 3 3
+        | tonalGrid = TonalGrid.initial
         , percGrid = PercGrid.initial
+        , scaleType = Scales.Major
+        , rootNote = Scales.C
+        , startingOctave = 3
+        , totalOctaves = 3
         , bars = 8
         , beatsPerBar = 4
         , subdivisions = 2
