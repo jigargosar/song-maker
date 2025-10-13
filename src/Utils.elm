@@ -54,12 +54,21 @@ setUpdate b =
         Set.remove
 
 
-setFilterMap : (a -> Maybe comparable) -> Set a -> Set comparable
+{-| More efficient filterMap for Sets - uses Set.foldl directly instead of converting to/from List
+-}
+setFilterMap : (comparable -> Maybe comparable) -> Set comparable -> Set comparable
 setFilterMap fn set =
-    set
-        |> Set.toList
-        |> List.filterMap fn
-        |> Set.fromList
+    Set.foldl
+        (\item acc ->
+            case fn item of
+                Just newItem ->
+                    Set.insert newItem acc
+
+                Nothing ->
+                    acc
+        )
+        Set.empty
+        set
 
 
 

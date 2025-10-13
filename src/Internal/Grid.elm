@@ -8,6 +8,7 @@ module Internal.Grid exposing
     )
 
 import Set exposing (Set)
+import Utils exposing (..)
 
 
 {-| Check if a cell is active in the grid
@@ -98,21 +99,6 @@ fromString str =
 
 
 -- Internal Utilities
-
-
-setFilterMap : (comparable -> Maybe comparable) -> Set comparable -> Set comparable
-setFilterMap fn set =
-    Set.foldl
-        (\item acc ->
-            case fn item of
-                Just newItem ->
-                    Set.insert newItem acc
-
-                Nothing ->
-                    acc
-        )
-        Set.empty
-        set
 
 
 toPairs : List a -> List ( a, a )
