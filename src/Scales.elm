@@ -260,75 +260,74 @@ rangeSize config =
     notesPerOctave config.scaleType * config.totalOctaves
 
 
-nthNoteToMidi : Int -> ScaleRange -> MidiNote
-nthNoteToMidi pitchIdx config =
+isWithinRange : Int -> ScaleRange -> Bool
+isWithinRange noteIdx config =
     let
-        scalePattern =
-            getScalePattern config.scaleType
-
-        rootOffset =
-            getRootNoteOffset config.rootNote
-
         notesInScale =
             notesPerOctave config.scaleType
 
         octaveIdx =
-            pitchIdx // notesInScale
-
-        noteIdx =
-            modBy notesInScale pitchIdx
-
-        octave =
-            config.startingOctave + octaveIdx
-
-        semitone =
-            Maybe.withDefault 0 (List.drop noteIdx scalePattern |> List.head)
-
-        baseC0 =
-            12
-
-        midiC4 =
-            60
+            noteIdx // notesInScale
     in
-    if octaveIdx < config.totalOctaves then
-        baseC0 + (octave * 12) + rootOffset + semitone
+    octaveIdx < config.totalOctaves
+
+
+absoluteOctave : Int -> ScaleRange -> Int
+absoluteOctave noteIdx config =
+    let
+        notesInScale =
+            notesPerOctave config.scaleType
+    in
+    config.startingOctave + (noteIdx // notesInScale)
+
+
+semitoneInOctave : Int -> ScaleRange -> Semitone
+semitoneInOctave noteIdx config =
+    let
+        notesInScale =
+            notesPerOctave config.scaleType
+
+        positionInScale =
+            modBy notesInScale noteIdx
+
+        rootOffset =
+            getRootNoteOffset config.rootNote
+
+        scaleOffset =
+            getScalePattern config.scaleType
+                |> List.getAt positionInScale
+                |> Maybe.withDefault 0
+    in
+    rootOffset + scaleOffset
+
+
+noteNameFromIdx : Int -> ScaleRange -> String
+noteNameFromIdx noteIdx config =
+    let
+        semitone =
+            semitoneInOctave noteIdx config
+
+        chromaticIndex =
+            modBy 12 semitone
+    in
+    chromaticNoteNames
+        |> List.getAt chromaticIndex
+        |> Maybe.withDefault "?"
+
+
+nthNoteToMidi : Int -> ScaleRange -> MidiNote
+nthNoteToMidi noteIdx config =
+    if isWithinRange noteIdx config then
+        12 + (absoluteOctave noteIdx config * 12) + semitoneInOctave noteIdx config
 
     else
-        midiC4
+        60
 
 
 nthNoteName : Int -> ScaleRange -> String
-nthNoteName pitchIdx config =
-    let
-        scalePattern =
-            getScalePattern config.scaleType
-
-        rootOffset =
-            getRootNoteOffset config.rootNote
-
-        notesInScale =
-            notesPerOctave config.scaleType
-
-        octaveIdx =
-            pitchIdx // notesInScale
-
-        noteIdx =
-            modBy notesInScale pitchIdx
-
-        octave =
-            config.startingOctave + octaveIdx
-
-        semitone =
-            Maybe.withDefault 0 (List.drop noteIdx scalePattern |> List.head)
-
-        chromaticIndex =
-            modBy 12 (rootOffset + semitone)
-
-        noteName =
-            Maybe.withDefault "?" (List.drop chromaticIndex chromaticNoteNames |> List.head)
-    in
-    if octaveIdx < config.totalOctaves then
-        noteName ++ String.fromInt octave
+nthNoteName noteIdx config =
+    if isWithinRange noteIdx config then
+        noteNameFromIdx noteIdx config ++ String.fromInt (absoluteOctave noteIdx config)
 
     else
         "C4"
