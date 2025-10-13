@@ -15,7 +15,7 @@ module TonalGrid exposing
     )
 
 import Internal.Grid as InternalGrid
-import Scales exposing (MidiNote, PitchIdx, RootNote, ScaleConfig)
+import Scales exposing (MidiNote, RootNote, ScaleRange)
 import Set exposing (Set)
 import Timing exposing (StepIdx, TimeConfig)
 import Utils exposing (..)
@@ -30,10 +30,10 @@ type alias PitchCell =
 
 
 type alias PitchPos =
-    { pitchIdx : PitchIdx, stepIdx : StepIdx }
+    { pitchIdx : Int, stepIdx : StepIdx }
 
 
-pitchPos : PitchIdx -> StepIdx -> PitchPos
+pitchPos : Int -> StepIdx -> PitchPos
 pitchPos pitchIdx stepIdx =
     { pitchIdx = pitchIdx, stepIdx = stepIdx }
 
@@ -47,26 +47,26 @@ initial =
     Set.empty
 
 
-isActive : PitchPos -> ScaleConfig -> TonalGrid -> Bool
+isActive : PitchPos -> ScaleRange -> TonalGrid -> Bool
 isActive position config grid =
     InternalGrid.get (positionToTuple position config) grid
 
 
-setCell : PitchPos -> ScaleConfig -> Bool -> TonalGrid -> TonalGrid
+setCell : PitchPos -> ScaleRange -> Bool -> TonalGrid -> TonalGrid
 setCell position config isActive_ grid =
     InternalGrid.set (positionToTuple position config) isActive_ grid
 
 
-positionToTuple : PitchPos -> ScaleConfig -> ( MidiNote, StepIdx )
+positionToTuple : PitchPos -> ScaleRange -> ( MidiNote, StepIdx )
 positionToTuple { pitchIdx, stepIdx } config =
-    ( Scales.pitchIdxToMidi pitchIdx config, stepIdx )
+    ( Scales.nthNoteToMidi pitchIdx config, stepIdx )
 
 
 
 -- Grid Transformations
 
 
-resize : ScaleConfig -> TimeConfig -> TonalGrid -> TonalGrid
+resize : ScaleRange -> TimeConfig -> TonalGrid -> TonalGrid
 resize sc tc =
     let
         validateCell : PitchCell -> Maybe PitchCell

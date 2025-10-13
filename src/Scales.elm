@@ -1,18 +1,17 @@
 module Scales exposing
     ( MidiNote
-    , PitchIdx
     , RootNote(..)
-    , ScaleConfig
+    , ScaleRange
     , ScaleType(..)
     , allRootNotes
     , allScales
     , getRootNoteOffset
-    , getTotalPitches
     , noteNameToMidi
+    , nthNoteName
+    , nthNoteToMidi
     , parseRootNote
     , parseScaleType
-    , pitchIdxToMidi
-    , pitchIdxToNoteName
+    , rangeSize
     , rootNoteToString
     , scaleLabel
     , validateMidi
@@ -23,10 +22,6 @@ import Utils exposing (..)
 
 
 type alias MidiNote =
-    Int
-
-
-type alias PitchIdx =
     Int
 
 
@@ -248,7 +243,7 @@ parseRootNote str =
 -- Scale Configuration
 
 
-type alias ScaleConfig =
+type alias ScaleRange =
     { scaleType : ScaleType
     , rootNote : RootNote
     , startingOctave : OctaveIdx
@@ -260,13 +255,13 @@ type alias ScaleConfig =
 -- Scale-based Calculations
 
 
-getTotalPitches : ScaleConfig -> Int
-getTotalPitches config =
+rangeSize : ScaleRange -> Int
+rangeSize config =
     notesPerOctave config.scaleType * config.totalOctaves
 
 
-pitchIdxToMidi : PitchIdx -> ScaleConfig -> MidiNote
-pitchIdxToMidi pitchIdx config =
+nthNoteToMidi : Int -> ScaleRange -> MidiNote
+nthNoteToMidi pitchIdx config =
     let
         scalePattern =
             getScalePattern config.scaleType
@@ -302,8 +297,8 @@ pitchIdxToMidi pitchIdx config =
         midiC4
 
 
-pitchIdxToNoteName : PitchIdx -> ScaleConfig -> String
-pitchIdxToNoteName pitchIdx config =
+nthNoteName : Int -> ScaleRange -> String
+nthNoteName pitchIdx config =
     let
         scalePattern =
             getScalePattern config.scaleType
@@ -339,11 +334,11 @@ pitchIdxToNoteName pitchIdx config =
         "C4"
 
 
-validateMidi : MidiNote -> ScaleConfig -> Maybe MidiNote
+validateMidi : MidiNote -> ScaleRange -> Maybe MidiNote
 validateMidi targetMidi sc =
-    getTotalPitches sc
+    rangeSize sc
         |> indices
-        |> List.findMap (\pitchIdx -> justIf (pitchIdxToMidi pitchIdx sc == targetMidi) targetMidi)
+        |> List.findMap (\pitchIdx -> justIf (nthNoteToMidi pitchIdx sc == targetMidi) targetMidi)
 
 
 noteNameToMidi : String -> Maybe MidiNote

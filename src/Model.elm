@@ -40,7 +40,7 @@ import Browser.Navigation as Nav
 import Instruments exposing (DrumKit, PercType, TonalInstrument)
 import PercGrid exposing (PercGrid, PercPos)
 import QuerystringCodec as QC
-import Scales exposing (RootNote, ScaleConfig, ScaleType)
+import Scales exposing (RootNote, ScaleRange, ScaleType)
 import Songs exposing (SongConfig)
 import Timing exposing (TimeConfig)
 import TonalGrid exposing (PitchPos, TonalGrid)
@@ -175,7 +175,7 @@ type alias Model =
 -- Helper functions to create Grid configs from Model
 
 
-scaleConfig : Model -> ScaleConfig
+scaleConfig : Model -> ScaleRange
 scaleConfig model =
     { scaleType = model.scaleType
     , rootNote = model.rootNote
@@ -385,14 +385,14 @@ getActiveNotesForStep stepIdx model =
             TonalGrid.isActive (TonalGrid.pitchPos pitchIdx stepIdx) sc model.tonalGrid
 
         pitchNotes =
-            Scales.getTotalPitches sc
+            Scales.rangeSize sc
                 |> indices
                 |> List.filterMap
                     (\pitchIdx ->
                         if isActive pitchIdx then
                             Just
                                 { webAudioFont = Instruments.tonalWebAudioFont model.currentTonalInstrument
-                                , midi = Scales.pitchIdxToMidi pitchIdx sc
+                                , midi = Scales.nthNoteToMidi pitchIdx sc
                                 , duration = duration
                                 , volume = pitchVolume
                                 }
@@ -621,7 +621,7 @@ startDrawingPitch position model_ =
             , if not isCellActive then
                 Just
                     { webAudioFont = Instruments.tonalWebAudioFont model.currentTonalInstrument
-                    , midi = Scales.pitchIdxToMidi position.pitchIdx sc
+                    , midi = Scales.nthNoteToMidi position.pitchIdx sc
                     , duration = Timing.noteDuration (timeConfig model)
                     , volume = pitchVolume
                     }
@@ -648,7 +648,7 @@ continueDrawingPitch position model =
                 maybeNote =
                     Just
                         { webAudioFont = Instruments.tonalWebAudioFont model.currentTonalInstrument
-                        , midi = Scales.pitchIdxToMidi position.pitchIdx sc
+                        , midi = Scales.nthNoteToMidi position.pitchIdx sc
                         , duration = Timing.noteDuration (timeConfig model)
                         , volume = pitchVolume
                         }
@@ -869,7 +869,7 @@ toVm model =
             scaleConfig model
     in
     { totalSteps = totalSteps
-    , totalPitches = Scales.getTotalPitches scaleConfigValue
+    , totalPitches = Scales.rangeSize scaleConfigValue
     , canUndo = not (List.isEmpty model.undoStack)
     , canRedo = not (List.isEmpty model.redoStack)
     , isPlaying = model.playState /= Stopped
@@ -880,7 +880,7 @@ toVm model =
     , isRootNoteSelected = \rootNote -> model.rootNote == rootNote
     , isTonalInstrumentSelected = \instrument -> model.currentTonalInstrument == instrument
     , isDrumKitSelected = \drumKit -> model.currentDrumKit == drumKit
-    , pitchIdxToNoteName = \pitchIdx -> Scales.pitchIdxToNoteName pitchIdx scaleConfigValue
+    , pitchIdxToNoteName = \pitchIdx -> Scales.nthNoteName pitchIdx scaleConfigValue
     , percLabel = \percType -> Instruments.percLabel model.currentDrumKit percType
     , bpm = model.bpm
     , startingOctave = model.startingOctave
