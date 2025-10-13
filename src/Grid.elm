@@ -23,6 +23,7 @@ module Grid exposing
     )
 
 import Instruments exposing (PercType)
+import Internal.Grid as InternalGrid
 import Scales exposing (MidiNote, PitchIdx, RootNote, ScaleConfig)
 import Set exposing (Set)
 import Timing exposing (StepIdx, TimeConfig)
@@ -78,12 +79,12 @@ initialPercGrid =
 
 isPitchCellActive : PitchPos -> ScaleConfig -> PitchGrid -> Bool
 isPitchCellActive position config pitchGrid =
-    Set.member (pitchPositionToTuple position config) pitchGrid
+    InternalGrid.isActive (pitchPositionToTuple position config) pitchGrid
 
 
 setPitchCell : PitchPos -> ScaleConfig -> Bool -> PitchGrid -> PitchGrid
-setPitchCell position config isActive =
-    setUpdate isActive (pitchPositionToTuple position config)
+setPitchCell position config isActive pitchGrid =
+    InternalGrid.setCell (pitchPositionToTuple position config) isActive pitchGrid
 
 
 pitchPositionToTuple : PitchPos -> ScaleConfig -> ( MidiNote, StepIdx )
@@ -93,12 +94,12 @@ pitchPositionToTuple { pitchIdx, stepIdx } config =
 
 isPercCellActive : PercPos -> PercGrid -> Bool
 isPercCellActive position grid =
-    Set.member (percPositionToTuple position) grid
+    InternalGrid.isActive (percPositionToTuple position) grid
 
 
 setPercCell : PercPos -> Bool -> PercGrid -> PercGrid
-setPercCell position isActive =
-    setUpdate isActive (percPositionToTuple position)
+setPercCell position isActive grid =
+    InternalGrid.setCell (percPositionToTuple position) isActive grid
 
 
 percPositionToTuple : PercPos -> ( PercRowIdx, StepIdx )
@@ -133,56 +134,16 @@ transposePitchGrid { prev, next } existingGrid =
 
 shiftStepRight : Int -> Int -> PitchGrid -> PercGrid -> ( PitchGrid, PercGrid )
 shiftStepRight fromStepIdx totalSteps pitchGrid percGrid =
-    ( gridShift fromStepIdx totalSteps pitchGrid
-    , gridShift fromStepIdx totalSteps percGrid
+    ( InternalGrid.shift fromStepIdx totalSteps pitchGrid
+    , InternalGrid.shift fromStepIdx totalSteps percGrid
     )
-
-
-gridShift : Int -> Int -> Set ( Int, Int ) -> Set ( Int, Int )
-gridShift fromStepIdx totalSteps =
-    setFilterMap
-        (\( rowId, stepIdx ) ->
-            if stepIdx >= fromStepIdx then
-                let
-                    newStepIdx =
-                        stepIdx + 1
-                in
-                if newStepIdx < totalSteps then
-                    Just ( rowId, newStepIdx )
-
-                else
-                    Nothing
-
-            else
-                Just ( rowId, stepIdx )
-        )
 
 
 deleteStep : Int -> Int -> PitchGrid -> PercGrid -> ( PitchGrid, PercGrid )
 deleteStep stepToDelete totalSteps pitchGrid percGrid =
-    ( gridDeleteStep stepToDelete totalSteps pitchGrid
-    , gridDeleteStep stepToDelete totalSteps percGrid
+    ( InternalGrid.delete stepToDelete totalSteps pitchGrid
+    , InternalGrid.delete stepToDelete totalSteps percGrid
     )
-
-
-gridDeleteStep : Int -> Int -> Set ( Int, Int ) -> Set ( Int, Int )
-gridDeleteStep stepToDelete totalSteps grid =
-    if stepToDelete < 0 || stepToDelete >= totalSteps then
-        grid
-
-    else
-        setFilterMap
-            (\( rowId, stepIdx ) ->
-                if stepIdx == stepToDelete then
-                    Nothing
-
-                else if stepIdx > stepToDelete then
-                    Just ( rowId, stepIdx - 1 )
-
-                else
-                    Just ( rowId, stepIdx )
-            )
-            grid
 
 
 
@@ -228,62 +189,25 @@ convertPercussionToGrid stepPercussion =
 -}
 pitchGridToString : PitchGrid -> String
 pitchGridToString =
-    gridToString
+    InternalGrid.toString
 
 
 {-| Parse comma-separated integers back to PitchGrid: "0,0,1,2,5,10"
 -}
 parsePitchGrid : String -> PitchGrid
 parsePitchGrid =
-    parseGrid
+    InternalGrid.fromString
 
 
 {-| Convert PercGrid to comma-separated integers: "0,0,1,2,5,10"
 -}
 percGridToString : PercGrid -> String
 percGridToString =
-    gridToString
+    InternalGrid.toString
 
 
 {-| Parse comma-separated integers back to PercGrid: "0,0,1,2,5,10"
 -}
 parsePercGrid : String -> PercGrid
 parsePercGrid =
-    parseGrid
-
-
-gridToString : Set ( Int, Int ) -> String
-gridToString grid =
-    grid
-        |> Set.toList
-        |> flattenPairs
-        |> List.map String.fromInt
-        |> String.join ","
-
-
-parseGrid : String -> Set ( Int, Int )
-parseGrid str =
-    str
-        |> String.split ","
-        |> List.filterMap String.toInt
-        |> toPairs
-        |> Set.fromList
-
-
-
--- Generic Utilities
-
-
-toPairs : List a -> List ( a, a )
-toPairs list =
-    case list of
-        x :: y :: rest ->
-            ( x, y ) :: toPairs rest
-
-        _ ->
-            []
-
-
-flattenPairs : List ( a, a ) -> List a
-flattenPairs =
-    List.concatMap (\( x, y ) -> [ x, y ])
+    InternalGrid.fromString
