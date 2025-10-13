@@ -39,11 +39,11 @@ module Model exposing
 import Browser.Navigation as Nav
 import Instruments exposing (DrumKit, PercType, TonalInstrument)
 import PercGrid exposing (PercGrid, PercPos)
-import TonalGrid exposing (PitchPos, TonalGrid)
 import QuerystringCodec as QC
 import Scales exposing (RootNote, ScaleConfig, ScaleType)
 import Songs exposing (SongConfig)
 import Timing exposing (TimeConfig)
+import TonalGrid exposing (PitchPos, TonalGrid)
 import Url exposing (Url)
 import Utils exposing (..)
 
@@ -257,8 +257,8 @@ pushToHistory model =
 applySong : SongConfig -> Model -> Model
 applySong sc model =
     { model
-        | pitchGrid = TonalGrid.convertMelodyToGrid sc.melody
-        , percGrid = PercGrid.convertPercussionToGrid sc.percussion
+        | pitchGrid = TonalGrid.fromMelody sc.melody
+        , percGrid = PercGrid.fromPercList sc.percussion
         , scaleType = Scales.Major
         , rootNote = Scales.C
         , bpm = sc.bpm

@@ -1,8 +1,8 @@
 module PercGrid exposing
     ( PercGrid
     , PercPos
-    , convertPercussionToGrid
     , deleteStep
+    , fromPercList
     , initial
     , isActive
     , parse
@@ -71,8 +71,8 @@ deleteStep stepToDelete totalSteps grid =
 -- Grid Conversions
 
 
-convertPercussionToGrid : List (List PercType) -> PercGrid
-convertPercussionToGrid stepPercussion =
+fromPercList : List (List PercType) -> PercGrid
+fromPercList stepPercussion =
     stepPercussion
         |> List.indexedMap
             (\stepIdx percTypes ->

@@ -1,8 +1,8 @@
 module TonalGrid exposing
     ( PitchPos
     , TonalGrid
-    , convertMelodyToGrid
     , deleteStep
+    , fromMelody
     , initial
     , isActive
     , parse
@@ -101,8 +101,8 @@ deleteStep stepToDelete totalSteps grid =
 -- Grid Conversions
 
 
-convertMelodyToGrid : List (List String) -> TonalGrid
-convertMelodyToGrid stepMelodies =
+fromMelody : List (List String) -> TonalGrid
+fromMelody stepMelodies =
     stepMelodies
         |> List.indexedMap
             (\stepIdx noteNames ->
