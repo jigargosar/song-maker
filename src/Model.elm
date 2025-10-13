@@ -40,10 +40,10 @@ import Browser.Navigation as Nav
 import Instruments exposing (DrumKit, PercType, TonalInstrument)
 import PercGrid exposing (PercGrid, PercPos)
 import QuerystringCodec as QC
-import Scales exposing (RootNote, ScaleConfig, ScaleType)
+import Scales
 import Songs exposing (SongConfig)
 import Timing exposing (TimeConfig)
-import TonalGrid exposing (PitchPos, TonalGrid)
+import TonalGrid exposing (PitchPos, RootNote, ScaleType, TonalGrid)
 import Url exposing (Url)
 import Utils exposing (..)
 
@@ -57,15 +57,11 @@ init _ url key =
     let
         initialModel : Model
         initialModel =
-            { scaleType = Scales.Major
-            , rootNote = Scales.C
-            , startingOctave = 3
-            , totalOctaves = 3
+            { tonalGrid = TonalGrid.initial Scales.Major Scales.C 3 3
+            , percGrid = PercGrid.initial
             , bars = 8
             , beatsPerBar = 4
             , subdivisions = 2
-            , tonalGrid = TonalGrid.initial
-            , percGrid = PercGrid.initial
             , drawState = NotDrawing
             , playState = Stopped
             , audioContextTime = 0.0
@@ -107,10 +103,6 @@ type DrawState
 type alias HistoryState =
     { pitchGrid : TonalGrid
     , percGrid : PercGrid
-    , scaleType : ScaleType
-    , rootNote : RootNote
-    , startingOctave : Int
-    , totalOctaves : Int
     , bars : Int
     , beatsPerBar : Int
     , subdivisions : Int
@@ -151,10 +143,6 @@ When adding/modifying a function that mutates history-tracked fields:
 type alias Model =
     { tonalGrid : TonalGrid
     , percGrid : PercGrid
-    , scaleType : ScaleType
-    , rootNote : RootNote
-    , startingOctave : Int
-    , totalOctaves : Int
     , bars : Int
     , beatsPerBar : Int
     , subdivisions : Int
@@ -173,15 +161,6 @@ type alias Model =
 
 
 -- Helper functions to create Grid configs from Model
-
-
-scaleConfig : Model -> ScaleConfig
-scaleConfig model =
-    { scaleType = model.scaleType
-    , rootNote = model.rootNote
-    , startingOctave = model.startingOctave
-    , totalOctaves = model.totalOctaves
-    }
 
 
 timeConfig : Model -> TimeConfig
@@ -205,10 +184,6 @@ toHistoryState : Model -> HistoryState
 toHistoryState model =
     { pitchGrid = model.tonalGrid
     , percGrid = model.percGrid
-    , scaleType = model.scaleType
-    , rootNote = model.rootNote
-    , startingOctave = model.startingOctave
-    , totalOctaves = model.totalOctaves
     , bars = model.bars
     , beatsPerBar = model.beatsPerBar
     , subdivisions = model.subdivisions
@@ -225,10 +200,6 @@ updateModelFromHistoryState historyState model =
     { model
         | tonalGrid = historyState.pitchGrid
         , percGrid = historyState.percGrid
-        , scaleType = historyState.scaleType
-        , rootNote = historyState.rootNote
-        , startingOctave = historyState.startingOctave
-        , totalOctaves = historyState.totalOctaves
         , bars = historyState.bars
         , beatsPerBar = historyState.beatsPerBar
         , subdivisions = historyState.subdivisions
@@ -257,13 +228,9 @@ pushToHistory model =
 applySong : SongConfig -> Model -> Model
 applySong sc model =
     { model
-        | tonalGrid = TonalGrid.fromMelody sc.melody
+        | tonalGrid = TonalGrid.fromMelody sc.melody Scales.Major Scales.C sc.startingOctave sc.totalOctaves
         , percGrid = PercGrid.fromPercList sc.percussion
-        , scaleType = Scales.Major
-        , rootNote = Scales.C
         , bpm = sc.bpm
-        , startingOctave = sc.startingOctave
-        , totalOctaves = sc.totalOctaves
         , bars = sc.bars
         , beatsPerBar = sc.beatsPerBar
         , subdivisions = sc.subdivisions
@@ -378,21 +345,18 @@ getActiveNotesForStep stepIdx model =
         duration =
             Timing.noteDuration (timeConfig model)
 
-        sc =
-            scaleConfig model
-
         isActive pitchIdx =
-            TonalGrid.isActive (TonalGrid.pitchPos pitchIdx stepIdx) sc model.tonalGrid
+            TonalGrid.isActive (TonalGrid.pitchPos pitchIdx stepIdx) model.tonalGrid
 
         pitchNotes =
-            Scales.getTotalPitches sc
+            TonalGrid.getTotalPitches model.tonalGrid
                 |> indices
                 |> List.filterMap
                     (\pitchIdx ->
                         if isActive pitchIdx then
                             Just
                                 { webAudioFont = Instruments.tonalWebAudioFont model.currentTonalInstrument
-                                , midi = Scales.pitchIdxToMidi pitchIdx sc
+                                , midi = TonalGrid.pitchIdxToMidi pitchIdx model.tonalGrid
                                 , duration = duration
                                 , volume = pitchVolume
                                 }
@@ -463,11 +427,7 @@ changeScaleType : ScaleType -> Model -> Model
 changeScaleType newScaleType =
     withHistory
         (\model ->
-            let
-                newModel =
-                    { model | scaleType = newScaleType }
-            in
-            { newModel | tonalGrid = TonalGrid.resize (scaleConfig newModel) (timeConfig newModel) model.tonalGrid }
+            { model | tonalGrid = TonalGrid.changeScaleType newScaleType (timeConfig model) model.tonalGrid }
         )
 
 
@@ -475,10 +435,7 @@ changeRootNote : RootNote -> Model -> Model
 changeRootNote newRootNote =
     withHistory
         (\model ->
-            { model
-                | rootNote = newRootNote
-                , tonalGrid = TonalGrid.transpose { prev = model.rootNote, next = newRootNote } model.tonalGrid
-            }
+            { model | tonalGrid = TonalGrid.changeRoot newRootNote model.tonalGrid }
         )
 
 
@@ -491,11 +448,7 @@ changeStartingOctave : Int -> Model -> Model
 changeStartingOctave newStart =
     withHistory
         (\model ->
-            let
-                newModel =
-                    { model | startingOctave = atLeast 1 newStart }
-            in
-            { newModel | tonalGrid = TonalGrid.resize (scaleConfig newModel) (timeConfig newModel) model.tonalGrid }
+            { model | tonalGrid = TonalGrid.changeStartingOctave (atLeast 1 newStart) (timeConfig model) model.tonalGrid }
         )
 
 
@@ -503,11 +456,7 @@ changeTotalOctaves : Int -> Model -> Model
 changeTotalOctaves newCount =
     withHistory
         (\model ->
-            let
-                newModel =
-                    { model | totalOctaves = atLeast 1 newCount }
-            in
-            { newModel | tonalGrid = TonalGrid.resize (scaleConfig newModel) (timeConfig newModel) model.tonalGrid }
+            { model | tonalGrid = TonalGrid.changeTotalOctaves (atLeast 1 newCount) (timeConfig model) model.tonalGrid }
         )
 
 
@@ -603,11 +552,8 @@ startDrawingPitch position model_ =
                 model =
                     pushToHistory model_
 
-                sc =
-                    scaleConfig model
-
                 isCellActive =
-                    TonalGrid.isActive position sc model.tonalGrid
+                    TonalGrid.isActive position model.tonalGrid
             in
             ( { model
                 | drawState =
@@ -616,12 +562,12 @@ startDrawingPitch position model_ =
 
                     else
                         DrawingPitch
-                , tonalGrid = TonalGrid.setCell position sc (not isCellActive) model.tonalGrid
+                , tonalGrid = TonalGrid.setCell position (not isCellActive) model.tonalGrid
               }
             , if not isCellActive then
                 Just
                     { webAudioFont = Instruments.tonalWebAudioFont model.currentTonalInstrument
-                    , midi = Scales.pitchIdxToMidi position.pitchIdx sc
+                    , midi = TonalGrid.pitchIdxToMidi position.pitchIdx model.tonalGrid
                     , duration = Timing.noteDuration (timeConfig model)
                     , volume = pitchVolume
                     }
@@ -639,16 +585,13 @@ continueDrawingPitch position model =
     case model.drawState of
         DrawingPitch ->
             let
-                sc =
-                    scaleConfig model
-
                 newModel =
-                    { model | tonalGrid = TonalGrid.setCell position sc True model.tonalGrid }
+                    { model | tonalGrid = TonalGrid.setCell position True model.tonalGrid }
 
                 maybeNote =
                     Just
                         { webAudioFont = Instruments.tonalWebAudioFont model.currentTonalInstrument
-                        , midi = Scales.pitchIdxToMidi position.pitchIdx sc
+                        , midi = TonalGrid.pitchIdxToMidi position.pitchIdx model.tonalGrid
                         , duration = Timing.noteDuration (timeConfig model)
                         , volume = pitchVolume
                         }
@@ -658,7 +601,7 @@ continueDrawingPitch position model =
         ErasingPitch ->
             let
                 newModel =
-                    { model | tonalGrid = TonalGrid.setCell position (scaleConfig model) False model.tonalGrid }
+                    { model | tonalGrid = TonalGrid.setCell position False model.tonalGrid }
             in
             ( newModel, Nothing )
 
@@ -863,28 +806,24 @@ toVm model =
 
         maybePlayingStepIdx =
             getCurrentPlayingStep model
-
-        -- Extract computed values to avoid recalculation in helper functions
-        scaleConfigValue =
-            scaleConfig model
     in
     { totalSteps = totalSteps
-    , totalPitches = Scales.getTotalPitches scaleConfigValue
+    , totalPitches = TonalGrid.getTotalPitches model.tonalGrid
     , canUndo = not (List.isEmpty model.undoStack)
     , canRedo = not (List.isEmpty model.redoStack)
     , isPlaying = model.playState /= Stopped
     , isStepCurrentlyPlaying = \stepIdx -> maybePlayingStepIdx == Just stepIdx
-    , isPitchCellActive = \position -> TonalGrid.isActive position scaleConfigValue model.tonalGrid
+    , isPitchCellActive = \position -> TonalGrid.isActive position model.tonalGrid
     , isPercCellActive = \position -> PercGrid.isActive position model.percGrid
-    , isScaleSelected = \scale -> model.scaleType == scale
-    , isRootNoteSelected = \rootNote -> model.rootNote == rootNote
+    , isScaleSelected = \scale -> TonalGrid.getScaleType model.tonalGrid == scale
+    , isRootNoteSelected = \rootNote -> TonalGrid.getRootNote model.tonalGrid == rootNote
     , isTonalInstrumentSelected = \instrument -> model.currentTonalInstrument == instrument
     , isDrumKitSelected = \drumKit -> model.currentDrumKit == drumKit
-    , pitchIdxToNoteName = \pitchIdx -> Scales.pitchIdxToNoteName pitchIdx scaleConfigValue
+    , pitchIdxToNoteName = \pitchIdx -> TonalGrid.pitchIdxToNoteName pitchIdx model.tonalGrid
     , percLabel = \percType -> Instruments.percLabel model.currentDrumKit percType
     , bpm = model.bpm
-    , startingOctave = model.startingOctave
-    , totalOctaves = model.totalOctaves
+    , startingOctave = TonalGrid.getStartingOctave model.tonalGrid
+    , totalOctaves = TonalGrid.getTotalOctaves model.tonalGrid
     , bars = model.bars
     , beatsPerBar = model.beatsPerBar
     , subdivisions = model.subdivisions
