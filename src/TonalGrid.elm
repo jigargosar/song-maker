@@ -106,12 +106,9 @@ fromMelody stepMelodies =
     stepMelodies
         |> List.indexedMap
             (\stepIdx noteNames ->
-                List.filterMap
-                    (\noteName ->
-                        Scales.noteNameToMidi noteName
-                            |> Maybe.map (\midiNote -> ( midiNote, stepIdx ))
-                    )
-                    noteNames
+                noteNames
+                    |> List.filterMap Scales.noteNameToMidi
+                    |> List.map (\midiNote -> ( midiNote, stepIdx ))
             )
         |> List.concat
         |> Set.fromList
