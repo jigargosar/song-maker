@@ -29,8 +29,8 @@ get cell grid =
 {-| Set or unset a cell in the grid
 -}
 set : Cell -> Bool -> Grid -> Grid
-set cell isActive_ grid =
-    if isActive_ then
+set cell bool grid =
+    if bool then
         Set.insert cell grid
 
     else
@@ -41,22 +41,22 @@ set cell isActive_ grid =
 Cells that would exceed totalSteps are removed
 -}
 shiftColumnRight : Int -> Int -> Grid -> Grid
-shiftColumnRight fromStepIdx totalSteps grid =
+shiftColumnRight fromCol totalCols grid =
     setFilterMap
-        (\( rowId, stepIdx ) ->
-            if stepIdx >= fromStepIdx then
+        (\( rowId, colIdx ) ->
+            if colIdx >= fromCol then
                 let
-                    newStepIdx =
-                        stepIdx + 1
+                    newColIdx =
+                        colIdx + 1
                 in
-                if newStepIdx < totalSteps then
-                    Just ( rowId, newStepIdx )
+                if newColIdx < totalCols then
+                    Just ( rowId, newColIdx )
 
                 else
                     Nothing
 
             else
-                Just ( rowId, stepIdx )
+                Just ( rowId, colIdx )
         )
         grid
 
@@ -64,21 +64,21 @@ shiftColumnRight fromStepIdx totalSteps grid =
 {-| Delete a step, shifting all subsequent steps left
 -}
 deleteColumn : Int -> Int -> Grid -> Grid
-deleteColumn stepToDelete totalSteps grid =
-    if stepToDelete < 0 || stepToDelete >= totalSteps then
+deleteColumn colIdxToDelete totalColumns grid =
+    if colIdxToDelete < 0 || colIdxToDelete >= totalColumns then
         grid
 
     else
         setFilterMap
-            (\( rowId, stepIdx ) ->
-                if stepIdx == stepToDelete then
+            (\( rowId, colIdx ) ->
+                if colIdx == colIdxToDelete then
                     Nothing
 
-                else if stepIdx > stepToDelete then
-                    Just ( rowId, stepIdx - 1 )
+                else if colIdx > colIdxToDelete then
+                    Just ( rowId, colIdx - 1 )
 
                 else
-                    Just ( rowId, stepIdx )
+                    Just ( rowId, colIdx )
             )
             grid
 
