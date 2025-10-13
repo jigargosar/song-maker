@@ -7,8 +7,8 @@ module QuerystringCodec exposing
 
 import Instruments exposing (DrumKit, TonalInstrument)
 import PercGrid exposing (PercGrid)
-import TonalGrid exposing (TonalGrid)
 import Scales exposing (RootNote, ScaleType)
+import TonalGrid exposing (TonalGrid)
 import Url exposing (Url)
 import Url.Builder as UB
 import Url.Parser as Parser exposing ((<?>))
@@ -21,7 +21,7 @@ type alias QueryData a =
         | bpm : Int
         , startingOctave : Int
         , totalOctaves : Int
-        , pitchGrid : TonalGrid
+        , tonalGrid : TonalGrid
         , percGrid : PercGrid
         , scaleType : ScaleType
         , rootNote : RootNote
@@ -83,7 +83,7 @@ buildQueryString data =
         [ UB.int "bpm" data.bpm
         , UB.int "startingOctave" data.startingOctave
         , UB.int "totalOctaves" data.totalOctaves
-        , UB.string "pitchGrid" (TonalGrid.serialize data.pitchGrid)
+        , UB.string "pitchGrid" (TonalGrid.serialize data.tonalGrid)
         , UB.string "percGrid" (PercGrid.serialize data.percGrid)
         , UB.string "scale" (Scales.scaleLabel data.scaleType)
         , UB.string "root" (Scales.rootNoteToString data.rootNote)
@@ -108,7 +108,7 @@ load url data =
                 | bpm = Maybe.withDefault data.bpm params.bpm
                 , startingOctave = Maybe.withDefault data.startingOctave params.startingOctave
                 , totalOctaves = Maybe.withDefault data.totalOctaves params.totalOctaves
-                , pitchGrid = Maybe.withDefault data.pitchGrid params.pitchGrid
+                , tonalGrid = Maybe.withDefault data.tonalGrid params.pitchGrid
                 , percGrid = Maybe.withDefault data.percGrid params.percGrid
                 , scaleType = Maybe.withDefault data.scaleType params.scaleType
                 , rootNote = Maybe.withDefault data.rootNote params.rootNote
@@ -126,7 +126,7 @@ load url data =
 reset : QueryData a -> QueryData a
 reset data =
     { data
-        | pitchGrid = TonalGrid.initial
+        | tonalGrid = TonalGrid.initial
         , percGrid = PercGrid.initial
         , scaleType = Scales.Major
         , rootNote = Scales.C
