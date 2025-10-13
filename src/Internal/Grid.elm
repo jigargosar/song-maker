@@ -1,27 +1,35 @@
 module Internal.Grid exposing
-    ( delete
-    , fromString
-    , isActive
-    , setCell
-    , shift
-    , toString
+    ( deleteColumn
+    , get
+    , parse
+    , serialize
+    , set
+    , shiftColumnRight
     )
 
 import Set exposing (Set)
 import Utils exposing (..)
 
 
+type alias Grid =
+    Set Cell
+
+
+type alias Cell =
+    ( Int, Int )
+
+
 {-| Check if a cell is active in the grid
 -}
-isActive : ( Int, Int ) -> Set ( Int, Int ) -> Bool
-isActive cell grid =
+get : Cell -> Grid -> Bool
+get cell grid =
     Set.member cell grid
 
 
 {-| Set or unset a cell in the grid
 -}
-setCell : ( Int, Int ) -> Bool -> Set ( Int, Int ) -> Set ( Int, Int )
-setCell cell isActive_ grid =
+set : Cell -> Bool -> Grid -> Grid
+set cell isActive_ grid =
     if isActive_ then
         Set.insert cell grid
 
@@ -32,8 +40,8 @@ setCell cell isActive_ grid =
 {-| Shift all cells at or after fromStepIdx one step to the right
 Cells that would exceed totalSteps are removed
 -}
-shift : Int -> Int -> Set ( Int, Int ) -> Set ( Int, Int )
-shift fromStepIdx totalSteps grid =
+shiftColumnRight : Int -> Int -> Grid -> Grid
+shiftColumnRight fromStepIdx totalSteps grid =
     setFilterMap
         (\( rowId, stepIdx ) ->
             if stepIdx >= fromStepIdx then
@@ -55,8 +63,8 @@ shift fromStepIdx totalSteps grid =
 
 {-| Delete a step, shifting all subsequent steps left
 -}
-delete : Int -> Int -> Set ( Int, Int ) -> Set ( Int, Int )
-delete stepToDelete totalSteps grid =
+deleteColumn : Int -> Int -> Grid -> Grid
+deleteColumn stepToDelete totalSteps grid =
     if stepToDelete < 0 || stepToDelete >= totalSteps then
         grid
 
@@ -77,8 +85,8 @@ delete stepToDelete totalSteps grid =
 
 {-| Convert grid to comma-separated string: "0,0,1,2,5,10"
 -}
-toString : Set ( Int, Int ) -> String
-toString grid =
+serialize : Grid -> String
+serialize grid =
     grid
         |> Set.toList
         |> flattenPairs
@@ -88,8 +96,8 @@ toString grid =
 
 {-| Parse comma-separated string to grid: "0,0,1,2,5,10"
 -}
-fromString : String -> Set ( Int, Int )
-fromString str =
+parse : String -> Grid
+parse str =
     str
         |> String.split ","
         |> List.filterMap String.toInt

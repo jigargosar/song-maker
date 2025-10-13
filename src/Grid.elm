@@ -79,12 +79,12 @@ initialPercGrid =
 
 isPitchCellActive : PitchPos -> ScaleConfig -> PitchGrid -> Bool
 isPitchCellActive position config pitchGrid =
-    InternalGrid.isActive (pitchPositionToTuple position config) pitchGrid
+    InternalGrid.get (pitchPositionToTuple position config) pitchGrid
 
 
 setPitchCell : PitchPos -> ScaleConfig -> Bool -> PitchGrid -> PitchGrid
 setPitchCell position config isActive pitchGrid =
-    InternalGrid.setCell (pitchPositionToTuple position config) isActive pitchGrid
+    InternalGrid.set (pitchPositionToTuple position config) isActive pitchGrid
 
 
 pitchPositionToTuple : PitchPos -> ScaleConfig -> ( MidiNote, StepIdx )
@@ -94,12 +94,12 @@ pitchPositionToTuple { pitchIdx, stepIdx } config =
 
 isPercCellActive : PercPos -> PercGrid -> Bool
 isPercCellActive position grid =
-    InternalGrid.isActive (percPositionToTuple position) grid
+    InternalGrid.get (percPositionToTuple position) grid
 
 
 setPercCell : PercPos -> Bool -> PercGrid -> PercGrid
 setPercCell position isActive grid =
-    InternalGrid.setCell (percPositionToTuple position) isActive grid
+    InternalGrid.set (percPositionToTuple position) isActive grid
 
 
 percPositionToTuple : PercPos -> ( PercRowIdx, StepIdx )
@@ -134,15 +134,15 @@ transposePitchGrid { prev, next } existingGrid =
 
 shiftStepRight : Int -> Int -> PitchGrid -> PercGrid -> ( PitchGrid, PercGrid )
 shiftStepRight fromStepIdx totalSteps pitchGrid percGrid =
-    ( InternalGrid.shift fromStepIdx totalSteps pitchGrid
-    , InternalGrid.shift fromStepIdx totalSteps percGrid
+    ( InternalGrid.shiftColumnRight fromStepIdx totalSteps pitchGrid
+    , InternalGrid.shiftColumnRight fromStepIdx totalSteps percGrid
     )
 
 
 deleteStep : Int -> Int -> PitchGrid -> PercGrid -> ( PitchGrid, PercGrid )
 deleteStep stepToDelete totalSteps pitchGrid percGrid =
-    ( InternalGrid.delete stepToDelete totalSteps pitchGrid
-    , InternalGrid.delete stepToDelete totalSteps percGrid
+    ( InternalGrid.deleteColumn stepToDelete totalSteps pitchGrid
+    , InternalGrid.deleteColumn stepToDelete totalSteps percGrid
     )
 
 
@@ -189,25 +189,25 @@ convertPercussionToGrid stepPercussion =
 -}
 pitchGridToString : PitchGrid -> String
 pitchGridToString =
-    InternalGrid.toString
+    InternalGrid.serialize
 
 
 {-| Parse comma-separated integers back to PitchGrid: "0,0,1,2,5,10"
 -}
 parsePitchGrid : String -> PitchGrid
 parsePitchGrid =
-    InternalGrid.fromString
+    InternalGrid.parse
 
 
 {-| Convert PercGrid to comma-separated integers: "0,0,1,2,5,10"
 -}
 percGridToString : PercGrid -> String
 percGridToString =
-    InternalGrid.toString
+    InternalGrid.serialize
 
 
 {-| Parse comma-separated integers back to PercGrid: "0,0,1,2,5,10"
 -}
 parsePercGrid : String -> PercGrid
 parsePercGrid =
-    InternalGrid.fromString
+    InternalGrid.parse
