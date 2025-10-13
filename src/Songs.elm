@@ -34,11 +34,11 @@ parseSong name =
 
 
 bass =
-    Instruments.bass
+    Instruments.Bass
 
 
 accent =
-    Instruments.accent
+    Instruments.Accent
 
 
 twinkleSong : SongConfig

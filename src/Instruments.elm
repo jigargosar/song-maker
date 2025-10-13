@@ -1,13 +1,11 @@
 module Instruments exposing
     ( DrumConfig
     , DrumKit
-    , PercType
+    , PercType(..)
     , TonalInstrument
-    , accent
     , allDrumKits
     , allPercTypes
     , allTonal
-    , bass
     , defaultDrumKit
     , defaultTonalInstrument
     , drumKitConfig
@@ -241,13 +239,3 @@ percRowIdx percType =
 defaultDrumKit : DrumKit
 defaultDrumKit =
     ElectronicKit
-
-
-bass : PercType
-bass =
-    Bass
-
-
-accent : PercType
-accent =
-    Accent

@@ -401,12 +401,11 @@ getActiveNotesForStep stepIdx model =
 
                             ( webAudioFontName, midiNote ) =
                                 case percType of
-                                    _ ->
-                                        if percType == Instruments.bass then
-                                            ( drumConfig.bassWebAudioFont, drumConfig.bassMidi )
+                                    Instruments.Bass ->
+                                        ( drumConfig.bassWebAudioFont, drumConfig.bassMidi )
 
-                                        else
-                                            ( drumConfig.accentWebAudioFont, drumConfig.accentMidi )
+                                    Instruments.Accent ->
+                                        ( drumConfig.accentWebAudioFont, drumConfig.accentMidi )
                         in
                         if Grid.isPercCellActive position model.percGrid then
                             Just
@@ -685,11 +684,12 @@ startDrawingPerc position model =
                                 Instruments.drumKitConfig model.currentDrumKit
 
                             ( webAudioFontName, midiNote ) =
-                                if position.percType == Instruments.bass then
-                                    ( drumConfig.bassWebAudioFont, drumConfig.bassMidi )
+                                case position.percType of
+                                    Instruments.Bass ->
+                                        ( drumConfig.bassWebAudioFont, drumConfig.bassMidi )
 
-                                else
-                                    ( drumConfig.accentWebAudioFont, drumConfig.accentMidi )
+                                    Instruments.Accent ->
+                                        ( drumConfig.accentWebAudioFont, drumConfig.accentMidi )
                         in
                         Just
                             { webAudioFont = webAudioFontName
@@ -719,11 +719,12 @@ continueDrawingPerc position model =
                     Instruments.drumKitConfig model.currentDrumKit
 
                 ( webAudioFontName, midiNote ) =
-                    if position.percType == Instruments.bass then
-                        ( drumConfig.bassWebAudioFont, drumConfig.bassMidi )
+                    case position.percType of
+                        Instruments.Bass ->
+                            ( drumConfig.bassWebAudioFont, drumConfig.bassMidi )
 
-                    else
-                        ( drumConfig.accentWebAudioFont, drumConfig.accentMidi )
+                        Instruments.Accent ->
+                            ( drumConfig.accentWebAudioFont, drumConfig.accentMidi )
 
                 maybeNote =
                     Just

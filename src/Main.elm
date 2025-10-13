@@ -294,8 +294,8 @@ viewGrid vm =
         ([ {- Empty corner cell -} div [ class labelBgColorAndClass, class "border-b border-gray-600", class "sticky top-0 left-0 z-20" ] [] ]
             ++ {- Step Labels row -} times (\stepIdx -> viewStepLabel stepIdx (vm.isStepCurrentlyPlaying stepIdx)) vm.totalSteps
             ++ {- Pitch rows -} (times (viewPitchRow vm) vm.totalPitches |> List.concat)
-            ++ {- Perc Accent row -} viewPercRow vm Instruments.accent
-            ++ {- Perc Bass row -} viewPercRow vm Instruments.bass
+            ++ {- Perc Accent row -} viewPercRow vm Instruments.Accent
+            ++ {- Perc Bass row -} viewPercRow vm Instruments.Bass
         )
 
 
@@ -424,12 +424,11 @@ viewPercRow vm percType =
 
         stickyClass =
             case percType of
-                _ ->
-                    if percType == Instruments.accent then
-                        "sticky bottom-12 h-12 z-10 border-t-3"
+                Instruments.Accent ->
+                    "sticky bottom-12 h-12 z-10 border-t-3"
 
-                    else
-                        "sticky bottom-0 h-12 z-10"
+                Instruments.Bass ->
+                    "sticky bottom-0 h-12 z-10"
     in
     div [ class labelBgColorAndClass, class stickyClass ] [ text percTypeName ]
         :: times (\stepIdx -> viewPercCell vm percType stepIdx) vm.totalSteps
@@ -452,12 +451,11 @@ viewPercCell vm percType stepIdx =
 
         stickyClass =
             case percType of
-                _ ->
-                    if percType == Instruments.accent then
-                        "sticky bottom-12 h-12 z-10  border-t-3"
+                Instruments.Accent ->
+                    "sticky bottom-12 h-12 z-10  border-t-3"
 
-                    else
-                        "sticky bottom-0 h-12 z-10"
+                Instruments.Bass ->
+                    "sticky bottom-0 h-12 z-10"
 
         cellClass =
             if isCurrentStep then
@@ -619,14 +617,13 @@ viewPercSymbol : Bool -> PercType -> Html Msg
 viewPercSymbol isActive percType =
     if isActive then
         case percType of
-            _ ->
-                if percType == Instruments.bass then
-                    -- Circle symbol
-                    div [ class "w-6 h-6 rounded-full", class accentBgColor ] []
+            Instruments.Bass ->
+                -- Circle symbol
+                div [ class "w-6 h-6 rounded-full", class accentBgColor ] []
 
-                else
-                    -- Triangle symbol
-                    div [ class "w-6 h-6", class accentBgColor, style "clip-path" "polygon(50% 0%, 0% 100%, 100% 100%)" ] []
+            Instruments.Accent ->
+                -- Triangle symbol
+                div [ class "w-6 h-6", class accentBgColor, style "clip-path" "polygon(50% 0%, 0% 100%, 100% 100%)" ] []
 
     else
         -- Small dim dot for inactive
