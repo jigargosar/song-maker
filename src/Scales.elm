@@ -85,54 +85,9 @@ type RootNote
     | B
 
 
-getRootNoteOffset : RootNote -> Semitone
-getRootNoteOffset rootNote =
-    case rootNote of
-        C ->
-            0
-
-        CSharp ->
-            1
-
-        D ->
-            2
-
-        DSharp ->
-            3
-
-        E ->
-            4
-
-        F ->
-            5
-
-        FSharp ->
-            6
-
-        G ->
-            7
-
-        GSharp ->
-            8
-
-        A ->
-            9
-
-        ASharp ->
-            10
-
-        B ->
-            11
-
-
 chromaticNoteNames : List String
 chromaticNoteNames =
     [ "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B" ]
-
-
-notesPerOctave : ScaleType -> Int
-notesPerOctave scaleType =
-    List.length (getScalePattern scaleType)
 
 
 allRootNotes : List RootNote
@@ -140,44 +95,31 @@ allRootNotes =
     [ C, CSharp, D, DSharp, E, F, FSharp, G, GSharp, A, ASharp, B ]
 
 
+noteOffsets : List Semitone
+noteOffsets =
+    List.range 0 11
+
+
+noteData : List ( String, RootNote, Semitone )
+noteData =
+    List.zip3 chromaticNoteNames allRootNotes noteOffsets
+
+
+getRootNoteOffset : RootNote -> Semitone
+getRootNoteOffset rootNote =
+    List.findMap (\( _, note, offset ) -> justIf (note == rootNote) offset) noteData
+        |> Maybe.withDefault 0
+
+
+notesPerOctave : ScaleType -> Int
+notesPerOctave scaleType =
+    List.length (getScalePattern scaleType)
+
+
 rootNoteToString : RootNote -> String
 rootNoteToString rootNote =
-    case rootNote of
-        C ->
-            "C"
-
-        CSharp ->
-            "C#"
-
-        D ->
-            "D"
-
-        DSharp ->
-            "D#"
-
-        E ->
-            "E"
-
-        F ->
-            "F"
-
-        FSharp ->
-            "F#"
-
-        G ->
-            "G"
-
-        GSharp ->
-            "G#"
-
-        A ->
-            "A"
-
-        ASharp ->
-            "A#"
-
-        B ->
-            "B"
+    List.findMap (\( name, note, _ ) -> justIf (note == rootNote) name) noteData
+        |> Maybe.withDefault "C"
 
 
 parseScaleType : String -> ScaleType
@@ -198,45 +140,8 @@ parseScaleType str =
 
 parseRootNote : String -> RootNote
 parseRootNote str =
-    case str of
-        "C" ->
-            C
-
-        "C#" ->
-            CSharp
-
-        "D" ->
-            D
-
-        "D#" ->
-            DSharp
-
-        "E" ->
-            E
-
-        "F" ->
-            F
-
-        "F#" ->
-            FSharp
-
-        "G" ->
-            G
-
-        "G#" ->
-            GSharp
-
-        "A" ->
-            A
-
-        "A#" ->
-            ASharp
-
-        "B" ->
-            B
-
-        _ ->
-            C
+    List.findMap (\( name, note, _ ) -> justIf (name == str) note) noteData
+        |> Maybe.withDefault C
 
 
 
