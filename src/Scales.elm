@@ -245,19 +245,30 @@ validateMidi targetMidi sc =
         |> List.findMap (\pitchIdx -> justIf (nthNoteToMidi pitchIdx sc == targetMidi) targetMidi)
 
 
+{-| Parse a note name to MIDI note number.
+
+Well-formed inputs:
+    noteNameToMidi "C4" == Just 60
+    noteNameToMidi "C#10" == Just 145
+
+Malformed inputs return Nothing:
+    noteNameToMidi "C##2" == Nothing
+    noteNameToMidi "C" == Nothing
+-}
 noteNameToMidi : String -> Maybe MidiNote
 noteNameToMidi noteName =
     let
-        -- Split "C#4" into ("C#", "4")
-        noteWithOctave =
-            if String.contains "#" noteName then
-                ( String.left 2 noteName, String.dropLeft 2 noteName )
+        -- Extract all digits from the string (e.g., "C#10" -> "10")
+        octaveStr =
+            String.filter Char.isDigit noteName
 
-            else
-                ( String.left 1 noteName, String.dropLeft 1 noteName )
+        -- Count how many characters to drop from the right (e.g., "10" -> 2)
+        octaveLen =
+            String.length octaveStr
 
-        ( note, octaveStr ) =
-            noteWithOctave
+        -- Get the note part by removing octave digits (e.g., "C#10" -> "C#")
+        note =
+            String.dropRight octaveLen noteName
     in
     Maybe.map2
         (\offset octave -> (octave + 1) * 12 + offset)
