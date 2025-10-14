@@ -6,10 +6,10 @@ module Scales exposing
     , allRootNotes
     , allScales
     , getRootNoteOffset
-    , noteNameToMidi
     , noteNamesInRange
-    , nthNoteName
-    , nthNoteToMidi
+    , nthNoteInRangeToMidi
+    , nthNoteNameInRange
+    , parseNoteNameToMidi
     , parseRootNote
     , parseScaleType
     , rangeSize
@@ -185,7 +185,7 @@ noteNamesInRange : ScaleRange -> List String
 noteNamesInRange config =
     rangeSize config
         |> indices
-        |> List.map (\noteIdx -> nthNoteName noteIdx config)
+        |> List.map (\noteIdx -> nthNoteNameInRange noteIdx config)
 
 
 isWithinRange : Int -> ScaleRange -> Bool
@@ -243,8 +243,8 @@ noteNameFromIdx noteIdx config =
         |> Maybe.withDefault "?"
 
 
-nthNoteToMidi : Int -> ScaleRange -> MidiNote
-nthNoteToMidi noteIdx config =
+nthNoteInRangeToMidi : Int -> ScaleRange -> MidiNote
+nthNoteInRangeToMidi noteIdx config =
     if isWithinRange noteIdx config then
         12 + (absoluteOctave noteIdx config * 12) + semitoneInOctave noteIdx config
 
@@ -252,8 +252,8 @@ nthNoteToMidi noteIdx config =
         60
 
 
-nthNoteName : Int -> ScaleRange -> String
-nthNoteName noteIdx config =
+nthNoteNameInRange : Int -> ScaleRange -> String
+nthNoteNameInRange noteIdx config =
     if isWithinRange noteIdx config then
         noteNameFromIdx noteIdx config ++ String.fromInt (absoluteOctave noteIdx config)
 
@@ -265,7 +265,7 @@ validateMidi : MidiNote -> ScaleRange -> Maybe MidiNote
 validateMidi targetMidi sc =
     rangeSize sc
         |> indices
-        |> List.findMap (\pitchIdx -> justIf (nthNoteToMidi pitchIdx sc == targetMidi) targetMidi)
+        |> List.findMap (\pitchIdx -> justIf (nthNoteInRangeToMidi pitchIdx sc == targetMidi) targetMidi)
 
 
 {-| Parse a note name to MIDI note number.
@@ -279,8 +279,8 @@ noteNameToMidi "C##2" == Nothing
 noteNameToMidi "C" == Nothing
 
 -}
-noteNameToMidi : String -> Maybe MidiNote
-noteNameToMidi noteName =
+parseNoteNameToMidi : String -> Maybe MidiNote
+parseNoteNameToMidi noteName =
     let
         -- Extract all digits from the string (e.g., "C#10" -> "10")
         octaveStr =

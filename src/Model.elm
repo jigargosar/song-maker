@@ -392,7 +392,7 @@ getActiveNotesForStep stepIdx model =
                         if isActive pitchIdx then
                             Just
                                 { webAudioFont = Instruments.tonalWebAudioFont model.currentTonalInstrument
-                                , midi = Scales.nthNoteToMidi pitchIdx sc
+                                , midi = Scales.nthNoteInRangeToMidi pitchIdx sc
                                 , duration = duration
                                 , volume = pitchVolume
                                 }
@@ -621,7 +621,7 @@ startDrawingPitch position model_ =
             , if not isCellActive then
                 Just
                     { webAudioFont = Instruments.tonalWebAudioFont model.currentTonalInstrument
-                    , midi = Scales.nthNoteToMidi position.pitchIdx sc
+                    , midi = Scales.nthNoteInRangeToMidi position.pitchIdx sc
                     , duration = Timing.noteDuration (timeConfig model)
                     , volume = pitchVolume
                     }
@@ -648,7 +648,7 @@ continueDrawingPitch position model =
                 maybeNote =
                     Just
                         { webAudioFont = Instruments.tonalWebAudioFont model.currentTonalInstrument
-                        , midi = Scales.nthNoteToMidi position.pitchIdx sc
+                        , midi = Scales.nthNoteInRangeToMidi position.pitchIdx sc
                         , duration = Timing.noteDuration (timeConfig model)
                         , volume = pitchVolume
                         }

@@ -59,7 +59,7 @@ setCell position config isActive_ grid =
 
 positionToTuple : PitchPos -> ScaleRange -> ( MidiNote, StepIdx )
 positionToTuple { pitchIdx, stepIdx } config =
-    ( Scales.nthNoteToMidi pitchIdx config, stepIdx )
+    ( Scales.nthNoteInRangeToMidi pitchIdx config, stepIdx )
 
 
 
@@ -107,7 +107,7 @@ fromMelody stepMelodies =
         |> List.indexedMap
             (\stepIdx noteNames ->
                 noteNames
-                    |> List.filterMap Scales.noteNameToMidi
+                    |> List.filterMap Scales.parseNoteNameToMidi
                     |> List.map (\midiNote -> ( midiNote, stepIdx ))
             )
         |> List.concat
