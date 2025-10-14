@@ -832,7 +832,7 @@ changeSubdivisions newSubdivisions =
 
 type alias ViewModel =
     { totalSteps : Int
-    , totalPitches : Int
+    , noteNames : List String
     , canUndo : Bool
     , canRedo : Bool
     , isPlaying : Bool
@@ -843,7 +843,6 @@ type alias ViewModel =
     , isRootNoteSelected : RootNote -> Bool
     , isTonalInstrumentSelected : TonalInstrument -> Bool
     , isDrumKitSelected : DrumKit -> Bool
-    , pitchIdxToNoteName : Int -> String
     , percLabel : PercType -> String
     , bpm : Int
     , startingOctave : Int
@@ -869,7 +868,7 @@ toVm model =
             scaleConfig model
     in
     { totalSteps = totalSteps
-    , totalPitches = Scales.rangeSize scaleConfigValue
+    , noteNames = Scales.noteNamesInRange scaleConfigValue
     , canUndo = not (List.isEmpty model.undoStack)
     , canRedo = not (List.isEmpty model.redoStack)
     , isPlaying = model.playState /= Stopped
@@ -880,7 +879,6 @@ toVm model =
     , isRootNoteSelected = \rootNote -> model.rootNote == rootNote
     , isTonalInstrumentSelected = \instrument -> model.currentTonalInstrument == instrument
     , isDrumKitSelected = \drumKit -> model.currentDrumKit == drumKit
-    , pitchIdxToNoteName = \pitchIdx -> Scales.nthNoteName pitchIdx scaleConfigValue
     , percLabel = \percType -> Instruments.percLabel model.currentDrumKit percType
     , bpm = model.bpm
     , startingOctave = model.startingOctave

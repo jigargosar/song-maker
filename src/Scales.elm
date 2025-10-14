@@ -7,6 +7,7 @@ module Scales exposing
     , allScales
     , getRootNoteOffset
     , noteNameToMidi
+    , noteNamesInRange
     , nthNoteName
     , nthNoteToMidi
     , parseRootNote
@@ -132,16 +133,6 @@ allRootNotes =
     [ C, CSharp, D, DSharp, E, F, FSharp, G, GSharp, A, ASharp, B ]
 
 
-noteOffsets : List Semitone
-noteOffsets =
-    List.range 0 11
-
-
-noteData : List ( String, RootNote, Semitone )
-noteData =
-    List.zip3 chromaticNoteNames allRootNotes noteOffsets
-
-
 getRootNoteOffset : RootNote -> Semitone
 getRootNoteOffset rootNote =
     (rootNoteInfo rootNote).offset
@@ -165,7 +156,7 @@ parseScaleType str =
 
 parseRootNote : String -> RootNote
 parseRootNote str =
-    List.findMap (\( name, note, _ ) -> justIf (name == str) note) noteData
+    List.findMap (\rn -> justIf ((rootNoteInfo rn).name == str) rn) allRootNotes
         |> Maybe.withDefault C
 
 
@@ -188,6 +179,13 @@ type alias ScaleRange =
 rangeSize : ScaleRange -> Int
 rangeSize config =
     notesPerOctave config.scaleType * config.totalOctaves
+
+
+noteNamesInRange : ScaleRange -> List String
+noteNamesInRange config =
+    rangeSize config
+        |> indices
+        |> List.map (\noteIdx -> nthNoteName noteIdx config)
 
 
 isWithinRange : Int -> ScaleRange -> Bool

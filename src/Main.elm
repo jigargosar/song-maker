@@ -282,7 +282,7 @@ viewGrid vm =
         gridTemplateRows =
             format "minmax($stepLabelRowMinHeight, auto) repeat($totalPitches, minmax($pitchRowMinHeight, 1fr)) repeat(2, $percRowHeight)"
                 [ ( "$stepLabelRowMinHeight", px 32 )
-                , ( "$totalPitches", String.fromInt vm.totalPitches )
+                , ( "$totalPitches", String.fromInt (List.length vm.noteNames) )
                 , ( "$pitchRowMinHeight", px 32 )
                 , ( "$percRowHeight", px 48 )
                 ]
@@ -294,7 +294,7 @@ viewGrid vm =
         ]
         ([ {- Empty corner cell -} div [ class labelBgColorAndClass, class "border-b border-gray-600", class "sticky top-0 left-0 z-20" ] [] ]
             ++ {- Step Labels row -} times (\stepIdx -> viewStepLabel stepIdx (vm.isStepCurrentlyPlaying stepIdx)) vm.totalSteps
-            ++ {- Pitch rows -} (times (viewPitchRow vm) vm.totalPitches |> List.concat)
+            ++ {- Pitch rows -} (List.indexedMap (viewPitchRow vm) vm.noteNames |> List.concat)
             ++ {- Perc Accent row -} viewPercRow vm Instruments.Accent
             ++ {- Perc Bass row -} viewPercRow vm Instruments.Bass
         )
@@ -362,13 +362,13 @@ viewStepButton label msg =
         [ text label ]
 
 
-viewPitchRow : ViewModel -> Int -> List (Html Msg)
-viewPitchRow vm pitchIdx =
+viewPitchRow : ViewModel -> Int -> String -> List (Html Msg)
+viewPitchRow vm pitchIdx noteName =
     let
         viewPitchLabel =
             div
                 [ class labelBgColorAndClass, class "border-[0.5px]", class "sticky left-0 z-10" ]
-                [ text (vm.pitchIdxToNoteName pitchIdx) ]
+                [ text noteName ]
     in
     viewPitchLabel :: times (\stepIdx -> viewPitchCell vm pitchIdx stepIdx) vm.totalSteps
 
