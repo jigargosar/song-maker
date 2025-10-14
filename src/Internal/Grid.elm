@@ -30,11 +30,7 @@ get cell grid =
 -}
 set : Cell -> Bool -> Grid -> Grid
 set cell bool grid =
-    if bool then
-        Set.insert cell grid
-
-    else
-        Set.remove cell grid
+    setUpdate bool cell grid
 
 
 {-| Shift all cells at or after fromStepIdx one step to the right
