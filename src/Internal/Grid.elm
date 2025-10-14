@@ -44,19 +44,14 @@ shiftColumnRight : Int -> Int -> Grid -> Grid
 shiftColumnRight fromCol totalCols grid =
     setFilterMap
         (\( rowId, colIdx ) ->
-            if colIdx >= fromCol then
-                let
-                    newColIdx =
-                        colIdx + 1
-                in
-                if newColIdx < totalCols then
-                    Just ( rowId, newColIdx )
+            if colIdx < fromCol then
+                Just ( rowId, colIdx )
 
-                else
-                    Nothing
+            else if colIdx + 1 < totalCols then
+                Just ( rowId, colIdx + 1 )
 
             else
-                Just ( rowId, colIdx )
+                Nothing
         )
         grid
 
