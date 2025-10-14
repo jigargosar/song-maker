@@ -44,30 +44,36 @@ allScales =
     [ Major, Pentatonic, Chromatic ]
 
 
-scaleLabel : ScaleType -> String
-scaleLabel scale =
-    case scale of
+scaleInfo : ScaleType -> { label : String, pattern : List Semitone, noteCount : Int }
+scaleInfo scaleType =
+    case scaleType of
         Major ->
-            "Major"
+            { label = "Major"
+            , pattern = [ 0, 2, 4, 5, 7, 9, 11 ]
+            , noteCount = 7
+            }
 
         Pentatonic ->
-            "Pentatonic"
+            { label = "Pentatonic"
+            , pattern = [ 0, 2, 4, 7, 9 ]
+            , noteCount = 5
+            }
 
         Chromatic ->
-            "Chromatic"
+            { label = "Chromatic"
+            , pattern = [ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11 ]
+            , noteCount = 12
+            }
+
+
+scaleLabel : ScaleType -> String
+scaleLabel scaleType =
+    (scaleInfo scaleType).label
 
 
 getScalePattern : ScaleType -> List Semitone
 getScalePattern scaleType =
-    case scaleType of
-        Major ->
-            [ 0, 2, 4, 5, 7, 9, 11 ]
-
-        Pentatonic ->
-            [ 0, 2, 4, 7, 9 ]
-
-        Chromatic ->
-            [ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11 ]
+    (scaleInfo scaleType).pattern
 
 
 type RootNote
@@ -113,7 +119,7 @@ getRootNoteOffset rootNote =
 
 notesPerOctave : ScaleType -> Int
 notesPerOctave scaleType =
-    List.length (getScalePattern scaleType)
+    (scaleInfo scaleType).noteCount
 
 
 rootNoteToString : RootNote -> String
@@ -124,18 +130,8 @@ rootNoteToString rootNote =
 
 parseScaleType : String -> ScaleType
 parseScaleType str =
-    case str of
-        "Major" ->
-            Major
-
-        "Pentatonic" ->
-            Pentatonic
-
-        "Chromatic" ->
-            Chromatic
-
-        _ ->
-            Major
+    List.findMap (\st -> justIf (scaleLabel st == str) st) allScales
+        |> Maybe.withDefault Major
 
 
 parseRootNote : String -> RootNote
