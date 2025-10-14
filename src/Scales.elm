@@ -82,6 +82,46 @@ type RootNote
     | B
 
 
+rootNoteInfo : RootNote -> { name : String, offset : Semitone }
+rootNoteInfo rootNote =
+    case rootNote of
+        C ->
+            { name = "C", offset = 0 }
+
+        CSharp ->
+            { name = "C#", offset = 1 }
+
+        D ->
+            { name = "D", offset = 2 }
+
+        DSharp ->
+            { name = "D#", offset = 3 }
+
+        E ->
+            { name = "E", offset = 4 }
+
+        F ->
+            { name = "F", offset = 5 }
+
+        FSharp ->
+            { name = "F#", offset = 6 }
+
+        G ->
+            { name = "G", offset = 7 }
+
+        GSharp ->
+            { name = "G#", offset = 8 }
+
+        A ->
+            { name = "A", offset = 9 }
+
+        ASharp ->
+            { name = "A#", offset = 10 }
+
+        B ->
+            { name = "B", offset = 11 }
+
+
 chromaticNoteNames : List String
 chromaticNoteNames =
     [ "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B" ]
@@ -104,8 +144,7 @@ noteData =
 
 getRootNoteOffset : RootNote -> Semitone
 getRootNoteOffset rootNote =
-    List.findMap (\( _, note, offset ) -> justIf (note == rootNote) offset) noteData
-        |> Maybe.withDefault 0
+    (rootNoteInfo rootNote).offset
 
 
 notesPerOctave : ScaleType -> Int
@@ -115,8 +154,7 @@ notesPerOctave scaleType =
 
 rootNoteToString : RootNote -> String
 rootNoteToString rootNote =
-    List.findMap (\( name, note, _ ) -> justIf (note == rootNote) name) noteData
-        |> Maybe.withDefault "C"
+    (rootNoteInfo rootNote).name
 
 
 parseScaleType : String -> ScaleType
