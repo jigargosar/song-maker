@@ -48,22 +48,13 @@ scaleInfo : ScaleType -> { label : String, pattern : List Semitone, noteCount : 
 scaleInfo scaleType =
     case scaleType of
         Major ->
-            { label = "Major"
-            , pattern = [ 0, 2, 4, 5, 7, 9, 11 ]
-            , noteCount = 7
-            }
+            { label = "Major", pattern = [ 0, 2, 4, 5, 7, 9, 11 ], noteCount = 7 }
 
         Pentatonic ->
-            { label = "Pentatonic"
-            , pattern = [ 0, 2, 4, 7, 9 ]
-            , noteCount = 5
-            }
+            { label = "Pentatonic", pattern = [ 0, 2, 4, 7, 9 ], noteCount = 5 }
 
         Chromatic ->
-            { label = "Chromatic"
-            , pattern = [ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11 ]
-            , noteCount = 12
-            }
+            { label = "Chromatic", pattern = [ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11 ], noteCount = 12 }
 
 
 scaleLabel : ScaleType -> String
@@ -244,12 +235,13 @@ validateMidi targetMidi sc =
 {-| Parse a note name to MIDI note number.
 
 Well-formed inputs:
-    noteNameToMidi "C4" == Just 60
-    noteNameToMidi "C#10" == Just 145
+noteNameToMidi "C4" == Just 60
+noteNameToMidi "C#10" == Just 145
 
 Malformed inputs return Nothing:
-    noteNameToMidi "C##2" == Nothing
-    noteNameToMidi "C" == Nothing
+noteNameToMidi "C##2" == Nothing
+noteNameToMidi "C" == Nothing
+
 -}
 noteNameToMidi : String -> Maybe MidiNote
 noteNameToMidi noteName =
